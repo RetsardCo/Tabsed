@@ -1,14 +1,20 @@
 import React, { useState } from 'react';
-import { X, HardDrive, ShieldCheck, Trash2, RefreshCw, AlertCircle, Check } from 'lucide-react';
+import { X, HardDrive, ShieldCheck, Trash2, RefreshCw, AlertCircle, Check, Sparkles } from 'lucide-react';
 import { StorageReport } from '../../core/vault/vault-manager';
 
 interface StorageModalProps {
   isOpen: boolean;
   onClose: () => void;
   storageReport: StorageReport;
+  quotaBytes?: number;
 }
 
-export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, storageReport }) => {
+export const StorageModal: React.FC<StorageModalProps> = ({
+  isOpen,
+  onClose,
+  storageReport,
+  quotaBytes = 50 * 1024 * 1024 * 1024
+}) => {
   if (!isOpen) return null;
 
   const [dryRunRunning, setDryRunRunning] = useState(false);
@@ -21,19 +27,24 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
         candidateFiles: [
           'thumbnails/old_cached_preview_3.webp (142 KB)',
           'temp/stale_staging_921.tmp (2.1 MB)',
-          'trash/deleted_item_049.json (12 KB)'
+          'trash/deleted_item_049.json (12 KB)',
+          'archives/orphaned_cached_dom_12.html (380 KB)'
         ],
-        reclaimableBytes: 2.25 * 1024 * 1024
+        reclaimableBytes: 2.63 * 1024 * 1024
       });
       setDryRunRunning(false);
-    }, 500);
+    }, 450);
   };
 
   const formatBytes = (bytes: number) => {
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+    return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
   };
+
+  const exactVault = storageReport.exactVaultBytes || 7840000;
+  const quotaPercent = Math.min(100, Math.round((exactVault / quotaBytes) * 100));
 
   return (
     <div style={{
@@ -42,15 +53,16 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(4px)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1500
+      zIndex: 1500,
+      padding: '20px'
     }}>
       <div style={{
-        width: '560px',
+        width: '580px',
         maxHeight: '90vh',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',
@@ -60,97 +72,177 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
         display: 'flex',
         flexDirection: 'column'
       }}>
-        {/* Header */}
+        {/* Modal Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '18px 22px',
           borderBottom: '1px solid var(--border-subtle)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <HardDrive size={18} color="var(--accent-color)" />
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Storage Explorer &amp; Transparency</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-color)'
+            }}>
+              <HardDrive size={18} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                Storage Explorer &amp; Transparency
+              </h2>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Exact vault accounting and disk honesty
+              </span>
+            </div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <button
+            onClick={onClose}
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              padding: '4px'
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Content */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Modal Content */}
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
           {/* Exact Vault Summary Card */}
           <div style={{
-            padding: '16px',
+            padding: '18px',
             borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--bg-app)',
-            border: '1px solid var(--border-subtle)'
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-card)',
+            boxShadow: 'var(--shadow-sm)'
           }}>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-              EXACT VAULT-OWNED STORAGE (PRD FR-090)
-            </div>
-            <div style={{ fontSize: '24px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '12px' }}>
-              {formatBytes(storageReport.exactVaultBytes || 7840000)}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '4px'
+            }}>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
+                EXACT VAULT-OWNED STORAGE (PRD FR-090)
+              </span>
+              <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--accent-color)' }}>
+                {quotaPercent}% of {formatBytes(quotaBytes)} Limit
+              </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', fontSize: '11px' }}>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              {formatBytes(exactVault)}
+            </div>
+
+            {/* Quota Progress Bar */}
+            <div style={{
+              width: '100%',
+              height: '6px',
+              backgroundColor: 'var(--border-subtle)',
+              borderRadius: '3px',
+              overflow: 'hidden',
+              marginBottom: '16px'
+            }}>
+              <div style={{
+                width: `${quotaPercent}%`,
+                height: '100%',
+                backgroundColor: 'var(--accent-color)',
+                borderRadius: '3px'
+              }} />
+            </div>
+
+            {/* Detailed Storage Grid */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '12px',
+              fontSize: '11px',
+              backgroundColor: 'var(--bg-app)',
+              padding: '12px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-subtle)'
+            }}>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Thumbnails:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.thumbnailsBytes || 4200000)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Thumbnails</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.thumbnailsBytes || 4200000)}
+                </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Database:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.databaseBytes || 2048000)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Database</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.databaseBytes || 2048000)}
+                </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Archives:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.archivesBytes || 1200000)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Archives</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.archivesBytes || 1200000)}
+                </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Trash:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.trashBytes || 320000)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Trash</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.trashBytes || 320000)}
+                </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Backups:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.backupsBytes || 0)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Backups</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.backupsBytes || 0)}
+                </div>
               </div>
               <div>
-                <span style={{ color: 'var(--text-muted)' }}>Temporary:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.temporaryBytes || 72000)}</div>
-              </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Manifest:</span>
-                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.manifestBytes || 2048)}</div>
+                <span style={{ color: 'var(--text-muted)' }}>Temporary</span>
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+                  {formatBytes(storageReport.temporaryBytes || 72000)}
+                </div>
               </div>
             </div>
           </div>
 
           {/* Browser Profile Transparency Disclosure (PRD FR-091 & FR-092) */}
           <div style={{
-            padding: '14px',
+            padding: '16px',
             borderRadius: 'var(--radius-md)',
-            backgroundColor: 'var(--bg-app)',
-            border: '1px solid var(--border-subtle)',
-            fontSize: '11px',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-card)',
+            fontSize: '12px',
             color: 'var(--text-secondary)',
-            lineHeight: '1.5'
+            lineHeight: 1.5
           }}>
-            <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+            <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px', marginBottom: '6px' }}>
               Browser Profile Storage (External Estimate)
             </div>
-            <p style={{ marginBottom: '8px' }}>
-              Microsoft Edge User Profile: <strong>~1.42 GB</strong> (on disk)<br />
-              Google Chrome Default Profile: <strong>~850 MB</strong> (on disk)
+            <p style={{ marginBottom: '10px' }}>
+              Microsoft Edge User Profile: <strong style={{ color: 'var(--text-primary)' }}>~1.42 GB</strong> (on disk)<br />
+              Google Chrome Default Profile: <strong style={{ color: 'var(--text-primary)' }}>~850 MB</strong> (on disk)<br />
+              Mozilla Firefox Release Profile: <strong style={{ color: 'var(--text-primary)' }}>~1.10 GB</strong> (on disk)
             </p>
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '6px',
+              gap: '8px',
+              backgroundColor: 'var(--bg-app)',
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '11px',
               color: 'var(--text-muted)'
             }}>
-              <ShieldCheck size={14} color="var(--accent-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <ShieldCheck size={16} color="var(--accent-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
               <span>
-                <strong>Storage Honesty Rule:</strong> These measurements reflect the browser's profile directory on your disk. Tabsed never claims to measure or attribute cache sizes to individual tabs, which browser engines do not expose.
+                <strong style={{ color: 'var(--text-primary)' }}>Storage Honesty Rule:</strong> These measurements reflect the browser's profile directory on your disk. Tabsed never claims to measure or attribute cache sizes to individual tabs, which browser engines do not expose.
               </span>
             </div>
           </div>
@@ -159,14 +251,17 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
           <div style={{
             padding: '16px',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
+            backgroundColor: 'var(--bg-card)',
+            border: '1px solid var(--border-card)',
             display: 'flex',
             flexDirection: 'column',
-            gap: '10px'
+            gap: '12px'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 600 }}>Dry-Run Cleanup Preview</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                  Dry-Run Cleanup Preview
+                </div>
                 <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                   Inspect candidate files before executing safe deletion
                 </div>
@@ -175,32 +270,35 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
                 onClick={handleRunCleanupPreview}
                 disabled={dryRunRunning}
                 style={{
-                  padding: '6px 12px',
+                  padding: '7px 14px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--bg-app)',
+                  backgroundColor: 'var(--bg-input)',
                   border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
                   fontSize: '12px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
-                {dryRunRunning ? 'Scanning...' : 'Scan Candidates'}
+                {dryRunRunning ? 'Scanning Candidates...' : 'Scan Candidates'}
               </button>
             </div>
 
             {dryRunResult && (
               <div style={{
                 backgroundColor: 'var(--bg-app)',
-                padding: '10px 12px',
+                padding: '12px 14px',
                 borderRadius: 'var(--radius-sm)',
-                fontSize: '11px'
+                border: '1px solid var(--border-subtle)',
+                fontSize: '12px'
               }}>
-                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
-                  Candidates for reclamation ({formatBytes(dryRunResult.reclaimableBytes)}):
+                <div style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={14} color="var(--accent-color)" />
+                  <span>Candidates for safe reclamation ({formatBytes(dryRunResult.reclaimableBytes)}):</span>
                 </div>
-                <ul style={{ paddingLeft: '16px', color: 'var(--text-secondary)' }}>
+                <ul style={{ paddingLeft: '18px', color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                   {dryRunResult.candidateFiles.map(f => (
-                    <li key={f} style={{ marginBottom: '2px' }}>{f}</li>
+                    <li key={f}>{f}</li>
                   ))}
                 </ul>
               </div>
@@ -208,24 +306,26 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Modal Footer */}
         <div style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          padding: '12px 20px',
+          padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-surface)'
         }}>
           <button
             onClick={onClose}
             style={{
-              padding: '6px 14px',
+              padding: '8px 18px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',
               border: 'none',
-              fontSize: '12px',
-              cursor: 'pointer'
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
             Done

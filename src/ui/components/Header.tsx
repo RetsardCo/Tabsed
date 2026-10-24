@@ -1,5 +1,16 @@
 import React from 'react';
-import { Search, LayoutGrid, List, Table, ArrowUpDown, Filter, Plus, ShieldCheck, Trash2 } from 'lucide-react';
+import {
+  Search,
+  LayoutGrid,
+  List,
+  Filter,
+  Plus,
+  ChevronDown,
+  Sparkles,
+  ArrowUpDown,
+  Trash2,
+  FolderPlus
+} from 'lucide-react';
 import { ViewMode } from '../types';
 
 interface HeaderProps {
@@ -12,11 +23,15 @@ interface HeaderProps {
   filterType: string;
   onFilterTypeChange: (f: string) => void;
   itemCount: number;
+  title?: string;
   onOpenSaveModal: () => void;
   onQuickSave: () => void;
+  onMagicAction?: () => void;
   isTrash?: boolean;
   onEmptyTrash?: () => void;
   trashCount?: number;
+  activeTagFilter?: string;
+  onSelectTagFilter?: (tag: string) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,201 +44,386 @@ export const Header: React.FC<HeaderProps> = ({
   filterType,
   onFilterTypeChange,
   itemCount,
+  title = 'All Tabs',
   onOpenSaveModal,
   onQuickSave,
+  onMagicAction,
   isTrash,
   onEmptyTrash,
-  trashCount
+  trashCount,
+  activeTagFilter = 'All',
+  onSelectTagFilter
 }) => {
+  const filterPills = [
+    { id: 'All', label: 'All', icon: null },
+    { id: 'tab', label: 'Tab', icon: null },
+    { id: 'session', label: 'Session', icon: null },
+    { id: 'ai', label: 'AI', icon: '✦' },
+    { id: 'development', label: 'Development', icon: '</>' },
+    { id: 'research', label: 'Research', icon: null },
+    { id: 'design', label: 'Design', icon: null },
+    { id: 'work', label: 'Work', icon: null }
+  ];
+
   return (
-    <header style={{
+    <div style={{
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      padding: '12px 24px',
+      flexDirection: 'column',
       borderBottom: '1px solid var(--border-subtle)',
       backgroundColor: 'var(--bg-surface)',
-      gap: '16px',
-      flexWrap: 'wrap'
+      zIndex: 5
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flex: '1 1 300px', maxWidth: '500px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          backgroundColor: 'var(--bg-app)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: '6px 12px',
-          width: '100%',
-          position: 'relative'
-        }}>
-          <Search size={16} color="var(--text-muted)" />
-          <input
-            id="global-search-input"
-            type="text"
-            placeholder="Search saved tabs, URLs, tags, or notes... (Press '/' to focus)"
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              outline: 'none',
-              width: '100%',
-              fontSize: '13px',
-              color: 'var(--text-primary)'
-            }}
-          />
-          {searchQuery && (
-            <button
-              onClick={() => onSearchChange('')}
+      {/* Top Header Row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '14px 24px',
+        gap: '20px'
+      }}>
+        {/* Left: Destination Title & Count */}
+        <div style={{ minWidth: '130px' }}>
+          <h1 style={{
+            fontSize: '20px',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.3px',
+            lineHeight: 1.2
+          }}>
+            {title}
+          </h1>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
+            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          </div>
+        </div>
+
+        {/* Center: Global Search Bar with Ctrl+K shortcut badge */}
+        <div style={{ flex: '1 1 380px', maxWidth: '580px' }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '7px 14px',
+            width: '100%',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
+            transition: 'border-color 0.15s ease'
+          }}>
+            <Search size={16} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+            <input
+              id="global-search-input"
+              type="text"
+              placeholder="Search tabs, collections, notes, or content..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
               style={{
                 border: 'none',
                 background: 'transparent',
-                cursor: 'pointer',
+                outline: 'none',
+                width: '100%',
+                fontSize: '13px',
+                color: 'var(--text-primary)'
+              }}
+            />
+            {searchQuery ? (
+              <button
+                onClick={() => onSearchChange('')}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--text-muted)',
+                  fontSize: '12px',
+                  padding: '2px 4px'
+                }}
+              >
+                ✕
+              </button>
+            ) : (
+              <kbd style={{
+                fontSize: '10px',
+                fontWeight: 600,
                 color: 'var(--text-muted)',
-                fontSize: '11px',
-                padding: '2px 4px'
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '4px',
+                padding: '2px 6px',
+                boxShadow: '0 1px 1px rgba(0,0,0,0.05)',
+                whiteSpace: 'nowrap'
+              }}>
+                Ctrl K
+              </kbd>
+            )}
+          </div>
+        </div>
+
+        {/* Right: View switcher, Filter button, + Save Tabs, Sparkle */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {/* View Mode Toggle */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '2px'
+          }}>
+            <button
+              title="Grid view"
+              onClick={() => onViewModeChange('grid')}
+              style={{
+                border: 'none',
+                background: viewMode === 'grid' ? 'var(--bg-surface)' : 'transparent',
+                color: viewMode === 'grid' ? 'var(--accent-color)' : 'var(--text-muted)',
+                padding: '6px 9px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: viewMode === 'grid' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
               }}
             >
-              ✕
+              <LayoutGrid size={15} />
             </button>
+            <button
+              title="List view"
+              onClick={() => onViewModeChange('detailed')}
+              style={{
+                border: 'none',
+                background: viewMode === 'detailed' || viewMode === 'compact' ? 'var(--bg-surface)' : 'transparent',
+                color: viewMode === 'detailed' || viewMode === 'compact' ? 'var(--accent-color)' : 'var(--text-muted)',
+                padding: '6px 9px',
+                borderRadius: '6px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                boxShadow: viewMode === 'detailed' || viewMode === 'compact' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none'
+              }}
+            >
+              <List size={15} />
+            </button>
+          </div>
+
+          {/* Filter Dropdown / Button */}
+          <button
+            title="Filter options"
+            onClick={() => onFilterTypeChange(filterType === 'all' ? 'favorites' : 'all')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'var(--bg-input)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '7px 12px',
+              fontSize: '12px',
+              fontWeight: 500,
+              color: 'var(--text-secondary)',
+              cursor: 'pointer'
+            }}
+          >
+            <Filter size={14} />
+            <span>Filter</span>
+          </button>
+
+          {/* Primary Action Button: Save Tabs or Empty Trash */}
+          {isTrash ? (
+            <button
+              onClick={onEmptyTrash}
+              disabled={!trashCount || trashCount === 0}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'var(--danger-color)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                padding: '7px 14px',
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: (!trashCount || trashCount === 0) ? 'not-allowed' : 'pointer',
+                opacity: (!trashCount || trashCount === 0) ? 0.5 : 1,
+                boxShadow: '0 2px 4px rgba(220, 38, 38, 0.2)'
+              }}
+            >
+              <Trash2 size={15} />
+              <span>Empty Trash</span>
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {/* Split "+ Save Tabs" button */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                backgroundColor: 'var(--accent-color)',
+                borderRadius: 'var(--radius-md)',
+                overflow: 'hidden',
+                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)'
+              }}>
+                <button
+                  onClick={onOpenSaveModal}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    backgroundColor: 'transparent',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '8px 14px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Plus size={15} strokeWidth={2.5} />
+                  <span>Save Tabs</span>
+                </button>
+                <div style={{ width: '1px', height: '18px', backgroundColor: 'rgba(255, 255, 255, 0.25)' }} />
+                <button
+                  onClick={onQuickSave}
+                  title="Save options"
+                  style={{
+                    backgroundColor: 'transparent',
+                    color: '#ffffff',
+                    border: 'none',
+                    padding: '8px 8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <ChevronDown size={14} />
+                </button>
+              </div>
+
+              {/* Sparkle / Magic Button */}
+              <button
+                onClick={onMagicAction || onOpenSaveModal}
+                title="Smart Organize & Group Tabs"
+                style={{
+                  width: '34px',
+                  height: '34px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-input)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-secondary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'color 0.15s ease'
+                }}
+              >
+                <Sparkles size={16} />
+              </button>
+            </div>
           )}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          backgroundColor: 'var(--bg-app)',
-          border: '1px solid var(--border-subtle)',
-          borderRadius: 'var(--radius-md)',
-          padding: '2px'
-        }}>
-          <button
-            title="Grid view"
-            onClick={() => onViewModeChange('grid')}
-            style={{
-              border: 'none',
-              background: viewMode === 'grid' ? 'var(--bg-surface)' : 'transparent',
-              color: viewMode === 'grid' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              boxShadow: viewMode === 'grid' ? 'var(--shadow-sm)' : 'none'
-            }}
-          >
-            <LayoutGrid size={15} />
-          </button>
-          <button
-            title="Compact list view"
-            onClick={() => onViewModeChange('compact')}
-            style={{
-              border: 'none',
-              background: viewMode === 'compact' ? 'var(--bg-surface)' : 'transparent',
-              color: viewMode === 'compact' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              boxShadow: viewMode === 'compact' ? 'var(--shadow-sm)' : 'none'
-            }}
-          >
-            <Table size={15} />
-          </button>
-          <button
-            title="Detailed list view"
-            onClick={() => onViewModeChange('detailed')}
-            style={{
-              border: 'none',
-              background: viewMode === 'detailed' ? 'var(--bg-surface)' : 'transparent',
-              color: viewMode === 'detailed' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-sm)',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              boxShadow: viewMode === 'detailed' ? 'var(--shadow-sm)' : 'none'
-            }}
-          >
-            <List size={15} />
-          </button>
-        </div>
+      {/* Filter Bar / Pills Row (aligned to exact mockup) */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 24px 12px 24px',
+        gap: '12px',
+        overflowX: 'auto'
+      }}>
+        {/* Left: Filter Pills */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'nowrap' }}>
+          {filterPills.map((pill) => {
+            const isSelected = activeTagFilter.toLowerCase() === pill.id.toLowerCase();
+            return (
+              <button
+                key={pill.id}
+                onClick={() => onSelectTagFilter && onSelectTagFilter(pill.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  padding: '5px 14px',
+                  borderRadius: 'var(--radius-pill)',
+                  fontSize: '12px',
+                  fontWeight: isSelected ? 600 : 500,
+                  backgroundColor: isSelected ? 'var(--accent-color)' : 'var(--bg-input)',
+                  color: isSelected ? '#ffffff' : 'var(--text-secondary)',
+                  border: isSelected ? '1px solid var(--accent-color)' : '1px solid var(--border-subtle)',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                  boxShadow: isSelected ? '0 2px 6px rgba(37, 99, 235, 0.25)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                {pill.icon && <span>{pill.icon}</span>}
+                <span>{pill.label}</span>
+              </button>
+            );
+          })}
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <select
-            value={sortBy}
-            onChange={(e) => onSortByChange(e.target.value)}
+          <button
+            onClick={() => {
+              const customTag = prompt('Enter tag to filter by:');
+              if (customTag && onSelectTagFilter) {
+                onSelectTagFilter(customTag);
+              }
+            }}
+            title="Add Filter Tag"
             style={{
-              fontSize: '12px',
-              padding: '6px 10px',
-              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '28px',
+              height: '28px',
+              borderRadius: 'var(--radius-pill)',
+              backgroundColor: 'var(--bg-input)',
               border: '1px solid var(--border-subtle)',
-              backgroundColor: 'var(--bg-surface)',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-              outline: 'none'
+              color: 'var(--text-muted)',
+              cursor: 'pointer'
             }}
           >
-            <option value="newest">Sort: Newest First</option>
-            <option value="oldest">Sort: Oldest First</option>
-            <option value="title">Sort: Title (A-Z)</option>
-            <option value="domain">Sort: Domain (A-Z)</option>
-            <option value="size">Sort: Archive Size</option>
-          </select>
+            <Plus size={14} />
+          </button>
         </div>
 
-        {isTrash && onEmptyTrash ? (
-          <button
-            onClick={onEmptyTrash}
-            disabled={!trashCount || trashCount === 0}
-            title={trashCount && trashCount > 0 ? 'Permanently delete all items in trash' : 'Trash is currently empty'}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'var(--danger-color)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              padding: '7px 14px',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: (!trashCount || trashCount === 0) ? 'not-allowed' : 'pointer',
-              opacity: (!trashCount || trashCount === 0) ? 0.5 : 1,
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <Trash2 size={16} />
-            <span>Empty Trash</span>
-          </button>
-        ) : (
-          <button
-            onClick={onOpenSaveModal}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'var(--accent-color)',
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: 'var(--radius-md)',
-              padding: '7px 14px',
-              fontSize: '13px',
-              fontWeight: 500,
-              cursor: 'pointer',
-              boxShadow: 'var(--shadow-sm)'
-            }}
-          >
-            <Plus size={16} />
-            <span>Save Tabs</span>
-          </button>
-        )}
+        {/* Right: Sort By Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sort by</span>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            backgroundColor: 'var(--bg-input)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            padding: '4px 10px'
+          }}>
+            <select
+              value={sortBy}
+              onChange={(e) => onSortByChange(e.target.value)}
+              style={{
+                fontSize: '12px',
+                fontWeight: 500,
+                border: 'none',
+                background: 'transparent',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              <option value="newest">Saved date</option>
+              <option value="oldest">Oldest date</option>
+              <option value="title">Title (A-Z)</option>
+              <option value="domain">Domain</option>
+              <option value="size">Size</option>
+            </select>
+            <ArrowUpDown size={12} color="var(--text-muted)" />
+          </div>
+        </div>
       </div>
-    </header>
+    </div>
   );
 };

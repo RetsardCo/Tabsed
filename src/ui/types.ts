@@ -3,6 +3,15 @@ export type ThemeMode = 'system' | 'light' | 'dark';
 export type DensityMode = 'compact' | 'comfortable' | 'spacious';
 export type AccentPreset = 'blue' | 'violet' | 'mint' | 'rose' | 'amber' | 'graphite' | 'custom';
 
+export interface SessionTab {
+  id: string;
+  title: string;
+  url: string;
+  domain: string;
+  faviconUrl?: string | null;
+  pinned?: boolean;
+}
+
 export interface SavedTabItem {
   id: string;
   vaultId: string;
@@ -21,7 +30,12 @@ export interface SavedTabItem {
   isFavorite: boolean;
   collectionIds: string[];
   tags: string[];
+  tabCount?: number;
+  sessionTabs?: SessionTab[];
+  authorAvatarUrl?: string | null;
   archiveSizeBytes?: number | null;
+  archiveContent?: string | null;
+  archiveHtml?: string | null;
   availabilityStatus?: 'reachable' | 'redirect' | 'auth_required' | 'blocked_uncertain' | 'timeout' | 'network_error';
   availabilityCheckedAt?: string | null;
   deletedAt?: string | null;
@@ -52,4 +66,17 @@ export interface UserPreferences {
   confirmBeforeBulkClose: boolean;
   restoreBatchSize: number;
   restoreBatchDelayMs: number;
+  storageQuotaBytes?: number;
+  autoPruneThresholdPercent?: number;
+}
+
+export interface BackupManifest {
+  backupId: string;
+  createdAt: string;
+  schemaVersion: number;
+  vaultId: string;
+  totalSizeBytes: number;
+  itemCount: number;
+  sha256: string;
+  files: { path: string; sizeBytes: number; sha256: string }[];
 }

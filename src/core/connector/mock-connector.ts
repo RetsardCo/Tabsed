@@ -1,10 +1,10 @@
 import { IBrowserConnector, ConnectorCapabilities, BrowserTab, BrowserProfile } from './types';
 
 export class MockBrowserConnector implements IBrowserConnector {
-  private browserFamily: 'Edge' | 'Chrome';
+  private browserFamily: 'Edge' | 'Chrome' | 'Firefox' | 'Brave' | 'Other';
   private tabs: BrowserTab[];
 
-  constructor(browserFamily: 'Edge' | 'Chrome' = 'Edge') {
+  constructor(browserFamily: 'Edge' | 'Chrome' | 'Firefox' | 'Brave' | 'Other' = 'Edge') {
     this.browserFamily = browserFamily;
     this.tabs = [
       {
@@ -80,6 +80,22 @@ export class MockBrowserConnector implements IBrowserConnector {
   }
 
   public async getCapabilities(): Promise<ConnectorCapabilities> {
+    if (this.browserFamily === 'Firefox') {
+      // Firefox Epic 3.5: tab groups are unsupported natively
+      return {
+        listTabs: 'supported',
+        captureMetadata: 'supported',
+        captureThumbnail: 'supported',
+        closeTabs: 'supported',
+        openUrls: 'supported',
+        selectProfile: 'supported',
+        restorePinnedState: 'supported',
+        restoreTabGroups: 'unsupported',
+        privateModeAvailable: 'supported',
+        queryProfileStorage: 'unavailable'
+      };
+    }
+
     return {
       listTabs: 'supported',
       captureMetadata: 'supported',
@@ -107,7 +123,7 @@ export class MockBrowserConnector implements IBrowserConnector {
     if (!tab) return null;
     
     // Internal browser URLs cannot be captured
-    if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) {
+    if (tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') || tab.url.startsWith('about:')) {
       return null;
     }
 
@@ -145,20 +161,39 @@ export class MockBrowserConnector implements IBrowserConnector {
   }
 
   public async getProfiles(): Promise<BrowserProfile[]> {
+    if (this.browserFamily === 'Firefox') {
+      return [
+        {
+          id: 'default-release',
+          label: 'default-release (Firefox Personal)',
+          browserFamily: 'Firefox',
+          isDefault: true,
+          estimatedDiskSizeBytes: 1100000000
+        },
+        {
+          id: 'dev-edition',
+          label: 'dev-edition-default (Firefox Dev)',
+          browserFamily: 'Firefox',
+          isDefault: false,
+          estimatedDiskSizeBytes: 650000000
+        }
+      ];
+    }
+
     return [
       {
         id: 'default',
-        label: 'Default Profile (Personal)',
+        label: `${this.browserFamily} Default Profile`,
         browserFamily: this.browserFamily,
         isDefault: true,
-        estimatedDiskSizeBytes: 1420000000 // ~1.4GB profile folder
+        estimatedDiskSizeBytes: 1420000000
       },
       {
         id: 'work',
-        label: 'Profile 2 (Work)',
+        label: `${this.browserFamily} Profile 2 (Work)`,
         browserFamily: this.browserFamily,
         isDefault: false,
-        estimatedDiskSizeBytes: 850000000 // ~850MB profile folder
+        estimatedDiskSizeBytes: 850000000
       }
     ];
   }

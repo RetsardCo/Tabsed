@@ -113,4 +113,4 @@ npm run build
 
 ## License
 
-MIT License. See [LICENSE](file:///C:/Users/Kurados/.gemini/antigravity/scratch/Tabsed/LICENSE) for details.
+Tabsed is dual-licensed under both the MIT License and the Apache License (Version 2.0). See [LICENSE](LICENSE), [LICENSE-MIT](LICENSE-MIT), and [LICENSE-APACHE](LICENSE-APACHE) for details.

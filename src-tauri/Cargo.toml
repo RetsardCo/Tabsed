@@ -3,6 +3,7 @@ name = "tabsed"
 version = "1.0.0"
 description = "Your tabs, thoughtfully put away."
 authors = ["Tabsed Contributors"]
+license = "MIT OR Apache-2.0"
 edition = "2021"
 
 [build-dependencies]

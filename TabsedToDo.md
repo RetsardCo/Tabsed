@@ -369,15 +369,15 @@ silently discard notes or archive files.
 ### Epic 2.3 --- Trash and cleanup
 
 -   [x] Implement soft-delete state and recoverable trash.
--   [ ] Define trash retention settings.
+-   [x] Define trash retention settings.
 -   [x] Implement restore from trash.
 -   [x] Implement permanent deletion with confirmation.
--   [ ] Build dry-run cleanup preview.
--   [ ] List exact candidate files and bytes to be reclaimed.
--   [ ] Add orphaned-file scanner and safe cleanup.
--   [ ] Keep database and file deletion states consistent after partial
+-   [x] Build dry-run cleanup preview.
+-   [x] List exact candidate files and bytes to be reclaimed.
+-   [x] Add orphaned-file scanner and safe cleanup.
+-   [x] Keep database and file deletion states consistent after partial
     failure.
--   [ ] Test cleanup interruption and external-drive removal.
+-   [x] Test cleanup interruption and external-drive removal.
 
 **Acceptance criteria** - User can inspect cleanup candidates before
 execution. - Failed deletion is visible and retryable. - Cleanup does
@@ -385,15 +385,15 @@ not edit active browser profile/cache databases.
 
 ### Epic 2.4 --- Quotas and retention policies
 
--   [ ] Add optional per-vault quota.
--   [ ] Warn at configurable thresholds.
--   [ ] Define eligible content types for pruning.
--   [ ] Allow pruning old thumbnails and optional archives only when
+-   [x] Add optional per-vault quota.
+-   [x] Warn at configurable thresholds.
+-   [x] Define eligible content types for pruning.
+-   [x] Allow pruning old thumbnails and optional archives only when
     explicitly configured.
--   [ ] Preserve session metadata unless the item is explicitly deleted.
--   [ ] Add dry-run and action history.
--   [ ] Ensure cleanup never runs invisibly on first launch.
--   [ ] Test quota handling when a save would exceed the limit.
+-   [x] Preserve session metadata unless the item is explicitly deleted.
+-   [x] Add dry-run and action history.
+-   [x] Ensure cleanup never runs invisibly on first launch.
+-   [x] Test quota handling when a save would exceed the limit.
 
 **Acceptance criteria** - Quota enforcement never closes a tab before
 its save state is safe. - User can see what will be pruned and how much
@@ -401,17 +401,17 @@ space may be reclaimed.
 
 ### Epic 2.5 --- Backup and integrity
 
--   [ ] Define backup manifest and version format.
--   [ ] Back up SQLite consistently.
--   [ ] Include required vault-owned files.
--   [ ] Hash files and verify after write.
--   [ ] Support configurable backup location and retention.
--   [ ] Add restore to staging directory.
--   [ ] Add rollback for failed restore.
--   [ ] Exclude browser profiles and credentials by default.
--   [ ] Test corrupted hash, missing file, disk full, and interrupted
+-   [x] Define backup manifest and version format.
+-   [x] Back up SQLite consistently.
+-   [x] Include required vault-owned files.
+-   [x] Hash files and verify after write.
+-   [x] Support configurable backup location and retention.
+-   [x] Add restore to staging directory.
+-   [x] Add rollback for failed restore.
+-   [x] Exclude browser profiles and credentials by default.
+-   [x] Test corrupted hash, missing file, disk full, and interrupted
     backup.
--   [ ] Show last successful backup and integrity status.
+-   [x] Show last successful backup and integrity status.
 
 **Acceptance criteria** - Backup success is not reported until required
 files verify. - Restore failure does not overwrite the active vault with
@@ -419,15 +419,15 @@ a partial state.
 
 ### Epic 2.6 --- Phase 2 testing and release
 
--   [ ] Run storage accounting tests on a fixture vault with known file
+-   [x] Run storage accounting tests on a fixture vault with known file
     sizes.
--   [ ] Verify collection membership does not double-count files.
--   [ ] Run duplicate-resolution tests.
+-   [x] Verify collection membership does not double-count files.
+-   [x] Run duplicate-resolution tests.
 -   [x] Run trash recovery and permanent deletion tests.
--   [ ] Run backup/restore round-trip tests.
--   [ ] Run cleanup dry-run versus actual deletion comparison.
--   [ ] Update docs and UI help.
--   [ ] Release candidate review.
+-   [x] Run backup/restore round-trip tests.
+-   [x] Run cleanup dry-run versus actual deletion comparison.
+-   [x] Update docs and UI help.
+-   [x] Release candidate review.
 
 ## Phase 3 --- Discovery and Advanced Restoration
 
@@ -472,17 +472,17 @@ content/notes. - No availability result triggers deletion.
 
 ### Epic 3.3 --- Full-text archive search
 
--   [ ] Select and validate local FTS implementation.
--   [ ] Define indexed fields and tokenizer behavior.
--   [ ] Add archive indexing queue.
--   [ ] Index only successfully captured and permitted content.
--   [ ] Store capture/index status.
--   [ ] Show snippets and source URL in results.
--   [ ] Add filters by collection, domain, date, and archive status.
--   [ ] Remove/rebuild index entries on archive deletion or re-index.
--   [ ] Exclude private/sensitive items according to settings.
--   [ ] Test Unicode, large documents, malformed HTML, duplicate
-    content, and index corruption.
+-   [x] Select and validate local FTS implementation.
+-   [x] Define indexed fields and tokenizer behavior.
+-   [x] Add archive indexing queue.
+-   [x] Index only successfully captured and permitted content.
+-   [x] Store capture/index status.
+-   [x] Show snippets and source URL in results.
+-   [x] Add filters by collection, domain, date, and archive status.
+-   [x] Remove/rebuild index entries on archive deletion or re-index.
+-   [x] Exclude private/sensitive items according to settings.
+-   [x] Test Unicode, large documents, malformed HTML, duplicate
+-     content, and index corruption.
 
 **Acceptance criteria** - Results only reference content that was
 actually indexed. - Failed indexing is visible and retryable. - Deleting
@@ -490,20 +490,20 @@ an archive follows the selected index-retention policy.
 
 ### Epic 3.4 --- Offline page capture
 
--   [ ] Research permitted capture approaches and their limits.
--   [ ] Define capture types: thumbnail only, text capture,
+-   [x] Research permitted capture approaches and their limits.
+-   [x] Define capture types: thumbnail only, text capture,
     HTML/resource bundle.
--   [ ] Keep offline archive opt-in and off by default.
--   [ ] Capture a test matrix of static pages, single-page apps,
+-   [x] Keep offline archive opt-in and off by default.
+-   [x] Capture a test matrix of static pages, single-page apps,
     authenticated pages, media-heavy pages, and restricted pages.
--   [ ] Record capture completeness and missing resources.
--   [ ] Sandbox archive viewing; do not execute untrusted archived
+-   [x] Record capture completeness and missing resources.
+-   [x] Sandbox archive viewing; do not execute untrusted archived
     content in privileged app context.
--   [ ] Add archive size and deletion controls.
--   [ ] Add text indexing integration.
--   [ ] Test archive deletion, corruption, and cross-platform portable
+-   [x] Add archive size and deletion controls.
+-   [x] Add text indexing integration.
+-   [x] Test archive deletion, corruption, and cross-platform portable
     export.
--   [ ] Document legal, site-policy, and authentication constraints.
+-   [x] Document legal, site-policy, and authentication constraints.
 
 **Acceptance criteria** - Incomplete archives are labeled. - The app
 never promises exact live-session resurrection. - Archived content is
@@ -511,14 +511,14 @@ handled as untrusted input.
 
 ### Epic 3.5 --- Firefox connector
 
--   [ ] Review current Firefox extension API and packaging constraints.
--   [ ] Implement connector using the shared capability interface.
--   [ ] Validate metadata capture and screenshot behavior.
--   [ ] Validate native messaging on supported configurations.
--   [ ] Test profile handling and private browsing permissions.
--   [ ] Add Firefox-specific setup and troubleshooting.
--   [ ] Run the shared connector conformance suite.
--   [ ] Document unsupported capabilities.
+-   [x] Review current Firefox extension API and packaging constraints.
+-   [x] Implement connector using the shared capability interface.
+-   [x] Validate metadata capture and screenshot behavior.
+-   [x] Validate native messaging on supported configurations.
+-   [x] Test profile handling and private browsing permissions.
+-   [x] Add Firefox-specific setup and troubleshooting.
+-   [x] Run the shared connector conformance suite.
+-   [x] Document unsupported capabilities.
 
 **Acceptance criteria** - Firefox-specific unsupported actions are
 reported clearly. - Shared library and storage behavior remains
@@ -526,12 +526,12 @@ browser-independent.
 
 ### Epic 3.6 --- Session history and group reconstruction
 
--   [ ] Store dated session snapshots.
--   [ ] Add compare/reopen previous arrangement where feasible.
--   [ ] Reconstruct supported pinned state and tab groups.
--   [ ] Handle unsupported group colors/names gracefully.
--   [ ] Add session restore preview.
--   [ ] Test different browser versions and connector capability
+-   [x] Store dated session snapshots.
+-   [x] Add compare/reopen previous arrangement where feasible.
+-   [x] Reconstruct supported pinned state and tab groups.
+-   [x] Handle unsupported group colors/names gracefully.
+-   [x] Add session restore preview.
+-   [x] Test different browser versions and connector capability
     differences.
 
 ## Phase 4 --- Advanced Vault

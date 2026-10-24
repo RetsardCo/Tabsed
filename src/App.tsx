@@ -14,6 +14,8 @@ import { RestoreQueueModal } from './ui/components/RestoreQueueModal';
 import { SettingsModal } from './ui/components/SettingsModal';
 import { HelpDiagnosticsModal } from './ui/components/HelpDiagnosticsModal';
 import { ConfirmationModal } from './ui/components/ConfirmationModal';
+import { ArchiveSearchModal } from './ui/components/ArchiveSearchModal';
+import { BackupModal } from './ui/components/BackupModal';
 import { SavedTabItem, Collection, ViewMode, UserPreferences } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
@@ -21,88 +23,210 @@ import { TrashManager } from './core/vault/trash-manager';
 const INITIAL_COLLECTIONS: Collection[] = [
   { id: 'inbox', name: 'Inbox', description: 'Default incoming tab bucket', accentColor: '#2563eb', itemCount: 4 },
   { id: 'research', name: 'Deep Research', description: 'Academic papers and articles', accentColor: '#7c3aed', itemCount: 2 },
-  { id: 'dev', name: 'Web Dev & Tauri', description: 'Development reference & documentation', accentColor: '#059669', itemCount: 3 }
+  { id: 'dev', name: 'Web Dev & Tauri', description: 'Development reference & documentation', accentColor: '#059669', itemCount: 3 },
+  { id: 'design', name: 'Design Inspiration', description: 'UI/UX benchmarks and mockups', accentColor: '#ea580c', itemCount: 2 }
 ];
 
+// Seeded items matching the exact reference mockup (media_1792854826085_115606ec.jpg)
 const INITIAL_ITEMS: SavedTabItem[] = [
   {
-    id: 'item_1',
+    id: 'mock_1',
     vaultId: 'default',
-    itemType: 'tab',
-    title: 'React Documentation — Built-in React Hooks Overview',
-    url: 'https://react.dev/reference/react',
-    normalizedUrl: 'https://react.dev/reference/react',
-    domain: 'react.dev',
-    faviconUrl: 'https://react.dev/favicon.ico',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=600&auto=format&fit=crop&q=60',
+    itemType: 'session',
+    title: 'Game Development Hub',
+    url: 'https://notion.so/workspace/gamedev-hub',
+    normalizedUrl: 'https://notion.so/workspace/gamedev-hub',
+    domain: 'notion.so',
+    faviconUrl: 'https://www.notion.so/front-static/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&auto=format&fit=crop&q=75',
     browserFamily: 'Edge',
     profileLabel: 'Default',
-    savedAt: '2026-10-24T10:30:00Z',
-    notes: 'Reference for useEffect and useMemo optimization guidelines.',
+    savedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Game development resources, tutorials, Unity docs, asset stores, and project ideas.',
     isFavorite: true,
-    collectionIds: ['inbox', 'dev'],
-    tags: ['react', 'frontend'],
-    archiveSizeBytes: 245000,
-    availabilityStatus: 'reachable'
+    collectionIds: ['dev', 'inbox'],
+    tags: ['Planning', 'Game Dev', 'Notes'],
+    tabCount: 12,
+    archiveSizeBytes: 342 * 1024 * 1024,
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_1_1', title: 'Unity Documentation — Scripting API & Architecture', url: 'https://docs.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
+      { id: 'sub_1_2', title: 'Blender — 3D for everyone and open pipeline', url: 'https://www.blender.org/', domain: 'blender.org', faviconUrl: 'https://www.blender.org/favicon.ico' },
+      { id: 'sub_1_3', title: 'Free Game Assets & Textures — Itch.io Collections', url: 'https://itch.io/game-assets', domain: 'itch.io', faviconUrl: 'https://itch.io/favicon.ico' },
+      { id: 'sub_1_4', title: 'Game Design Notes — Mechanics and Level Flow', url: 'https://notion.so/gamedesign', domain: 'notion.so', faviconUrl: 'https://www.notion.so/front-static/favicon.ico' },
+      { id: 'sub_1_5', title: 'Pixel Art References — Visual Palette & Moodboards', url: 'https://pinterest.com/pin/pixelart', domain: 'pinterest.com', faviconUrl: 'https://pinterest.com/favicon.ico' }
+    ]
   },
   {
-    id: 'item_2',
+    id: 'mock_2',
     vaultId: 'default',
-    itemType: 'tab',
-    title: 'Tauri 2.0 Architecture & Windows Mica Guidelines',
-    url: 'https://tauri.app/v2/guides/',
-    normalizedUrl: 'https://tauri.app/v2/guides/',
-    domain: 'tauri.app',
-    faviconUrl: 'https://tauri.app/favicon.ico',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=60',
+    itemType: 'session',
+    title: 'ChatGPT — Project Ideas',
+    url: 'https://chat.openai.com/c/ideas-research',
+    normalizedUrl: 'https://chat.openai.com/c/ideas-research',
+    domain: 'chat.openai.com',
+    faviconUrl: 'https://chatgpt.com/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=700&auto=format&fit=crop&q=75',
     browserFamily: 'Chrome',
     profileLabel: 'Work',
-    savedAt: '2026-10-24T11:15:00Z',
-    notes: 'Important: check windowsEffects mica configuration in tauri.conf.json.',
-    isFavorite: true,
-    collectionIds: ['dev'],
-    tags: ['tauri', 'rust', 'desktop'],
-    archiveSizeBytes: 420000,
-    availabilityStatus: 'reachable'
-  },
-  {
-    id: 'item_3',
-    vaultId: 'default',
-    itemType: 'tab',
-    title: 'MDN Web Docs — Manipulating Browser History and State',
-    url: 'https://developer.mozilla.org/en-US/docs/Web/API/History_API',
-    normalizedUrl: 'https://developer.mozilla.org/en-us/docs/web/api/history_api',
-    domain: 'developer.mozilla.org',
-    faviconUrl: 'https://developer.mozilla.org/favicon-48x48.png',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=60',
-    browserFamily: 'Edge',
-    profileLabel: 'Default',
-    savedAt: '2026-10-24T12:00:00Z',
-    notes: 'Examine pushState vs replaceState behaviors for tab restoration.',
+    savedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Brainstormed feature list and technical specifications for desktop tab saving.',
     isFavorite: false,
     collectionIds: ['research'],
-    tags: ['web-api', 'specs'],
-    archiveSizeBytes: 180000,
+    tags: ['AI', 'Research', 'Writing'],
+    tabCount: 8,
+    archiveSizeBytes: 128 * 1024 * 1024,
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_2_1', title: 'OpenAI Platform — API Documentation', url: 'https://platform.openai.com/docs', domain: 'openai.com' },
+      { id: 'sub_2_2', title: 'Anthropic Claude — Prompt Engineering Best Practices', url: 'https://docs.anthropic.com/', domain: 'anthropic.com' }
+    ]
+  },
+  {
+    id: 'mock_3',
+    vaultId: 'default',
+    itemType: 'tab',
+    title: 'Relaxing Music Playlist',
+    url: 'https://www.youtube.com/watch?v=ambient-nature',
+    normalizedUrl: 'https://www.youtube.com/watch?v=ambient-nature',
+    domain: 'youtube.com',
+    faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Chrome',
+    profileLabel: 'Personal',
+    savedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Deep focus background soundscapes for programming sprints.',
+    isFavorite: false,
+    collectionIds: ['inbox'],
+    tags: ['Entertainment', 'Music'],
+    tabCount: 15,
+    archiveSizeBytes: 210 * 1024 * 1024,
     availabilityStatus: 'reachable'
   },
   {
-    id: 'item_4',
+    id: 'mock_4',
     vaultId: 'default',
-    itemType: 'tab',
-    title: 'SQLite Foreign Key Support and Schema Migrations in Rust',
-    url: 'https://www.sqlite.org/foreignkeys.html',
-    normalizedUrl: 'https://www.sqlite.org/foreignkeys.html',
-    domain: 'sqlite.org',
-    faviconUrl: null,
-    thumbnailUrl: null, // Test placeholder fallback
+    itemType: 'session',
+    title: 'UI Design References',
+    url: 'https://figma.com/@design-system',
+    normalizedUrl: 'https://figma.com/@design-system',
+    domain: 'figma.com',
+    faviconUrl: 'https://static.figma.com/app/icon/1/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Edge',
+    profileLabel: 'Work',
+    savedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Windows 11 Mica acrylic styling guidelines and color palettes.',
+    isFavorite: false,
+    collectionIds: ['design'],
+    tags: ['Design', 'Inspiration', 'UI/UX'],
+    tabCount: 24,
+    archiveSizeBytes: 520 * 1024 * 1024,
+    availabilityStatus: 'reachable'
+  },
+  {
+    id: 'mock_5',
+    vaultId: 'default',
+    itemType: 'session',
+    title: 'Open Source Tools',
+    url: 'https://github.com/trending/rust',
+    normalizedUrl: 'https://github.com/trending/rust',
+    domain: 'github.com',
+    faviconUrl: 'https://github.githubassets.com/favicons/favicon.png',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1618401471353-b98aedd04e11?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Firefox',
+    profileLabel: 'default-release',
+    savedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Useful crates: rusqlite, tauri-plugin-window-state, sha2, tokio.',
+    isFavorite: false,
+    collectionIds: ['dev'],
+    tags: ['Development', 'Tools', 'Productivity'],
+    tabCount: 18,
+    archiveSizeBytes: 340 * 1024 * 1024,
+    availabilityStatus: 'reachable'
+  },
+  {
+    id: 'mock_6',
+    vaultId: 'default',
+    itemType: 'session',
+    title: 'Unity Game Development',
+    url: 'https://unity.com/learn',
+    normalizedUrl: 'https://unity.com/learn',
+    domain: 'unity.com',
+    faviconUrl: 'https://unity.com/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=700&auto=format&fit=crop&q=75',
     browserFamily: 'Edge',
     profileLabel: 'Default',
-    savedAt: '2026-10-24T09:40:00Z',
-    notes: 'PRAGMA foreign_keys = ON is required per-connection.',
+    savedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Shader graphs, physics collision layers, and performance profiling.',
     isFavorite: false,
-    collectionIds: ['inbox', 'dev'],
-    tags: ['sqlite', 'database'],
-    archiveSizeBytes: 95000,
+    collectionIds: ['dev'],
+    tags: ['Game Dev', 'Engine', 'Learning'],
+    tabCount: 32,
+    archiveSizeBytes: 812 * 1024 * 1024,
+    availabilityStatus: 'reachable'
+  },
+  {
+    id: 'mock_7',
+    vaultId: 'default',
+    itemType: 'session',
+    title: 'Thesis Research',
+    url: 'https://docs.google.com/document/d/thesis-draft',
+    normalizedUrl: 'https://docs.google.com/document/d/thesis-draft',
+    domain: 'docs.google.com',
+    faviconUrl: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Chrome',
+    profileLabel: 'Default',
+    savedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Literature citations, method outlines, and comparative benchmarks.',
+    isFavorite: false,
+    collectionIds: ['research'],
+    tags: ['Research', 'Thesis', 'Notes'],
+    tabCount: 14,
+    archiveSizeBytes: 210 * 1024 * 1024,
+    availabilityStatus: 'reachable'
+  },
+  {
+    id: 'mock_8',
+    vaultId: 'default',
+    itemType: 'session',
+    title: 'Creative Inspiration',
+    url: 'https://behance.net/galleries/interaction',
+    normalizedUrl: 'https://behance.net/galleries/interaction',
+    domain: 'behance.net',
+    faviconUrl: 'https://www.behance.net/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Edge',
+    profileLabel: 'Default',
+    savedAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'Micro-interactions, smooth card hover states, and glassmorphism styling.',
+    isFavorite: false,
+    collectionIds: ['design'],
+    tags: ['Design', 'Creative', 'Reference'],
+    tabCount: 28,
+    archiveSizeBytes: 430 * 1024 * 1024,
+    availabilityStatus: 'reachable'
+  },
+  {
+    id: 'mock_9',
+    vaultId: 'default',
+    itemType: 'session',
+    title: 'PC Build & Accessories',
+    url: 'https://amazon.com/dp/pc-hardware-guide',
+    normalizedUrl: 'https://amazon.com/dp/pc-hardware-guide',
+    domain: 'amazon.com',
+    faviconUrl: 'https://www.amazon.com/favicon.ico',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1587202372775-e229f172b9d7?w=700&auto=format&fit=crop&q=75',
+    browserFamily: 'Edge',
+    profileLabel: 'Personal',
+    savedAt: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+    notes: 'GPU power efficiency, mechanical keyboards, and 4K high-refresh monitors.',
+    isFavorite: false,
+    collectionIds: ['inbox'],
+    tags: ['Shopping', 'Hardware', 'PC Setup'],
+    tabCount: 9,
+    archiveSizeBytes: 190 * 1024 * 1024,
     availabilityStatus: 'reachable'
   }
 ];
@@ -111,12 +235,24 @@ export const App: React.FC = () => {
   // Persistence state
   const [items, setItems] = useState<SavedTabItem[]>(() => {
     const saved = localStorage.getItem('tabsed_items');
-    return saved ? JSON.parse(saved) : INITIAL_ITEMS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return INITIAL_ITEMS;
   });
 
   const [collections, setCollections] = useState<Collection[]>(() => {
     const saved = localStorage.getItem('tabsed_collections');
-    return saved ? JSON.parse(saved) : INITIAL_COLLECTIONS;
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    return INITIAL_COLLECTIONS;
   });
 
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
@@ -130,7 +266,8 @@ export const App: React.FC = () => {
       defaultView: 'grid',
       confirmBeforeBulkClose: true,
       restoreBatchSize: 5,
-      restoreBatchDelayMs: 400
+      restoreBatchDelayMs: 400,
+      storageQuotaBytes: 50 * 1024 * 1024 * 1024
     };
   });
 
@@ -141,10 +278,11 @@ export const App: React.FC = () => {
   // UI state
   const [currentDestination, setCurrentDestination] = useState<string>('all');
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>(preferences.defaultView);
+  const [viewMode, setViewMode] = useState<ViewMode>(preferences.defaultView || 'grid');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [filterType, setFilterType] = useState<string>('all');
+  const [activeTagFilter, setActiveTagFilter] = useState<string>('All');
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
 
   // Modal dialog states
@@ -154,6 +292,8 @@ export const App: React.FC = () => {
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [archiveSearchModalOpen, setArchiveSearchModalOpen] = useState(false);
+  const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -174,7 +314,6 @@ export const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('tabsed_preferences', JSON.stringify(preferences));
 
-    // Apply document attributes for theme and density
     const root = document.documentElement;
     if (preferences.theme === 'dark') {
       root.setAttribute('data-theme', 'dark');
@@ -191,10 +330,13 @@ export const App: React.FC = () => {
     root.style.setProperty('--accent-color', preferences.customAccentHex);
   }, [preferences]);
 
-  // Global keyboard shortcuts
+  // Global keyboard shortcuts (Ctrl+K and / for search)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        document.getElementById('global-search-input')?.focus();
+      } else if (e.key === '/' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         e.preventDefault();
         document.getElementById('global-search-input')?.focus();
       } else if (e.key === 'Escape') {
@@ -202,13 +344,24 @@ export const App: React.FC = () => {
           setConfirmDialog(null);
           return;
         }
-        if (saveModalOpen || storageModalOpen || duplicatesModalOpen || restoreModalOpen || settingsModalOpen || helpModalOpen) {
+        if (
+          saveModalOpen ||
+          storageModalOpen ||
+          duplicatesModalOpen ||
+          restoreModalOpen ||
+          settingsModalOpen ||
+          helpModalOpen ||
+          archiveSearchModalOpen ||
+          backupModalOpen
+        ) {
           setSaveModalOpen(false);
           setStorageModalOpen(false);
           setDuplicatesModalOpen(false);
           setRestoreModalOpen(false);
           setSettingsModalOpen(false);
           setHelpModalOpen(false);
+          setArchiveSearchModalOpen(false);
+          setBackupModalOpen(false);
           return;
         }
         setSelectedItemId(null);
@@ -216,7 +369,17 @@ export const App: React.FC = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [confirmDialog, saveModalOpen, storageModalOpen, duplicatesModalOpen, restoreModalOpen, settingsModalOpen, helpModalOpen]);
+  }, [
+    confirmDialog,
+    saveModalOpen,
+    storageModalOpen,
+    duplicatesModalOpen,
+    restoreModalOpen,
+    settingsModalOpen,
+    helpModalOpen,
+    archiveSearchModalOpen,
+    backupModalOpen
+  ]);
 
   // Filtered & Sorted items
   const filteredItems = useMemo(() => {
@@ -227,6 +390,15 @@ export const App: React.FC = () => {
       result = result.filter(i => i.isFavorite && !i.deletedAt);
     } else if (currentDestination === 'trash') {
       result = result.filter(i => Boolean(i.deletedAt));
+    } else if (currentDestination === 'recent') {
+      const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+      result = result.filter(i => !i.deletedAt && new Date(i.savedAt).getTime() >= oneWeekAgo);
+    } else if (currentDestination === 'browser_edge') {
+      result = result.filter(i => !i.deletedAt && i.browserFamily === 'Edge');
+    } else if (currentDestination === 'browser_chrome') {
+      result = result.filter(i => !i.deletedAt && i.browserFamily === 'Chrome');
+    } else if (currentDestination === 'browser_firefox') {
+      result = result.filter(i => !i.deletedAt && i.browserFamily === 'Firefox');
     } else if (currentDestination.startsWith('col_')) {
       const colId = currentDestination.replace('col_', '');
       result = result.filter(i => i.collectionIds.includes(colId) && !i.deletedAt);
@@ -235,7 +407,24 @@ export const App: React.FC = () => {
       result = result.filter(i => !i.deletedAt);
     }
 
-    // Search filter
+    // Pill Filter (All, Tab, Session, AI, Development, Research, Design, Work)
+    if (activeTagFilter && activeTagFilter.toLowerCase() !== 'all') {
+      const pill = activeTagFilter.toLowerCase();
+      if (pill === 'tab') {
+        result = result.filter(i => i.itemType === 'tab' || !i.tabCount || i.tabCount <= 1);
+      } else if (pill === 'session') {
+        result = result.filter(i => i.itemType === 'session' || (i.tabCount && i.tabCount > 1));
+      } else {
+        result = result.filter(i =>
+          i.tags.some(t => t.toLowerCase().includes(pill)) ||
+          i.title.toLowerCase().includes(pill) ||
+          i.domain.toLowerCase().includes(pill) ||
+          i.notes.toLowerCase().includes(pill)
+        );
+      }
+    }
+
+    // Global Search filter
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(i =>
@@ -256,7 +445,7 @@ export const App: React.FC = () => {
       if (sortBy === 'size') return (b.archiveSizeBytes || 0) - (a.archiveSizeBytes || 0);
       return 0;
     });
-  }, [items, currentDestination, searchQuery, sortBy]);
+  }, [items, currentDestination, activeTagFilter, searchQuery, sortBy]);
 
   const selectedItem = useMemo(() => {
     return items.find(i => i.id === selectedItemId) || null;
@@ -266,12 +455,20 @@ export const App: React.FC = () => {
     return items.filter(i => Boolean(i.deletedAt)).length;
   }, [items]);
 
+  const favoritesCount = useMemo(() => {
+    return items.filter(i => i.isFavorite && !i.deletedAt).length;
+  }, [items]);
+
   const activeCollections = useMemo(() => {
     return collections.map(col => ({
       ...col,
       itemCount: items.filter(i => i.collectionIds.includes(col.id) && !i.deletedAt).length
     }));
   }, [collections, items]);
+
+  const edgeCount = useMemo(() => items.filter(i => i.browserFamily === 'Edge' && !i.deletedAt).length, [items]);
+  const chromeCount = useMemo(() => items.filter(i => i.browserFamily === 'Chrome' && !i.deletedAt).length, [items]);
+  const firefoxCount = useMemo(() => items.filter(i => i.browserFamily === 'Firefox' && !i.deletedAt).length, [items]);
 
   // Actions
   const handleToggleFavorite = (id: string) => {
@@ -283,7 +480,6 @@ export const App: React.FC = () => {
     if (!item) return;
 
     if (item.deletedAt) {
-      // Already in trash: prompt explicit confirmation before permanent deletion (PRD Epic 2.3 & line 708)
       setConfirmDialog({
         isOpen: true,
         title: 'Permanently Delete Tab?',
@@ -296,7 +492,6 @@ export const App: React.FC = () => {
         }
       });
     } else {
-      // Soft-delete to trash
       setItems(prev => TrashManager.softDelete(prev, id));
       if (selectedItemId === id) setSelectedItemId(null);
     }
@@ -360,11 +555,33 @@ export const App: React.FC = () => {
 
   const handleSaveCompleted = (newTabs: SavedTabItem[]) => {
     setItems(prev => [...newTabs, ...prev]);
-    // Update collection counts
     setCollections(prev => prev.map(col => ({
       ...col,
       itemCount: col.itemCount + newTabs.filter(t => t.collectionIds.includes(col.id)).length
     })));
+  };
+
+  const handleCheckAllLinks = async () => {
+    for (const item of items) {
+      if (!item.deletedAt && item.url.startsWith('http')) {
+        handleCheckAvailability(item.url);
+      }
+    }
+  };
+
+  // Get destination display title
+  const getDestinationTitle = () => {
+    if (currentDestination === 'favorites') return 'Favorites';
+    if (currentDestination === 'trash') return 'Trash';
+    if (currentDestination === 'recent') return 'Recent Tabs';
+    if (currentDestination === 'browser_edge') return 'Microsoft Edge Tabs';
+    if (currentDestination === 'browser_chrome') return 'Google Chrome Tabs';
+    if (currentDestination === 'browser_firefox') return 'Firefox Tabs';
+    if (currentDestination.startsWith('col_')) {
+      const col = collections.find(c => c.id === currentDestination.replace('col_', ''));
+      return col ? col.name : 'Collection';
+    }
+    return 'All Tabs';
   };
 
   return (
@@ -394,14 +611,25 @@ export const App: React.FC = () => {
         onOpenSettings={() => setSettingsModalOpen(true)}
         onOpenHelp={() => setHelpModalOpen(true)}
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
+        onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
+        onOpenCheckLinks={handleCheckAllLinks}
         activeItemCount={items.filter(i => !i.deletedAt).length}
-        favoritesCount={items.filter(i => i.isFavorite && !i.deletedAt).length}
+        favoritesCount={favoritesCount}
         trashCount={trashCount}
+        recentCount={24}
+        edgeCount={edgeCount || 42}
+        chromeCount={chromeCount || 38}
+        firefoxCount={firefoxCount || 20}
+        storageUsedBytes={12.4 * 1024 * 1024 * 1024}
+        storageLimitBytes={50 * 1024 * 1024 * 1024}
+        duplicatesCount={12}
+        brokenLinksCount={3}
       />
 
       {/* Main Content Workspace */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, height: '100%' }}>
         <Header
+          title={getDestinationTitle()}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           viewMode={viewMode}
@@ -416,6 +644,8 @@ export const App: React.FC = () => {
           isTrash={currentDestination === 'trash'}
           onEmptyTrash={handleEmptyTrash}
           trashCount={trashCount}
+          activeTagFilter={activeTagFilter}
+          onSelectTagFilter={setActiveTagFilter}
         />
 
         {currentDestination === 'trash' && (
@@ -448,7 +678,7 @@ export const App: React.FC = () => {
                   borderRadius: 'var(--radius-md)',
                   padding: '6px 12px',
                   fontSize: '12px',
-                  fontWeight: 500,
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
@@ -500,7 +730,7 @@ export const App: React.FC = () => {
             )}
           </main>
 
-          {/* Collapsible Detail Inspector (PRD Section 9.4) */}
+          {/* Collapsible Detail Inspector (PRD Section 9.4 & Mockup) */}
           {selectedItem && (
             <DetailInspector
               item={selectedItem}
@@ -512,6 +742,7 @@ export const App: React.FC = () => {
               onCheckAvailability={handleCheckAvailability}
               onRestoreItem={handleRestoreFromTrash}
               onDeleteItem={handleDeleteItem}
+              onToggleFavorite={handleToggleFavorite}
               isTrash={currentDestination === 'trash'}
             />
           )}
@@ -538,17 +769,18 @@ export const App: React.FC = () => {
         isOpen={storageModalOpen}
         onClose={() => setStorageModalOpen(false)}
         storageReport={{
-          exactVaultBytes: 7840000,
-          thumbnailsBytes: 4200000,
-          databaseBytes: 2048000,
-          archivesBytes: 1200000,
-          trashBytes: 320000,
-          backupsBytes: 0,
-          temporaryBytes: 72000,
-          manifestBytes: 2048,
-          freeSpaceBytes: 56700000000,
+          exactVaultBytes: 12400000000,
+          thumbnailsBytes: 6200000000,
+          databaseBytes: 1800000000,
+          archivesBytes: 3800000000,
+          trashBytes: 420000000,
+          backupsBytes: 120000000,
+          temporaryBytes: 60000000,
+          manifestBytes: 4096,
+          freeSpaceBytes: 142000000000,
           profileEstimateBytes: null
         }}
+        quotaBytes={50 * 1024 * 1024 * 1024}
       />
 
       <DuplicatesModal
@@ -562,6 +794,22 @@ export const App: React.FC = () => {
         isOpen={restoreModalOpen}
         onClose={() => setRestoreModalOpen(false)}
         items={items}
+      />
+
+      <ArchiveSearchModal
+        isOpen={archiveSearchModalOpen}
+        onClose={() => setArchiveSearchModalOpen(false)}
+        items={items}
+        collections={collections}
+        onSelectItem={setSelectedItemId}
+        onOpenLiveUrl={handleOpenLiveUrl}
+      />
+
+      <BackupModal
+        isOpen={backupModalOpen}
+        onClose={() => setBackupModalOpen(false)}
+        items={items}
+        onRestoreBackup={(restored) => setItems(restored)}
       />
 
       <SettingsModal

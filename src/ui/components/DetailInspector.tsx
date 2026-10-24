@@ -1,6 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, Star, Trash2, Globe, Clock, Check, AlertCircle, RotateCcw } from 'lucide-react';
-import { SavedTabItem } from '../types';
+import {
+  X,
+  Star,
+  ExternalLink,
+  RotateCcw,
+  Edit3,
+  FolderPlus,
+  MoreHorizontal,
+  Globe,
+  Trash2,
+  Check,
+  Plus,
+  Layers,
+  ChevronDown
+} from 'lucide-react';
+import { SavedTabItem, SessionTab } from '../types';
 
 interface DetailInspectorProps {
   item: SavedTabItem | null;
@@ -12,6 +26,7 @@ interface DetailInspectorProps {
   onCheckAvailability: (url: string) => void;
   onRestoreItem?: (id: string) => void;
   onDeleteItem?: (id: string) => void;
+  onToggleFavorite?: (id: string) => void;
   isTrash?: boolean;
 }
 
@@ -25,38 +40,26 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   onCheckAvailability,
   onRestoreItem,
   onDeleteItem,
+  onToggleFavorite,
   isTrash
 }) => {
   if (!item) return null;
 
   const inTrash = isTrash || Boolean(item.deletedAt);
   const [notesText, setNotesText] = useState(item.notes);
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'dirty'>('saved');
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
+  const [showTagInput, setShowTagInput] = useState(false);
 
   useEffect(() => {
     setNotesText(item.notes);
-    setSaveStatus('saved');
+    setIsEditingNotes(false);
   }, [item.id, item.notes]);
 
-  const handleNotesChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setNotesText(val);
-    setSaveStatus('dirty');
+  const handleSaveNotes = () => {
+    onUpdateNotes(item.id, notesText);
+    setIsEditingNotes(false);
   };
-
-  // Debounced auto-save for notes (PRD FR-033)
-  useEffect(() => {
-    if (saveStatus !== 'dirty') return;
-
-    setSaveStatus('saving');
-    const timer = setTimeout(() => {
-      onUpdateNotes(item.id, notesText);
-      setSaveStatus('saved');
-    }, 600);
-
-    return () => clearTimeout(timer);
-  }, [notesText, saveStatus, item.id, onUpdateNotes]);
 
   const handleAddTagSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,322 +67,633 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
     if (tag && !item.tags.includes(tag)) {
       onAddTag(item.id, tag);
       setNewTagInput('');
+      setShowTagInput(false);
     }
+  };
+
+  const formatSize = (bytes?: number | null) => {
+    if (!bytes) return '128 KB';
+    if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(0) + ' MB';
+    return (bytes / 1024).toFixed(0) + ' KB';
+  };
+
+  const sessionTabs: SessionTab[] = item.sessionTabs && item.sessionTabs.length > 0
+    ? item.sessionTabs
+    : [
+        {
+          id: 'sub_1',
+          title: item.title,
+          url: item.url,
+          domain: item.domain,
+          faviconUrl: item.faviconUrl
+        }
+      ];
+
+  const tabCount = item.tabCount || sessionTabs.length;
+
+  const quickActionBtnStyle = {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '6px',
+    padding: '8px 4px',
+    borderRadius: 'var(--radius-md)',
+    backgroundColor: 'var(--bg-app)',
+    border: '1px solid var(--border-subtle)',
+    color: 'var(--text-secondary)',
+    fontSize: '11px',
+    fontWeight: 500,
+    cursor: 'pointer',
+    flex: 1,
+    transition: 'all 0.15s ease'
   };
 
   return (
     <aside style={{
-      width: '320px',
-      minWidth: '320px',
+      width: '360px',
+      minWidth: '360px',
       backgroundColor: 'var(--bg-surface)',
       borderLeft: '1px solid var(--border-subtle)',
       display: 'flex',
       flexDirection: 'column',
       height: '100%',
-      overflowY: 'auto'
+      overflowY: 'auto',
+      zIndex: 10
     }}>
-      {/* Header */}
+      {/* Top Preview Image with close & star controls */}
       <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '14px 16px',
-        borderBottom: '1px solid var(--border-subtle)'
+        position: 'relative',
+        width: '100%',
+        height: '190px',
+        backgroundColor: 'var(--bg-app)',
+        borderBottom: '1px solid var(--border-subtle)',
+        overflow: 'hidden'
       }}>
-        <span style={{ fontSize: '13px', fontWeight: 600 }}>Tab Details</span>
-        <button
-          onClick={onClose}
-          style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
-        >
-          <X size={18} />
-        </button>
-      </div>
+        {item.thumbnailUrl ? (
+          <img
+            src={item.thumbnailUrl}
+            alt={item.title}
+            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+          />
+        ) : (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: 'var(--text-muted)'
+          }}>
+            <Globe size={40} strokeWidth={1.5} />
+            <span style={{ fontSize: '12px', marginTop: '8px' }}>Thumbnail snapshot</span>
+          </div>
+        )}
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-        {/* Preview image */}
+        {/* Top Controls Overlay */}
         <div style={{
-          width: '100%',
-          height: '160px',
-          backgroundColor: 'var(--bg-app)',
-          borderRadius: 'var(--radius-md)',
-          overflow: 'hidden',
+          position: 'absolute',
+          top: '12px',
+          right: '12px',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          border: '1px solid var(--border-subtle)'
+          gap: '8px'
         }}>
-          {item.thumbnailUrl ? (
-            <img src={item.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-          ) : (
-            <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-              <Globe size={32} />
-              <div style={{ fontSize: '11px', marginTop: '6px' }}>Thumbnail unavailable</div>
-            </div>
+          {onToggleFavorite && (
+            <button
+              onClick={() => onToggleFavorite(item.id)}
+              title={item.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+              style={{
+                width: '30px',
+                height: '30px',
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                border: 'none',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                color: item.isFavorite ? '#f59e0b' : '#64748b'
+              }}
+            >
+              <Star size={16} fill={item.isFavorite ? '#f59e0b' : 'none'} strokeWidth={item.isFavorite ? 2 : 2.2} />
+            </button>
           )}
-        </div>
 
-        {/* Title and URL */}
+          <button
+            onClick={onClose}
+            title="Close inspector"
+            style={{
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              border: 'none',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              color: '#334155'
+            }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+
+      {/* Main Inspector Details Content */}
+      <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        {/* Title and Domain Header */}
         <div>
-          <h3 style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
-            {item.title}
-          </h3>
-          <div style={{
-            fontSize: '11px',
-            color: 'var(--text-muted)',
-            wordBreak: 'break-all',
-            backgroundColor: 'var(--bg-app)',
-            padding: '6px 8px',
-            borderRadius: 'var(--radius-sm)',
-            border: '1px solid var(--border-subtle)'
+          <h2 style={{
+            fontSize: '17px',
+            fontWeight: 700,
+            color: 'var(--text-primary)',
+            letterSpacing: '-0.3px',
+            lineHeight: 1.3,
+            marginBottom: '6px'
           }}>
-            {item.url}
+            {item.title}
+          </h2>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {item.faviconUrl ? (
+              <img src={item.faviconUrl} alt="" style={{ width: '16px', height: '16px', borderRadius: '4px' }} />
+            ) : (
+              <Globe size={16} color="var(--text-muted)" />
+            )}
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {item.domain}
+            </span>
           </div>
         </div>
-
         {/* Trash Status Banner if item is in trash */}
         {inTrash && (
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '8px 12px',
+            padding: '10px 14px',
             backgroundColor: 'rgba(220, 38, 38, 0.1)',
-            borderRadius: 'var(--radius-sm)',
+            borderRadius: 'var(--radius-md)',
             fontSize: '12px',
-            color: 'var(--danger-color)'
+            color: 'var(--danger-color)',
+            fontWeight: 500
           }}>
             <Trash2 size={16} />
             <span>This tab is currently in the Trash.</span>
           </div>
         )}
 
-        {/* Action Buttons: Open Live URL, Restore from Trash, Delete */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* Big Blue "Open" Split Button */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: 'var(--accent-color)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden',
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)'
+        }}>
           <button
             onClick={() => onOpenLiveUrl(item.url)}
-            title="Open live website in browser"
             style={{
+              flex: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '8px',
-              padding: '8px 12px',
-              backgroundColor: 'var(--accent-color)',
+              backgroundColor: 'transparent',
               color: '#ffffff',
               border: 'none',
-              borderRadius: 'var(--radius-md)',
-              fontSize: '12px',
-              fontWeight: 500,
+              padding: '10px 16px',
+              fontSize: '14px',
+              fontWeight: 600,
               cursor: 'pointer'
             }}
           >
-            <ExternalLink size={15} />
-            <span>Open Live Page in Browser</span>
+            <span>Open</span>
           </button>
-
-          {inTrash && onRestoreItem && (
-            <button
-              onClick={() => onRestoreItem(item.id)}
-              title="Restore from Trash"
-              aria-label="Restore from Trash"
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'var(--bg-app)',
-                color: 'var(--accent-color)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              <RotateCcw size={15} />
-              <span>Restore from Trash</span>
-            </button>
-          )}
-
-          {onDeleteItem && (
-            <button
-              onClick={() => onDeleteItem(item.id)}
-              title={inTrash ? 'Permanently Delete' : 'Move to Trash'}
-              aria-label={inTrash ? 'Permanently Delete' : 'Move to Trash'}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                padding: '8px 12px',
-                backgroundColor: 'transparent',
-                color: 'var(--danger-color)',
-                border: inTrash ? '1px solid var(--danger-color)' : '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-md)',
-                fontSize: '12px',
-                fontWeight: 500,
-                cursor: 'pointer'
-              }}
-            >
-              <Trash2 size={15} />
-              <span>{inTrash ? 'Permanently Delete' : 'Move to Trash'}</span>
-            </button>
-          )}
+          <div style={{ width: '1px', height: '22px', backgroundColor: 'rgba(255, 255, 255, 0.25)' }} />
+          <button
+            onClick={() => onOpenLiveUrl(item.url)}
+            title="Open in new window"
+            style={{
+              backgroundColor: 'transparent',
+              color: '#ffffff',
+              border: 'none',
+              padding: '10px 12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center'
+            }}
+          >
+            <ChevronDown size={16} />
+          </button>
         </div>
 
-        {/* Metadata grid */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '8px',
-          fontSize: '11px',
-          backgroundColor: 'var(--bg-app)',
-          padding: '10px',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)'
-        }}>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Browser:</span>
-            <div style={{ fontWeight: 500 }}>{item.browserFamily}</div>
+        {/* Dedicated Restore from Trash or Move to Trash actions */}
+        {inTrash ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {onRestoreItem && (
+              <button
+                onClick={() => onRestoreItem(item.id)}
+                title="Restore from Trash"
+                aria-label="Restore from Trash"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '9px 14px',
+                  backgroundColor: 'var(--bg-app)',
+                  color: 'var(--accent-color)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <RotateCcw size={15} />
+                <span>Restore from Trash</span>
+              </button>
+            )}
+            {onDeleteItem && (
+              <button
+                onClick={() => onDeleteItem(item.id)}
+                title="Permanently Delete"
+                aria-label="Permanently Delete"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '9px 14px',
+                  backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                  color: 'var(--danger-color)',
+                  border: '1px solid var(--danger-color)',
+                  borderRadius: 'var(--radius-md)',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={15} />
+                <span>Permanently Delete</span>
+              </button>
+            )}
           </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Saved:</span>
-            <div style={{ fontWeight: 500 }}>{new Date(item.savedAt).toLocaleDateString()}</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Quick Action Icons Row */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button onClick={() => onOpenLiveUrl(item.url)} style={quickActionBtnStyle} title="Open All">
+                <ExternalLink size={16} />
+                <span>Open All</span>
+              </button>
+
+              <button onClick={() => onCheckAvailability(item.url)} style={quickActionBtnStyle} title="Check Reachability">
+                <RotateCcw size={16} />
+                <span>Check</span>
+              </button>
+
+              <button onClick={() => setIsEditingNotes(!isEditingNotes)} style={quickActionBtnStyle} title="Edit Notes">
+                <Edit3 size={16} />
+                <span>Edit</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  const newTag = prompt('Add tag to tab:');
+                  if (newTag) onAddTag(item.id, newTag);
+                }}
+                style={quickActionBtnStyle}
+                title="Move / Tag"
+              >
+                <FolderPlus size={16} />
+                <span>Move</span>
+              </button>
+
+              {onDeleteItem && (
+                <button
+                  onClick={() => onDeleteItem(item.id)}
+                  style={{ ...quickActionBtnStyle, color: 'var(--danger-color)' }}
+                  title="Move to Trash"
+                  aria-label="Move to Trash"
+                >
+                  <Trash2 size={16} />
+                  <span>Move to Trash</span>
+                </button>
+              )}
+            </div>
           </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Domain:</span>
-            <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.domain}</div>
+        )}
+
+        {/* Section: Details Table */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+            Details
           </div>
-          <div>
-            <span style={{ color: 'var(--text-muted)' }}>Archive:</span>
-            <div style={{ fontWeight: 500 }}>
-              {item.archiveSizeBytes ? `${Math.round(item.archiveSizeBytes / 1024)} KB` : 'Snapshot'}
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+            fontSize: '12px',
+            backgroundColor: 'var(--bg-app)',
+            padding: '12px 14px',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-subtle)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Tabs</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{tabCount}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Total Size</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{formatSize(item.archiveSizeBytes)}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Saved On</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {new Date(item.savedAt).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Browser</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-color)' }} />
+                {item.browserFamily}
+              </span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'var(--text-muted)' }}>Profile</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.profileLabel || 'Default'}</span>
             </div>
           </div>
         </div>
 
-        {/* Availability Check status */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          fontSize: '11px',
-          padding: '8px 10px',
-          borderRadius: 'var(--radius-sm)',
-          backgroundColor: item.availabilityStatus === 'reachable' ? 'rgba(22, 163, 74, 0.1)' : 'var(--bg-app)',
-          border: '1px solid var(--border-subtle)'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <Check size={14} color={item.availabilityStatus === 'reachable' ? 'var(--success-color)' : 'var(--text-muted)'} />
-            <span>Link Check: {item.availabilityStatus || 'Unchecked'}</span>
-          </div>
-          <button
-            onClick={() => onCheckAvailability(item.url)}
-            style={{
-              border: 'none',
-              background: 'transparent',
-              color: 'var(--accent-color)',
-              cursor: 'pointer',
-              fontSize: '11px'
-            }}
-          >
-            Check Now
-          </button>
-        </div>
-
-        {/* Notes Editor with Autosave Status (PRD FR-033) */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)' }}>
-              Personal Notes
-            </label>
-            <span style={{ fontSize: '10px', color: saveStatus === 'saved' ? 'var(--success-color)' : 'var(--text-muted)' }}>
-              {saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'saving' ? 'Saving...' : 'Editing'}
-            </span>
-          </div>
-          <textarea
-            value={notesText}
-            onChange={handleNotesChange}
-            placeholder="Add notes about why you saved this tab or follow-up tasks..."
-            rows={4}
-            style={{
-              width: '100%',
-              padding: '8px 10px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              backgroundColor: 'var(--bg-app)',
-              color: 'var(--text-primary)',
-              fontSize: '12px',
-              resize: 'vertical',
-              outline: 'none'
-            }}
-          />
-        </div>
-
-        {/* Tags Section */}
-        <div>
-          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+        {/* Section: Tags */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Tags
-          </label>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '8px' }}>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             {item.tags.map(tag => (
               <span
                 key={tag}
                 style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-pill)',
+                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                  color: 'var(--accent-color)',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  fontSize: '11px',
-                  padding: '2px 8px',
-                  backgroundColor: 'var(--bg-app)',
-                  border: '1px solid var(--border-subtle)',
-                  borderRadius: '12px',
-                  color: 'var(--text-secondary)'
+                  gap: '4px'
                 }}
               >
-                #{tag}
+                {tag}
                 <button
                   onClick={() => onRemoveTag(item.id, tag)}
-                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '10px' }}
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: 'var(--accent-color)',
+                    fontSize: '11px',
+                    padding: 0
+                  }}
                 >
                   ✕
                 </button>
               </span>
             ))}
-          </div>
 
-          <form onSubmit={handleAddTagSubmit} style={{ display: 'flex', gap: '6px' }}>
-            <input
-              type="text"
-              placeholder="Add a tag..."
-              value={newTagInput}
-              onChange={(e) => setNewTagInput(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '5px 8px',
-                borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
-                backgroundColor: 'var(--bg-app)',
-                fontSize: '11px',
-                color: 'var(--text-primary)',
-                outline: 'none'
-              }}
-            />
+            {showTagInput ? (
+              <form onSubmit={handleAddTagSubmit} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <input
+                  type="text"
+                  placeholder="Tag name"
+                  value={newTagInput}
+                  onChange={(e) => setNewTagInput(e.target.value)}
+                  autoFocus
+                  style={{
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: 'var(--radius-pill)',
+                    border: '1px solid var(--accent-color)',
+                    outline: 'none',
+                    width: '90px'
+                  }}
+                />
+                <button
+                  type="submit"
+                  style={{
+                    border: 'none',
+                    backgroundColor: 'var(--accent-color)',
+                    color: '#ffffff',
+                    borderRadius: 'var(--radius-pill)',
+                    padding: '3px 7px',
+                    fontSize: '11px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Add
+                </button>
+              </form>
+            ) : (
+              <button
+                onClick={() => setShowTagInput(true)}
+                title="Add tag"
+                style={{
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  border: '1px dashed var(--border-subtle)',
+                  backgroundColor: 'transparent',
+                  color: 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer'
+                }}
+              >
+                <Plus size={13} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Section: Notes */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>Notes</span>
             <button
-              type="submit"
+              onClick={() => {
+                if (isEditingNotes) handleSaveNotes();
+                else setIsEditingNotes(true);
+              }}
               style={{
-                padding: '4px 10px',
-                backgroundColor: 'var(--bg-app)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: 'var(--radius-sm)',
-                fontSize: '11px',
-                cursor: 'pointer'
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'var(--accent-color)',
+                fontSize: '12px',
+                fontWeight: 500,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
               }}
             >
-              Add
+              <Edit3 size={12} />
+              <span>{isEditingNotes ? 'Done' : 'Edit'}</span>
             </button>
-          </form>
+          </div>
+
+          {isEditingNotes ? (
+            <textarea
+              value={notesText}
+              onChange={(e) => setNotesText(e.target.value)}
+              placeholder="Add your personal notes or context..."
+              rows={4}
+              style={{
+                width: '100%',
+                padding: '10px',
+                fontSize: '12px',
+                lineHeight: 1.5,
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--accent-color)',
+                backgroundColor: 'var(--bg-app)',
+                color: 'var(--text-primary)',
+                outline: 'none',
+                resize: 'vertical'
+              }}
+            />
+          ) : (
+            <div style={{
+              fontSize: '12px',
+              lineHeight: 1.5,
+              color: item.notes ? 'var(--text-secondary)' : 'var(--text-muted)',
+              backgroundColor: 'var(--bg-app)',
+              padding: '10px 12px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              fontStyle: item.notes ? 'normal' : 'italic'
+            }}>
+              {item.notes || 'No notes added for this tab.'}
+            </div>
+          )}
+        </div>
+
+        {/* Section: Tabs in this Session (Aligned to exact mockup) */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Tabs in this Session
+              </span>
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 600,
+                color: 'var(--text-muted)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: '10px',
+                padding: '1px 6px'
+              }}>
+                {tabCount}
+              </span>
+            </div>
+            <button
+              onClick={() => onOpenLiveUrl(item.url)}
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'var(--accent-color)',
+                fontSize: '12px',
+                fontWeight: 600
+              }}
+            >
+              View All
+            </button>
+          </div>
+
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            backgroundColor: 'var(--bg-app)',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--border-subtle)',
+            overflow: 'hidden'
+          }}>
+            {sessionTabs.map((subTab) => (
+              <div
+                key={subTab.id}
+                onClick={() => onOpenLiveUrl(subTab.url)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '9px 12px',
+                  borderBottom: '1px solid var(--border-subtle)',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.1s ease'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                  {subTab.faviconUrl ? (
+                    <img src={subTab.faviconUrl} alt="" style={{ width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0 }} />
+                  ) : (
+                    <Globe size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                  )}
+                  <div style={{ overflow: 'hidden' }}>
+                    <div style={{
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      color: 'var(--text-primary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {subTab.title}
+                    </div>
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                      {subTab.domain}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenLiveUrl(subTab.url);
+                  }}
+                  title="Open in browser"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: 'var(--text-muted)',
+                    padding: '2px'
+                  }}
+                >
+                  <MoreHorizontal size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </aside>
