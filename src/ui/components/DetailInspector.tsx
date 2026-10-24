@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ExternalLink, Star, Trash2, Globe, Clock, Check, AlertCircle } from 'lucide-react';
+import { X, ExternalLink, Star, Trash2, Globe, Clock, Check, AlertCircle, RotateCcw } from 'lucide-react';
 import { SavedTabItem } from '../types';
 
 interface DetailInspectorProps {
@@ -10,6 +10,9 @@ interface DetailInspectorProps {
   onRemoveTag: (id: string, tag: string) => void;
   onOpenLiveUrl: (url: string) => void;
   onCheckAvailability: (url: string) => void;
+  onRestoreItem?: (id: string) => void;
+  onDeleteItem?: (id: string) => void;
+  isTrash?: boolean;
 }
 
 export const DetailInspector: React.FC<DetailInspectorProps> = ({
@@ -19,10 +22,14 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   onAddTag,
   onRemoveTag,
   onOpenLiveUrl,
-  onCheckAvailability
+  onCheckAvailability,
+  onRestoreItem,
+  onDeleteItem,
+  isTrash
 }) => {
   if (!item) return null;
 
+  const inTrash = isTrash || Boolean(item.deletedAt);
   const [notesText, setNotesText] = useState(item.notes);
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'dirty'>('saved');
   const [newTagInput, setNewTagInput] = useState('');
@@ -129,27 +136,97 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           </div>
         </div>
 
-        {/* Open Live URL Button */}
-        <button
-          onClick={() => onOpenLiveUrl(item.url)}
-          style={{
+        {/* Trash Status Banner if item is in trash */}
+        {inTrash && (
+          <div style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center',
             gap: '8px',
             padding: '8px 12px',
-            backgroundColor: 'var(--accent-color)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
+            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            borderRadius: 'var(--radius-sm)',
             fontSize: '12px',
-            fontWeight: 500,
-            cursor: 'pointer'
-          }}
-        >
-          <ExternalLink size={15} />
-          <span>Open Live Page in Browser</span>
-        </button>
+            color: 'var(--danger-color)'
+          }}>
+            <Trash2 size={16} />
+            <span>This tab is currently in the Trash.</span>
+          </div>
+        )}
+
+        {/* Action Buttons: Open Live URL, Restore from Trash, Delete */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button
+            onClick={() => onOpenLiveUrl(item.url)}
+            title="Open live website in browser"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '8px 12px',
+              backgroundColor: 'var(--accent-color)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              fontSize: '12px',
+              fontWeight: 500,
+              cursor: 'pointer'
+            }}
+          >
+            <ExternalLink size={15} />
+            <span>Open Live Page in Browser</span>
+          </button>
+
+          {inTrash && onRestoreItem && (
+            <button
+              onClick={() => onRestoreItem(item.id)}
+              title="Restore from Trash"
+              aria-label="Restore from Trash"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: 'var(--bg-app)',
+                color: 'var(--accent-color)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer'
+              }}
+            >
+              <RotateCcw size={15} />
+              <span>Restore from Trash</span>
+            </button>
+          )}
+
+          {onDeleteItem && (
+            <button
+              onClick={() => onDeleteItem(item.id)}
+              title={inTrash ? 'Permanently Delete' : 'Move to Trash'}
+              aria-label={inTrash ? 'Permanently Delete' : 'Move to Trash'}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                padding: '8px 12px',
+                backgroundColor: 'transparent',
+                color: 'var(--danger-color)',
+                border: inTrash ? '1px solid var(--danger-color)' : '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '12px',
+                fontWeight: 500,
+                cursor: 'pointer'
+              }}
+            >
+              <Trash2 size={15} />
+              <span>{inTrash ? 'Permanently Delete' : 'Move to Trash'}</span>
+            </button>
+          )}
+        </div>
 
         {/* Metadata grid */}
         <div style={{

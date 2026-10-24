@@ -121,9 +121,6 @@ export class VaultManager {
   /**
    * Atomically commit staged file to final vault destination
    */
-  /**
-   * Atomically commit staged file to final vault destination
-   */
   public commitStagedFile(staged: StagedFile): string {
     if (!this.verifyStagedFile(staged)) {
       throw new Error(`Integrity verification failed for staged file ${staged.stageId}`);

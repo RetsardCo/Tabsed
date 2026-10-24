@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Trash2 } from 'lucide-react';
 import { Header } from './ui/components/Header';
 import { Sidebar } from './ui/components/Sidebar';
 import { TabGrid } from './ui/components/TabGrid';
@@ -12,8 +13,10 @@ import { DuplicatesModal } from './ui/components/DuplicatesModal';
 import { RestoreQueueModal } from './ui/components/RestoreQueueModal';
 import { SettingsModal } from './ui/components/SettingsModal';
 import { HelpDiagnosticsModal } from './ui/components/HelpDiagnosticsModal';
+import { ConfirmationModal } from './ui/components/ConfirmationModal';
 import { SavedTabItem, Collection, ViewMode, UserPreferences } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
+import { TrashManager } from './core/vault/trash-manager';
 
 const INITIAL_COLLECTIONS: Collection[] = [
   { id: 'inbox', name: 'Inbox', description: 'Default incoming tab bucket', accentColor: '#2563eb', itemCount: 4 },
@@ -151,6 +154,13 @@ export const App: React.FC = () => {
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmLabel: string;
+    onConfirm: () => void;
+  } | null>(null);
 
   // Sync to local storage
   useEffect(() => {
@@ -188,18 +198,25 @@ export const App: React.FC = () => {
         e.preventDefault();
         document.getElementById('global-search-input')?.focus();
       } else if (e.key === 'Escape') {
+        if (confirmDialog) {
+          setConfirmDialog(null);
+          return;
+        }
+        if (saveModalOpen || storageModalOpen || duplicatesModalOpen || restoreModalOpen || settingsModalOpen || helpModalOpen) {
+          setSaveModalOpen(false);
+          setStorageModalOpen(false);
+          setDuplicatesModalOpen(false);
+          setRestoreModalOpen(false);
+          setSettingsModalOpen(false);
+          setHelpModalOpen(false);
+          return;
+        }
         setSelectedItemId(null);
-        setSaveModalOpen(false);
-        setStorageModalOpen(false);
-        setDuplicatesModalOpen(false);
-        setRestoreModalOpen(false);
-        setSettingsModalOpen(false);
-        setHelpModalOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [confirmDialog, saveModalOpen, storageModalOpen, duplicatesModalOpen, restoreModalOpen, settingsModalOpen, helpModalOpen]);
 
   // Filtered & Sorted items
   const filteredItems = useMemo(() => {
@@ -245,26 +262,70 @@ export const App: React.FC = () => {
     return items.find(i => i.id === selectedItemId) || null;
   }, [items, selectedItemId]);
 
+  const trashCount = useMemo(() => {
+    return items.filter(i => Boolean(i.deletedAt)).length;
+  }, [items]);
+
+  const activeCollections = useMemo(() => {
+    return collections.map(col => ({
+      ...col,
+      itemCount: items.filter(i => i.collectionIds.includes(col.id) && !i.deletedAt).length
+    }));
+  }, [collections, items]);
+
   // Actions
   const handleToggleFavorite = (id: string) => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, isFavorite: !item.isFavorite } : item));
   };
 
   const handleDeleteItem = (id: string) => {
-    setItems(prev => {
-      const existing = prev.find(item => item.id === id);
-      if (existing?.deletedAt) {
-        // Already in trash: permanent deletion
-        return prev.filter(item => item.id !== id);
-      }
+    const item = items.find(i => i.id === id);
+    if (!item) return;
+
+    if (item.deletedAt) {
+      // Already in trash: prompt explicit confirmation before permanent deletion (PRD Epic 2.3 & line 708)
+      setConfirmDialog({
+        isOpen: true,
+        title: 'Permanently Delete Tab?',
+        message: `Are you sure you want to permanently delete "${item.title}"? This action cannot be undone and will permanently remove this record from your vault.`,
+        confirmLabel: 'Permanently Delete',
+        onConfirm: () => {
+          setItems(prev => TrashManager.permanentDelete(prev, id));
+          if (selectedItemId === id) setSelectedItemId(null);
+          setConfirmDialog(null);
+        }
+      });
+    } else {
       // Soft-delete to trash
-      return prev.map(item => item.id === id ? { ...item, deletedAt: new Date().toISOString() } : item);
-    });
-    if (selectedItemId === id) setSelectedItemId(null);
+      setItems(prev => TrashManager.softDelete(prev, id));
+      if (selectedItemId === id) setSelectedItemId(null);
+    }
   };
 
   const handleRestoreFromTrash = (id: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, deletedAt: null } : item));
+    setItems(prev => TrashManager.restoreFromTrash(prev, id));
+    if (currentDestination === 'trash' && selectedItemId === id) {
+      setSelectedItemId(null);
+    }
+  };
+
+  const handleEmptyTrash = () => {
+    const trashItems = TrashManager.getTrashItems(items);
+    if (trashItems.length === 0) return;
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Empty Trash?',
+      message: `Are you sure you want to permanently delete all ${trashItems.length} item${trashItems.length === 1 ? '' : 's'} in the Trash? This action cannot be undone.`,
+      confirmLabel: 'Empty Trash',
+      onConfirm: () => {
+        setItems(prev => TrashManager.emptyTrash(prev));
+        if (selectedItem?.deletedAt) {
+          setSelectedItemId(null);
+        }
+        setConfirmDialog(null);
+      }
+    });
   };
 
   const handleUpdateNotes = (id: string, notes: string) => {
@@ -312,7 +373,7 @@ export const App: React.FC = () => {
       <Sidebar
         currentDestination={currentDestination}
         onSelectDestination={setCurrentDestination}
-        collections={collections}
+        collections={activeCollections}
         onOpenCreateCollection={() => {
           const name = prompt('Enter new collection name:');
           if (name) {
@@ -335,7 +396,7 @@ export const App: React.FC = () => {
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
         activeItemCount={items.filter(i => !i.deletedAt).length}
         favoritesCount={items.filter(i => i.isFavorite && !i.deletedAt).length}
-        trashCount={items.filter(i => Boolean(i.deletedAt)).length}
+        trashCount={trashCount}
       />
 
       {/* Main Content Workspace */}
@@ -352,7 +413,51 @@ export const App: React.FC = () => {
           itemCount={filteredItems.length}
           onOpenSaveModal={() => setSaveModalOpen(true)}
           onQuickSave={() => setSaveModalOpen(true)}
+          isTrash={currentDestination === 'trash'}
+          onEmptyTrash={handleEmptyTrash}
+          trashCount={trashCount}
         />
+
+        {currentDestination === 'trash' && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 24px',
+            backgroundColor: 'rgba(220, 38, 38, 0.08)',
+            borderBottom: '1px solid var(--border-subtle)',
+            fontSize: '13px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Trash2 size={16} color="var(--danger-color)" />
+              <span>
+                <strong>Trash:</strong> Items here can be restored to your active library or permanently deleted.
+              </span>
+            </div>
+            {trashCount > 0 && (
+              <button
+                onClick={handleEmptyTrash}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--danger-color)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  cursor: 'pointer'
+                }}
+              >
+                <Trash2 size={14} />
+                <span>Empty Trash ({trashCount})</span>
+              </button>
+            )}
+          </div>
+        )}
 
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Main List / Grid View */}
@@ -364,7 +469,9 @@ export const App: React.FC = () => {
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}
                 onDeleteItem={handleDeleteItem}
+                onRestoreItem={handleRestoreFromTrash}
                 onOpenLiveUrl={handleOpenLiveUrl}
+                isTrash={currentDestination === 'trash'}
               />
             )}
             {viewMode === 'compact' && (
@@ -374,7 +481,9 @@ export const App: React.FC = () => {
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}
                 onDeleteItem={handleDeleteItem}
+                onRestoreItem={handleRestoreFromTrash}
                 onOpenLiveUrl={handleOpenLiveUrl}
+                isTrash={currentDestination === 'trash'}
               />
             )}
             {viewMode === 'detailed' && (
@@ -384,7 +493,9 @@ export const App: React.FC = () => {
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}
                 onDeleteItem={handleDeleteItem}
+                onRestoreItem={handleRestoreFromTrash}
                 onOpenLiveUrl={handleOpenLiveUrl}
+                isTrash={currentDestination === 'trash'}
               />
             )}
           </main>
@@ -399,6 +510,9 @@ export const App: React.FC = () => {
               onRemoveTag={handleRemoveTag}
               onOpenLiveUrl={handleOpenLiveUrl}
               onCheckAvailability={handleCheckAvailability}
+              onRestoreItem={handleRestoreFromTrash}
+              onDeleteItem={handleDeleteItem}
+              isTrash={currentDestination === 'trash'}
             />
           )}
         </div>
@@ -461,6 +575,18 @@ export const App: React.FC = () => {
         isOpen={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}
       />
+
+      {confirmDialog && (
+        <ConfirmationModal
+          isOpen={confirmDialog.isOpen}
+          title={confirmDialog.title}
+          message={confirmDialog.message}
+          confirmLabel={confirmDialog.confirmLabel}
+          onConfirm={confirmDialog.onConfirm}
+          onCancel={() => setConfirmDialog(null)}
+          isDestructive={true}
+        />
+      )}
     </div>
   );
 };

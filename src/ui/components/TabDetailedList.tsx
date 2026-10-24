@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Star, Trash2, Globe, Clock, Tag } from 'lucide-react';
+import { ExternalLink, Star, Trash2, Globe, Clock, Tag, RotateCcw } from 'lucide-react';
 import { SavedTabItem } from '../types';
 
 interface TabDetailedListProps {
@@ -9,6 +9,8 @@ interface TabDetailedListProps {
   onToggleFavorite: (id: string) => void;
   onDeleteItem: (id: string) => void;
   onOpenLiveUrl: (url: string) => void;
+  onRestoreItem?: (id: string) => void;
+  isTrash?: boolean;
 }
 
 export const TabDetailedList: React.FC<TabDetailedListProps> = ({
@@ -17,8 +19,38 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
   onSelectItem,
   onToggleFavorite,
   onDeleteItem,
-  onOpenLiveUrl
+  onOpenLiveUrl,
+  onRestoreItem,
+  isTrash
 }) => {
+  if (items.length === 0) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '60px 20px',
+        color: 'var(--text-secondary)',
+        textAlign: 'center'
+      }}>
+        {isTrash ? (
+          <Trash2 size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        ) : (
+          <Globe size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        )}
+        <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+          {isTrash ? 'Trash is empty' : 'No saved tabs in this view'}
+        </h3>
+        <p style={{ fontSize: '13px', maxWidth: '420px', marginBottom: '16px' }}>
+          {isTrash
+            ? 'Tabs moved to trash will appear here until permanently deleted.'
+            : 'Tabs saved from Microsoft Edge, Google Chrome, or imported manually will appear here with previews and metadata.'}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '16px' }}>
       {items.map(item => {
@@ -125,12 +157,32 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
               >
                 <ExternalLink size={16} />
               </button>
+              {(isTrash || Boolean(item.deletedAt)) && onRestoreItem && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onRestoreItem(item.id);
+                  }}
+                  title="Restore from Trash"
+                  aria-label="Restore from Trash"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: 'var(--accent-color)',
+                    padding: '4px'
+                  }}
+                >
+                  <RotateCcw size={16} />
+                </button>
+              )}
               <button
                 onClick={(e) => {
                   e.stopPropagation();
                   onDeleteItem(item.id);
                 }}
-                title="Delete to trash"
+                title={isTrash || Boolean(item.deletedAt) ? 'Permanently Delete' : 'Move to Trash'}
+                aria-label={isTrash || Boolean(item.deletedAt) ? 'Permanently Delete' : 'Move to Trash'}
                 style={{
                   border: 'none',
                   background: 'transparent',

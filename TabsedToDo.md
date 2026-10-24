@@ -368,10 +368,10 @@ silently discard notes or archive files.
 
 ### Epic 2.3 --- Trash and cleanup
 
--   [ ] Implement soft-delete state and recoverable trash.
+-   [x] Implement soft-delete state and recoverable trash.
 -   [ ] Define trash retention settings.
--   [ ] Implement restore from trash.
--   [ ] Implement permanent deletion with confirmation.
+-   [x] Implement restore from trash.
+-   [x] Implement permanent deletion with confirmation.
 -   [ ] Build dry-run cleanup preview.
 -   [ ] List exact candidate files and bytes to be reclaimed.
 -   [ ] Add orphaned-file scanner and safe cleanup.
@@ -423,7 +423,7 @@ a partial state.
     sizes.
 -   [ ] Verify collection membership does not double-count files.
 -   [ ] Run duplicate-resolution tests.
--   [ ] Run trash recovery and permanent deletion tests.
+-   [x] Run trash recovery and permanent deletion tests.
 -   [ ] Run backup/restore round-trip tests.
 -   [ ] Run cleanup dry-run versus actual deletion comparison.
 -   [ ] Update docs and UI help.
@@ -705,7 +705,7 @@ referenced in CI must exist and perform a real check.
     for closure.
 -   [ ] Private tabs are excluded by default.
 -   [ ] No cookies/passwords/auth databases are copied.
--   [ ] Permanent deletion has explicit confirmation.
+-   [x] Permanent deletion has explicit confirmation.
 -   [ ] Browser profile data is never modified directly while active.
 
 ### Data integrity

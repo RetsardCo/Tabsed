@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, LayoutGrid, List, Table, ArrowUpDown, Filter, Plus, ShieldCheck } from 'lucide-react';
+import { Search, LayoutGrid, List, Table, ArrowUpDown, Filter, Plus, ShieldCheck, Trash2 } from 'lucide-react';
 import { ViewMode } from '../types';
 
 interface HeaderProps {
@@ -14,6 +14,9 @@ interface HeaderProps {
   itemCount: number;
   onOpenSaveModal: () => void;
   onQuickSave: () => void;
+  isTrash?: boolean;
+  onEmptyTrash?: () => void;
+  trashCount?: number;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -27,7 +30,10 @@ export const Header: React.FC<HeaderProps> = ({
   onFilterTypeChange,
   itemCount,
   onOpenSaveModal,
-  onQuickSave
+  onQuickSave,
+  isTrash,
+  onEmptyTrash,
+  trashCount
 }) => {
   return (
     <header style={{
@@ -171,26 +177,52 @@ export const Header: React.FC<HeaderProps> = ({
           </select>
         </div>
 
-        <button
-          onClick={onOpenSaveModal}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            backgroundColor: 'var(--accent-color)',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: 'var(--radius-md)',
-            padding: '7px 14px',
-            fontSize: '13px',
-            fontWeight: 500,
-            cursor: 'pointer',
-            boxShadow: 'var(--shadow-sm)'
-          }}
-        >
-          <Plus size={16} />
-          <span>Save Tabs</span>
-        </button>
+        {isTrash && onEmptyTrash ? (
+          <button
+            onClick={onEmptyTrash}
+            disabled={!trashCount || trashCount === 0}
+            title={trashCount && trashCount > 0 ? 'Permanently delete all items in trash' : 'Trash is currently empty'}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'var(--danger-color)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              padding: '7px 14px',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: (!trashCount || trashCount === 0) ? 'not-allowed' : 'pointer',
+              opacity: (!trashCount || trashCount === 0) ? 0.5 : 1,
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <Trash2 size={16} />
+            <span>Empty Trash</span>
+          </button>
+        ) : (
+          <button
+            onClick={onOpenSaveModal}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'var(--accent-color)',
+              color: '#ffffff',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              padding: '7px 14px',
+              fontSize: '13px',
+              fontWeight: 500,
+              cursor: 'pointer',
+              boxShadow: 'var(--shadow-sm)'
+            }}
+          >
+            <Plus size={16} />
+            <span>Save Tabs</span>
+          </button>
+        )}
       </div>
     </header>
   );

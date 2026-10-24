@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Star, Trash2, Globe, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { ExternalLink, Star, Trash2, Globe, FileText, CheckCircle, AlertCircle, RotateCcw } from 'lucide-react';
 import { SavedTabItem } from '../types';
 
 interface TabGridProps {
@@ -9,6 +9,8 @@ interface TabGridProps {
   onToggleFavorite: (id: string) => void;
   onDeleteItem: (id: string) => void;
   onOpenLiveUrl: (url: string) => void;
+  onRestoreItem?: (id: string) => void;
+  isTrash?: boolean;
 }
 
 export const TabGrid: React.FC<TabGridProps> = ({
@@ -17,7 +19,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
   onSelectItem,
   onToggleFavorite,
   onDeleteItem,
-  onOpenLiveUrl
+  onOpenLiveUrl,
+  onRestoreItem,
+  isTrash
 }) => {
   if (items.length === 0) {
     return (
@@ -30,12 +34,18 @@ export const TabGrid: React.FC<TabGridProps> = ({
         color: 'var(--text-secondary)',
         textAlign: 'center'
       }}>
-        <Globe size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        {isTrash ? (
+          <Trash2 size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        ) : (
+          <Globe size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        )}
         <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-          No saved tabs in this view
+          {isTrash ? 'Trash is empty' : 'No saved tabs in this view'}
         </h3>
         <p style={{ fontSize: '13px', maxWidth: '420px', marginBottom: '16px' }}>
-          Tabs saved from Microsoft Edge, Google Chrome, or imported manually will appear here with previews and metadata.
+          {isTrash
+            ? 'Tabs moved to trash will appear here until permanently deleted.'
+            : 'Tabs saved from Microsoft Edge, Google Chrome, or imported manually will appear here with previews and metadata.'}
         </p>
       </div>
     );
@@ -259,12 +269,32 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 >
                   <ExternalLink size={14} />
                 </button>
+                {(isTrash || Boolean(item.deletedAt)) && onRestoreItem && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onRestoreItem(item.id);
+                    }}
+                    title="Restore from Trash"
+                    aria-label="Restore from Trash"
+                    style={{
+                      border: 'none',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      color: 'var(--accent-color)',
+                      padding: '2px'
+                    }}
+                  >
+                    <RotateCcw size={14} />
+                  </button>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteItem(item.id);
                   }}
-                  title="Move to trash"
+                  title={isTrash || Boolean(item.deletedAt) ? 'Permanently Delete' : 'Move to Trash'}
+                  aria-label={isTrash || Boolean(item.deletedAt) ? 'Permanently Delete' : 'Move to Trash'}
                   style={{
                     border: 'none',
                     background: 'transparent',
