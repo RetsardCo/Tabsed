@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Search,
   LayoutGrid,
@@ -9,7 +9,11 @@ import {
   Sparkles,
   ArrowUpDown,
   Trash2,
-  FolderPlus
+  Moon,
+  Sun,
+  Globe,
+  Layers,
+  Link
 } from 'lucide-react';
 import { ViewMode } from '../types';
 
@@ -24,7 +28,7 @@ interface HeaderProps {
   onFilterTypeChange: (f: string) => void;
   itemCount: number;
   title?: string;
-  onOpenSaveModal: () => void;
+  onOpenSaveModal: (initialScope?: 'window' | 'tab' | 'manual') => void;
   onQuickSave: () => void;
   onMagicAction?: () => void;
   isTrash?: boolean;
@@ -32,6 +36,8 @@ interface HeaderProps {
   trashCount?: number;
   activeTagFilter?: string;
   onSelectTagFilter?: (tag: string) => void;
+  currentTheme?: 'light' | 'dark' | 'system';
+  onToggleTheme?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -52,17 +58,34 @@ export const Header: React.FC<HeaderProps> = ({
   onEmptyTrash,
   trashCount,
   activeTagFilter = 'All',
-  onSelectTagFilter
+  onSelectTagFilter,
+  currentTheme = 'light',
+  onToggleTheme
 }) => {
+  const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const saveMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (saveMenuRef.current && !saveMenuRef.current.contains(e.target as Node)) {
+        setSaveMenuOpen(false);
+      }
+    };
+    if (saveMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [saveMenuOpen]);
+
   const filterPills = [
     { id: 'All', label: 'All', icon: null },
     { id: 'tab', label: 'Tab', icon: null },
     { id: 'session', label: 'Session', icon: null },
     { id: 'ai', label: 'AI', icon: '✦' },
     { id: 'development', label: 'Development', icon: '</>' },
-    { id: 'research', label: 'Research', icon: null },
-    { id: 'design', label: 'Design', icon: null },
-    { id: 'work', label: 'Work', icon: null }
+    { id: 'research', label: 'Research', icon: '📖' },
+    { id: 'design', label: 'Design', icon: '🎨' },
+    { id: 'work', label: 'Work', icon: '💼' }
   ];
 
   return (
@@ -159,7 +182,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
         </div>
 
-        {/* Right: View switcher, Filter button, + Save Tabs, Sparkle */}
+        {/* Right: View switcher, Filter button, + Save Tabs, Theme Toggle, Sparkle */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
           {/* View Mode Toggle */}
           <div style={{
@@ -253,8 +276,8 @@ export const Header: React.FC<HeaderProps> = ({
               <span>Empty Trash</span>
             </button>
           ) : (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {/* Split "+ Save Tabs" button */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }} ref={saveMenuRef}>
+              {/* Split "+ Save Tabs" button with interactive menu */}
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -264,7 +287,7 @@ export const Header: React.FC<HeaderProps> = ({
                 boxShadow: '0 2px 6px rgba(37, 99, 235, 0.35)'
               }}>
                 <button
-                  onClick={onOpenSaveModal}
+                  onClick={() => onOpenSaveModal('window')}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -283,7 +306,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
                 <div style={{ width: '1px', height: '18px', backgroundColor: 'rgba(255, 255, 255, 0.25)' }} />
                 <button
-                  onClick={onQuickSave}
+                  onClick={() => setSaveMenuOpen(!saveMenuOpen)}
                   title="Save options"
                   style={{
                     backgroundColor: 'transparent',
@@ -299,9 +322,99 @@ export const Header: React.FC<HeaderProps> = ({
                 </button>
               </div>
 
+              {/* Split Dropdown Menu */}
+              {saveMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  width: '210px',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: 'var(--shadow-lg)',
+                  padding: '6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                  zIndex: 50
+                }}>
+                  <button
+                    onClick={() => {
+                      setSaveMenuOpen(false);
+                      onOpenSaveModal('window');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Layers size={14} color="var(--accent-color)" />
+                    <span>Save Current Window</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSaveMenuOpen(false);
+                      onOpenSaveModal('tab');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Globe size={14} color="var(--accent-color)" />
+                    <span>Save Active Tab Only</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSaveMenuOpen(false);
+                      onOpenSaveModal('manual');
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      background: 'transparent',
+                      color: 'var(--text-primary)',
+                      fontSize: '12px',
+                      fontWeight: 500,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <Link size={14} color="var(--accent-color)" />
+                    <span>Save Manually by URL</span>
+                  </button>
+                </div>
+              )}
+
               {/* Sparkle / Magic Button */}
               <button
-                onClick={onMagicAction || onOpenSaveModal}
+                onClick={onMagicAction || (() => onOpenSaveModal('window'))}
                 title="Smart Organize & Group Tabs"
                 style={{
                   width: '34px',
@@ -319,6 +432,29 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 <Sparkles size={16} />
               </button>
+
+              {/* Instant Theme Toggle (Sun / Moon) */}
+              {onToggleTheme && (
+                <button
+                  onClick={onToggleTheme}
+                  title={currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--bg-input)',
+                    border: '1px solid var(--border-subtle)',
+                    color: currentTheme === 'dark' ? '#fbbf24' : 'var(--text-secondary)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  {currentTheme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
+              )}
             </div>
           )}
         </div>

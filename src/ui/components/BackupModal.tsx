@@ -31,7 +31,12 @@ export const BackupModal: React.FC<BackupModalProps> = ({
 
   const handleDownloadBackup = () => {
     if (!createdBackup) return;
-    const blob = new Blob([createdBackup.backupBlobJson], { type: 'application/json' });
+    // Export full bundle with manifest & items
+    const exportBundle = {
+      manifest: createdBackup.manifest,
+      items: JSON.parse(createdBackup.backupBlobJson)
+    };
+    const blob = new Blob([JSON.stringify(exportBundle, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -49,12 +54,28 @@ export const BackupModal: React.FC<BackupModalProps> = ({
         return;
       }
       const parsed = JSON.parse(restoreText);
-      if (!Array.isArray(parsed)) {
-        setRestoreError('Invalid backup file format: must be an array of tab items');
+
+      // Support full bundle format { manifest, items }
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed) && parsed.manifest && Array.isArray(parsed.items)) {
+        const serialized = JSON.stringify(parsed.items, null, 2);
+        const isValid = BackupManager.verifyBackup(serialized, parsed.manifest);
+        if (!isValid) {
+          setRestoreError('Cryptographic integrity check failed: SHA-256 hash does not match manifest');
+          return;
+        }
+        onRestoreBackup(parsed.items);
+        setRestoreSuccess(`Verified & restored ${parsed.items.length} tab items (SHA-256 integrity passed)!`);
         return;
       }
-      onRestoreBackup(parsed);
-      setRestoreSuccess(`Successfully restored ${parsed.length} tab items to your vault!`);
+
+      // Support raw array format
+      if (Array.isArray(parsed)) {
+        onRestoreBackup(parsed);
+        setRestoreSuccess(`Successfully restored ${parsed.length} tab items to your vault!`);
+        return;
+      }
+
+      setRestoreError('Invalid backup file format: expected an array of tab items or a verified backup bundle');
     } catch (e: any) {
       setRestoreError('Failed to parse backup JSON: ' + e.message);
     }
@@ -76,7 +97,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
       padding: '20px'
     }}>
       <div style={{
-        width: '560px',
+        width: '580px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',
@@ -108,7 +129,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               <ShieldCheck size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, margin: 0 }}>
                 Vault Backup &amp; Integrity
               </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -116,7 +137,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               </span>
             </div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
             <X size={18} />
           </button>
         </div>
@@ -127,7 +148,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             onClick={() => setActiveTab('create')}
             style={{
               flex: 1,
-              padding: '10px',
+              padding: '12px',
               fontSize: '13px',
               fontWeight: 600,
               backgroundColor: activeTab === 'create' ? 'var(--bg-surface)' : 'transparent',
@@ -143,7 +164,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             onClick={() => setActiveTab('restore')}
             style={{
               flex: 1,
-              padding: '10px',
+              padding: '12px',
               fontSize: '13px',
               fontWeight: 600,
               backgroundColor: activeTab === 'restore' ? 'var(--bg-surface)' : 'transparent',
@@ -184,13 +205,14 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '8px',
-                    padding: '10px',
+                    padding: '11px',
                     borderRadius: 'var(--radius-md)',
                     backgroundColor: 'var(--accent-color)',
                     color: '#ffffff',
                     border: 'none',
                     fontWeight: 600,
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
                   }}
                 >
                   <FileArchive size={16} />
@@ -206,15 +228,15 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                   flexDirection: 'column',
                   gap: '12px'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success-color)', fontWeight: 600, fontSize: '13px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--success-color)', fontWeight: 700, fontSize: '13px' }}>
                     <CheckCircle2 size={18} />
                     <span>Backup Verified and Created Successfully</span>
                   </div>
 
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px', wordBreak: 'break-all' }}>
-                    <div><strong>SHA-256 Hash:</strong> {createdBackup.manifest.sha256}</div>
-                    <div><strong>Items Saved:</strong> {createdBackup.manifest.itemCount}</div>
-                    <div><strong>Snapshot Size:</strong> {(createdBackup.manifest.totalSizeBytes / 1024).toFixed(1)} KB</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px', wordBreak: 'break-all' }}>
+                    <div><strong style={{ color: 'var(--text-primary)' }}>SHA-256 Hash:</strong> {createdBackup.manifest.sha256}</div>
+                    <div><strong style={{ color: 'var(--text-primary)' }}>Items Saved:</strong> {createdBackup.manifest.itemCount}</div>
+                    <div><strong style={{ color: 'var(--text-primary)' }}>Snapshot Size:</strong> {(createdBackup.manifest.totalSizeBytes / 1024).toFixed(1)} KB</div>
                   </div>
 
                   <button
@@ -224,13 +246,14 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                       gap: '8px',
-                      padding: '10px',
+                      padding: '11px',
                       borderRadius: 'var(--radius-md)',
                       backgroundColor: 'var(--accent-color)',
                       color: '#ffffff',
                       border: 'none',
                       fontWeight: 600,
-                      cursor: 'pointer'
+                      cursor: 'pointer',
+                      boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
                     }}
                   >
                     <Download size={16} />
@@ -241,18 +264,18 @@ export const BackupModal: React.FC<BackupModalProps> = ({
             </>
           ) : (
             <>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
                 Paste the contents of a previously exported Tabsed backup JSON file below:
               </div>
 
               <textarea
                 value={restoreText}
                 onChange={(e) => setRestoreText(e.target.value)}
-                placeholder='[{"id": "item_1", "title": "React Docs", ...}]'
+                placeholder='{"manifest": {...}, "items": [...]}'
                 rows={8}
                 style={{
                   width: '100%',
-                  padding: '10px',
+                  padding: '12px',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border-subtle)',
                   backgroundColor: 'var(--bg-input)',
@@ -264,14 +287,14 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               />
 
               {restoreError && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger-color)', fontSize: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--danger-color)', fontSize: '12px', fontWeight: 500 }}>
                   <AlertTriangle size={15} />
                   <span>{restoreError}</span>
                 </div>
               )}
 
               {restoreSuccess && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--success-color)', fontSize: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--success-color)', fontSize: '12px', fontWeight: 600 }}>
                   <CheckCircle2 size={15} />
                   <span>{restoreSuccess}</span>
                 </div>
@@ -284,17 +307,18 @@ export const BackupModal: React.FC<BackupModalProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: '8px',
-                  padding: '10px',
+                  padding: '11px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--accent-color)',
                   color: '#ffffff',
                   border: 'none',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
                 }}
               >
                 <Upload size={16} />
-                <span>Verify and Restore Items</span>
+                <span>Verify SHA-256 and Restore Items</span>
               </button>
             </>
           )}
@@ -306,14 +330,14 @@ export const BackupModal: React.FC<BackupModalProps> = ({
           justifyContent: 'flex-end',
           padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-surface)'
         }}>
           <button
             onClick={onClose}
             style={{
-              padding: '6px 14px',
+              padding: '8px 18px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--bg-surface)',
+              backgroundColor: 'var(--bg-input)',
               border: '1px solid var(--border-subtle)',
               color: 'var(--text-primary)',
               fontWeight: 600,

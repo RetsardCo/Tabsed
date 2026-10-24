@@ -54,4 +54,28 @@ describe('Backup and Integrity (PRD Epic 2.5)', () => {
     expect(restored[0].id).toBe('tab_1');
     expect(restored[0].title).toBe('Tauri 2.0 Guide');
   });
+
+  it('handles empty vault backup generation and verification', () => {
+    const emptyBackup = BackupManager.createBackup([]);
+    expect(emptyBackup.manifest.itemCount).toBe(0);
+    expect(BackupManager.verifyBackup(emptyBackup.backupBlobJson, emptyBackup.manifest)).toBe(true);
+    const restored = BackupManager.restoreFromBackup(emptyBackup.backupBlobJson, emptyBackup.manifest);
+    expect(restored).toEqual([]);
+  });
+
+  it('verifies structured backup bundle and rejects modified item content', () => {
+    const backup = BackupManager.createBackup(sampleItems);
+    const bundle = {
+      manifest: backup.manifest,
+      items: JSON.parse(backup.backupBlobJson)
+    };
+
+    const validJson = JSON.stringify(bundle.items, null, 2);
+    expect(BackupManager.verifyBackup(validJson, bundle.manifest)).toBe(true);
+
+    // Tamper with one property in the item
+    const tamperedItems = [{ ...bundle.items[0], title: 'Tampered Title' }];
+    const tamperedJson = JSON.stringify(tamperedItems, null, 2);
+    expect(BackupManager.verifyBackup(tamperedJson, bundle.manifest)).toBe(false);
+  });
 });

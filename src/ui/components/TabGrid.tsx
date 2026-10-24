@@ -4,11 +4,11 @@ import {
   Trash2,
   Globe,
   MoreHorizontal,
-  ExternalLink,
-  Layers,
-  RotateCcw
+  RotateCcw,
+  Layers
 } from 'lucide-react';
 import { SavedTabItem } from '../types';
+import { SmartFavicon } from './BrandIcons';
 
 interface TabGridProps {
   items: SavedTabItem[];
@@ -81,27 +81,27 @@ export const TabGrid: React.FC<TabGridProps> = ({
   const getTagColors = (tag: string) => {
     const t = tag.toLowerCase();
     if (t.includes('plan') || t.includes('work') || t.includes('dev')) {
-      return { bg: 'rgba(37, 99, 235, 0.12)', text: '#2563eb' };
+      return { bg: 'rgba(37, 99, 235, 0.14)', text: '#2563eb' };
     }
     if (t.includes('game') || t.includes('engine')) {
-      return { bg: 'rgba(124, 58, 237, 0.12)', text: '#7c3aed' };
+      return { bg: 'rgba(124, 58, 237, 0.14)', text: '#7c3aed' };
     }
     if (t.includes('note') || t.includes('writ')) {
-      return { bg: 'rgba(244, 63, 94, 0.12)', text: '#e11d48' };
+      return { bg: 'rgba(244, 63, 94, 0.14)', text: '#e11d48' };
     }
     if (t.includes('ai') || t.includes('learn')) {
-      return { bg: 'rgba(14, 165, 233, 0.12)', text: '#0284c7' };
+      return { bg: 'rgba(14, 165, 233, 0.14)', text: '#0284c7' };
     }
     if (t.includes('design') || t.includes('creative') || t.includes('insp')) {
-      return { bg: 'rgba(79, 70, 229, 0.12)', text: '#4f46e5' };
+      return { bg: 'rgba(79, 70, 229, 0.14)', text: '#4f46e5' };
     }
     if (t.includes('music') || t.includes('entertain') || t.includes('video')) {
-      return { bg: 'rgba(245, 158, 11, 0.14)', text: '#d97706' };
+      return { bg: 'rgba(245, 158, 11, 0.16)', text: '#d97706' };
     }
     if (t.includes('shop') || t.includes('hard') || t.includes('tool')) {
-      return { bg: 'rgba(16, 185, 129, 0.12)', text: '#059669' };
+      return { bg: 'rgba(16, 185, 129, 0.14)', text: '#059669' };
     }
-    return { bg: 'rgba(100, 116, 139, 0.12)', text: 'var(--text-secondary)' };
+    return { bg: 'rgba(148, 163, 184, 0.16)', text: 'var(--text-secondary)' };
   };
 
   return (
@@ -128,7 +128,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
               flexDirection: 'column',
               cursor: 'pointer',
               transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: isSelected ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+              boxShadow: isSelected
+                ? 'var(--shadow-md), var(--card-highlight)'
+                : 'var(--shadow-sm), var(--card-highlight)',
               position: 'relative'
             }}
           >
@@ -162,7 +164,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 </div>
               )}
 
-              {/* Favicon Overlay Badge (Top Left) */}
+              {/* Favicon Overlay Badge (Top Left - exact white pill matching mockup) */}
               <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -172,24 +174,19 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 borderRadius: '7px',
                 backgroundColor: '#ffffff',
                 border: '1px solid rgba(0, 0, 0, 0.1)',
-                boxShadow: '0 2px 5px rgba(0, 0, 0, 0.15)',
+                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                overflow: 'hidden'
+                overflow: 'hidden',
+                zIndex: 2
               }}>
-                {item.faviconUrl ? (
-                  <img
-                    src={item.faviconUrl}
-                    alt=""
-                    style={{ width: '16px', height: '16px', objectFit: 'contain' }}
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
-                ) : (
-                  <Globe size={16} color="#475569" />
-                )}
+                <SmartFavicon
+                  domain={item.domain}
+                  url={item.url}
+                  faviconUrl={item.faviconUrl}
+                  size={16}
+                />
               </div>
 
               {/* Favorite Star Button (Top Right) */}
@@ -204,9 +201,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
                   top: '10px',
                   right: '10px',
                   border: 'none',
-                  backgroundColor: 'rgba(255, 255, 255, 0.85)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.92)',
                   backdropFilter: 'blur(8px)',
-                  boxShadow: '0 2px 5px rgba(0, 0, 0, 0.12)',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
                   borderRadius: '50%',
                   width: '28px',
                   height: '28px',
@@ -215,7 +212,8 @@ export const TabGrid: React.FC<TabGridProps> = ({
                   justifyContent: 'center',
                   cursor: 'pointer',
                   color: item.isFavorite ? '#f59e0b' : '#64748b',
-                  transition: 'transform 0.15s ease'
+                  transition: 'transform 0.15s ease',
+                  zIndex: 2
                 }}
               >
                 <Star size={15} fill={item.isFavorite ? '#f59e0b' : 'none'} strokeWidth={item.isFavorite ? 2 : 2.2} />
@@ -279,7 +277,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                     fontWeight: 600,
                     padding: '3px 7px',
                     borderRadius: 'var(--radius-pill)',
-                    backgroundColor: 'rgba(100, 116, 139, 0.1)',
+                    backgroundColor: 'rgba(148, 163, 184, 0.15)',
                     color: 'var(--text-muted)'
                   }}>
                     +{item.tags.length - 3}
@@ -288,7 +286,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
               </div>
             </div>
 
-            {/* Card Footer */}
+            {/* Card Footer (Cleanly aligned to exact mockup layout) */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -299,41 +297,34 @@ export const TabGrid: React.FC<TabGridProps> = ({
               color: 'var(--text-muted)',
               backgroundColor: 'rgba(0, 0, 0, 0.01)'
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                {/* Author Avatar or Session Icon */}
-                <div style={{
-                  width: '20px',
-                  height: '20px',
-                  borderRadius: '50%',
-                  backgroundColor: 'var(--accent-light)',
-                  color: 'var(--accent-color)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  flexShrink: 0
-                }}>
-                  {item.authorAvatarUrl ? (
-                    <img src={item.authorAvatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                {/* Avatar Icon */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <div style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--accent-light)',
+                    color: 'var(--accent-color)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    overflow: 'hidden',
+                    flexShrink: 0
+                  }}>
                     <Layers size={11} />
-                  )}
+                  </div>
+                  <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
+                    {tabCount} tabs
+                  </span>
                 </div>
 
-                <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
-                  {tabCount} {tabCount === 1 ? 'tab' : 'tabs'}
-                </span>
+                <span style={{ color: 'var(--text-muted)' }}>{formatSize(item.archiveSizeBytes)}</span>
 
-                <span>•</span>
-
-                <span>{formatSize(item.archiveSizeBytes)}</span>
-
-                <span>•</span>
-
-                <span>{formatRelativeDate(item.savedAt)}</span>
+                <span style={{ color: 'var(--text-muted)' }}>{formatRelativeDate(item.savedAt)}</span>
               </div>
 
-              {/* Action Menu button */}
+              {/* Action Menu button (Matches mockup right menu) */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {isTrash ? (
                   <>
@@ -389,7 +380,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
                         cursor: 'pointer',
                         color: 'var(--text-muted)',
                         padding: '4px',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
                       }}
                     >
                       <Trash2 size={15} />
@@ -400,13 +393,16 @@ export const TabGrid: React.FC<TabGridProps> = ({
                         onSelectItem(item.id);
                       }}
                       title="Tab actions"
+                      aria-label="Tab actions"
                       style={{
                         border: 'none',
                         background: 'transparent',
                         cursor: 'pointer',
                         color: 'var(--text-muted)',
                         padding: '4px',
-                        borderRadius: '4px'
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center'
                       }}
                     >
                       <MoreHorizontal size={16} />

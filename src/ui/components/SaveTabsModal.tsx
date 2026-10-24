@@ -9,17 +9,23 @@ interface SaveTabsModalProps {
   onClose: () => void;
   collections: Collection[];
   onSaveCompleted: (newTabs: any[]) => void;
+  initialScope?: 'window' | 'tab' | 'manual';
 }
 
 export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   isOpen,
   onClose,
   collections,
-  onSaveCompleted
+  onSaveCompleted,
+  initialScope = 'window'
 }) => {
   if (!isOpen) return null;
 
-  const [scope, setScope] = useState<'window' | 'tab' | 'manual'>('window');
+  const [scope, setScope] = useState<'window' | 'tab' | 'manual'>(initialScope);
+
+  React.useEffect(() => {
+    if (initialScope) setScope(initialScope);
+  }, [initialScope, isOpen]);
   const [selectedCollectionId, setSelectedCollectionId] = useState(collections[0]?.id || 'inbox');
   const [captureThumbnails, setCaptureThumbnails] = useState(true);
   const [closeAfterSave, setCloseAfterSave] = useState(false);

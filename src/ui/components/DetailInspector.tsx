@@ -12,9 +12,11 @@ import {
   Check,
   Plus,
   Layers,
-  ChevronDown
+  ChevronDown,
+  User
 } from 'lucide-react';
 import { SavedTabItem, SessionTab } from '../types';
+import { SmartFavicon, EdgeIcon, ChromeIcon, FirefoxIcon } from './BrandIcons';
 
 interface DetailInspectorProps {
   item: SavedTabItem | null;
@@ -110,6 +112,28 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
     transition: 'all 0.15s ease'
   };
 
+  const renderBrowserBadge = () => {
+    if (item.browserFamily === 'Chrome') {
+      return (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <ChromeIcon size={14} /> Google Chrome
+        </span>
+      );
+    }
+    if (item.browserFamily === 'Firefox') {
+      return (
+        <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <FirefoxIcon size={14} /> Mozilla Firefox
+        </span>
+      );
+    }
+    return (
+      <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <EdgeIcon size={14} /> Microsoft Edge
+      </span>
+    );
+  };
+
   return (
     <aside style={{
       width: '360px',
@@ -122,7 +146,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
       overflowY: 'auto',
       zIndex: 10
     }}>
-      {/* Top Preview Image with close & star controls */}
+      {/* Top Preview Image with close & star controls (Mockup image 4) */}
       <div style={{
         position: 'relative',
         width: '100%',
@@ -158,7 +182,8 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           right: '12px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px'
+          gap: '8px',
+          zIndex: 3
         }}>
           {onToggleFavorite && (
             <button
@@ -168,7 +193,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                 width: '30px',
                 height: '30px',
                 borderRadius: '50%',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backgroundColor: 'rgba(255, 255, 255, 0.92)',
                 border: 'none',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                 display: 'flex',
@@ -189,7 +214,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
               width: '30px',
               height: '30px',
               borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backgroundColor: 'rgba(255, 255, 255, 0.92)',
               border: 'none',
               boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
               display: 'flex',
@@ -220,16 +245,13 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           </h2>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {item.faviconUrl ? (
-              <img src={item.faviconUrl} alt="" style={{ width: '16px', height: '16px', borderRadius: '4px' }} />
-            ) : (
-              <Globe size={16} color="var(--text-muted)" />
-            )}
+            <SmartFavicon domain={item.domain} url={item.url} faviconUrl={item.faviconUrl} size={16} />
             <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>
               {item.domain}
             </span>
           </div>
         </div>
+
         {/* Trash Status Banner if item is in trash */}
         {inTrash && (
           <div style={{
@@ -237,18 +259,18 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             alignItems: 'center',
             gap: '8px',
             padding: '10px 14px',
-            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+            backgroundColor: 'rgba(220, 38, 38, 0.12)',
             borderRadius: 'var(--radius-md)',
             fontSize: '12px',
             color: 'var(--danger-color)',
-            fontWeight: 500
+            fontWeight: 600
           }}>
             <Trash2 size={16} />
             <span>This tab is currently in the Trash.</span>
           </div>
         )}
 
-        {/* Big Blue "Open" Split Button */}
+        {/* Big Blue "Open" Split Button (Exact mockup element) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -294,7 +316,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           </button>
         </div>
 
-        {/* Dedicated Restore from Trash or Move to Trash actions */}
+        {/* 5 Quick Action Buttons (Aligned to Mockup: Open All, Restore, Edit, Move, More) */}
         {inTrash ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {onRestoreItem && (
@@ -332,7 +354,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                   justifyContent: 'center',
                   gap: '8px',
                   padding: '9px 14px',
-                  backgroundColor: 'rgba(220, 38, 38, 0.08)',
+                  backgroundColor: 'rgba(220, 38, 38, 0.1)',
                   color: 'var(--danger-color)',
                   border: '1px solid var(--danger-color)',
                   borderRadius: 'var(--radius-md)',
@@ -347,52 +369,64 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             )}
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Quick Action Icons Row */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <button onClick={() => onOpenLiveUrl(item.url)} style={quickActionBtnStyle} title="Open All">
-                <ExternalLink size={16} />
-                <span>Open All</span>
-              </button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {/* 1. Open All */}
+            <button
+              onClick={() => onOpenLiveUrl(item.url)}
+              style={quickActionBtnStyle}
+              title="Open All Tabs"
+            >
+              <ExternalLink size={15} />
+              <span>Open All</span>
+            </button>
 
-              <button onClick={() => onCheckAvailability(item.url)} style={quickActionBtnStyle} title="Check Reachability">
-                <RotateCcw size={16} />
-                <span>Check</span>
-              </button>
+            {/* 2. Restore */}
+            <button
+              onClick={() => onRestoreItem ? onRestoreItem(item.id) : onCheckAvailability(item.url)}
+              style={quickActionBtnStyle}
+              title="Restore / Batch"
+            >
+              <RotateCcw size={15} />
+              <span>Restore</span>
+            </button>
 
-              <button onClick={() => setIsEditingNotes(!isEditingNotes)} style={quickActionBtnStyle} title="Edit Notes">
-                <Edit3 size={16} />
-                <span>Edit</span>
-              </button>
+            {/* 3. Edit */}
+            <button
+              onClick={() => setIsEditingNotes(!isEditingNotes)}
+              style={quickActionBtnStyle}
+              title="Edit Notes"
+            >
+              <Edit3 size={15} />
+              <span>Edit</span>
+            </button>
 
-              <button
-                onClick={() => {
-                  const newTag = prompt('Add tag to tab:');
-                  if (newTag) onAddTag(item.id, newTag);
-                }}
-                style={quickActionBtnStyle}
-                title="Move / Tag"
-              >
-                <FolderPlus size={16} />
-                <span>Move</span>
-              </button>
+            {/* 4. Move */}
+            <button
+              onClick={() => {
+                const newTag = prompt('Add tag to tab:');
+                if (newTag) onAddTag(item.id, newTag);
+              }}
+              style={quickActionBtnStyle}
+              title="Move / Tag"
+            >
+              <FolderPlus size={15} />
+              <span>Move</span>
+            </button>
 
-              {onDeleteItem && (
-                <button
-                  onClick={() => onDeleteItem(item.id)}
-                  style={{ ...quickActionBtnStyle, color: 'var(--danger-color)' }}
-                  title="Move to Trash"
-                  aria-label="Move to Trash"
-                >
-                  <Trash2 size={16} />
-                  <span>Move to Trash</span>
-                </button>
-              )}
-            </div>
+            {/* 5. More */}
+            <button
+              onClick={() => onDeleteItem ? onDeleteItem(item.id) : null}
+              style={{ ...quickActionBtnStyle, color: 'var(--danger-color)' }}
+              title="Move to Trash"
+              aria-label="Move to Trash"
+            >
+              <Trash2 size={15} />
+              <span>Trash</span>
+            </button>
           </div>
         )}
 
-        {/* Section: Details Table */}
+        {/* Section: Details Table (Exact Mockup) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Details
@@ -429,14 +463,16 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--text-muted)' }}>Browser</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--accent-color)' }} />
-                {item.browserFamily}
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {renderBrowserBadge()}
               </span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span style={{ color: 'var(--text-muted)' }}>Profile</span>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{item.profileLabel || 'Default'}</span>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <User size={12} color="var(--text-muted)" />
+                {item.profileLabel || 'Default'}
+              </span>
             </div>
           </div>
         </div>
@@ -455,7 +491,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                   fontWeight: 600,
                   padding: '4px 10px',
                   borderRadius: 'var(--radius-pill)',
-                  backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                  backgroundColor: 'var(--accent-light)',
                   color: 'var(--accent-color)',
                   display: 'flex',
                   alignItems: 'center',
@@ -549,7 +585,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                 cursor: 'pointer',
                 color: 'var(--accent-color)',
                 fontSize: '12px',
-                fontWeight: 500,
+                fontWeight: 600,
                 display: 'flex',
                 alignItems: 'center',
                 gap: '4px'
@@ -595,7 +631,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           )}
         </div>
 
-        {/* Section: Tabs in this Session (Aligned to exact mockup) */}
+        {/* Section: Tabs in this Session (Exact mockup layout) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -632,7 +668,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: '4px',
+            gap: '2px',
             backgroundColor: 'var(--bg-app)',
             borderRadius: 'var(--radius-md)',
             border: '1px solid var(--border-subtle)',
@@ -653,11 +689,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                  {subTab.faviconUrl ? (
-                    <img src={subTab.faviconUrl} alt="" style={{ width: '14px', height: '14px', borderRadius: '3px', flexShrink: 0 }} />
-                  ) : (
-                    <Globe size={14} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                  )}
+                  <SmartFavicon domain={subTab.domain} url={subTab.url} faviconUrl={subTab.faviconUrl} size={15} />
                   <div style={{ overflow: 'hidden' }}>
                     <div style={{
                       fontSize: '12px',
@@ -686,7 +718,9 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                     background: 'transparent',
                     cursor: 'pointer',
                     color: 'var(--text-muted)',
-                    padding: '2px'
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center'
                   }}
                 >
                   <MoreHorizontal size={14} />

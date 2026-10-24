@@ -14,7 +14,7 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
 
   const [batchSize, setBatchSize] = useState<number>(3);
   const [delayMs, setDelayMs] = useState<number>(400);
-  const [targetBrowser, setTargetBrowser] = useState<string>('Microsoft Edge (Default)');
+  const [targetBrowser, setTargetBrowser] = useState<string>('Microsoft Edge (Default Profile)');
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
 
@@ -112,15 +112,16 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
       left: 0,
       right: 0,
       bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(4px)',
+      backgroundColor: 'rgba(0, 0, 0, 0.65)',
+      backdropFilter: 'blur(8px)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      zIndex: 1500
+      zIndex: 1500,
+      padding: '20px'
     }}>
       <div style={{
-        width: '560px',
+        width: '580px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',
@@ -135,22 +136,47 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '16px 20px',
+          padding: '18px 22px',
           borderBottom: '1px solid var(--border-subtle)'
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Clock size={18} color="var(--accent-color)" />
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Bounded Session Restore Queue</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '8px',
+              backgroundColor: 'var(--accent-light)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--accent-color)'
+            }}>
+              <Clock size={18} />
+            </div>
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+                Bounded Session Restore Queue
+              </h2>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Rate-limited tab restore without browser freezing (PRD Epic 3.1)
+              </span>
+            </div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
             <X size={18} />
           </button>
         </div>
 
         {/* Controls */}
-        <div style={{ padding: '16px 20px', backgroundColor: 'var(--bg-app)', borderBottom: '1px solid var(--border-subtle)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+        <div style={{
+          padding: '18px 22px',
+          backgroundColor: 'var(--bg-app)',
+          borderBottom: '1px solid var(--border-subtle)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '14px'
+        }}>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
               Target Browser &amp; Profile:
             </label>
             <select
@@ -158,22 +184,26 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
               onChange={e => setTargetBrowser(e.target.value)}
               style={{
                 width: '100%',
-                padding: '6px 10px',
+                padding: '8px 12px',
                 borderRadius: 'var(--radius-md)',
                 border: '1px solid var(--border-subtle)',
-                backgroundColor: 'var(--bg-surface)',
-                fontSize: '12px'
+                backgroundColor: 'var(--bg-input)',
+                color: 'var(--text-primary)',
+                fontSize: '12px',
+                outline: 'none',
+                cursor: 'pointer'
               }}
             >
               <option>Microsoft Edge (Default Profile)</option>
               <option>Google Chrome (Default Profile)</option>
+              <option>Mozilla Firefox (default-release)</option>
             </select>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                Batch Size: {batchSize} tabs
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Batch Size: <span style={{ color: 'var(--accent-color)' }}>{batchSize} tabs</span>
               </label>
               <input
                 type="range"
@@ -181,12 +211,12 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                 max={10}
                 value={batchSize}
                 onChange={e => setBatchSize(Number(e.target.value))}
-                style={{ width: '100%' }}
+                style={{ width: '100%', cursor: 'pointer' }}
               />
             </div>
             <div>
-              <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '2px' }}>
-                Delay Between Batches: {delayMs} ms
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                Delay Between Batches: <span style={{ color: 'var(--accent-color)' }}>{delayMs} ms</span>
               </label>
               <input
                 type="range"
@@ -195,13 +225,13 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                 step={50}
                 value={delayMs}
                 onChange={e => setDelayMs(Number(e.target.value))}
-                style={{ width: '100%' }}
+                style={{ width: '100%', cursor: 'pointer' }}
               />
             </div>
           </div>
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+          <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
             <button
               onClick={handleStartQueue}
               disabled={isRunning && !isPaused}
@@ -209,14 +239,15 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '6px 14px',
+                padding: '8px 16px',
                 borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--accent-color)',
                 color: '#ffffff',
                 border: 'none',
                 fontSize: '12px',
                 cursor: 'pointer',
-                fontWeight: 500
+                fontWeight: 600,
+                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
               }}
             >
               <Play size={14} />
@@ -230,11 +261,13 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 14px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
                   fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
@@ -250,12 +283,13 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 14px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border-subtle)',
                   color: 'var(--danger-color)',
                   fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
@@ -271,12 +305,13 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                   display: 'flex',
                   alignItems: 'center',
                   gap: '6px',
-                  padding: '6px 12px',
+                  padding: '8px 14px',
                   borderRadius: 'var(--radius-md)',
                   backgroundColor: 'var(--bg-surface)',
                   border: '1px solid var(--border-subtle)',
                   color: 'var(--text-primary)',
                   fontSize: '12px',
+                  fontWeight: 600,
                   cursor: 'pointer'
                 }}
               >
@@ -288,8 +323,8 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
         </div>
 
         {/* Item List */}
-        <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)' }}>
+        <div style={{ padding: '18px 22px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Restoration Queue ({restoreItems.length} tabs)
           </div>
 
@@ -300,30 +335,31 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '8px 12px',
+                padding: '10px 14px',
                 borderRadius: 'var(--radius-sm)',
-                backgroundColor: 'var(--bg-app)',
-                fontSize: '11px',
-                border: '1px solid var(--border-subtle)'
+                backgroundColor: 'var(--bg-card)',
+                fontSize: '12px',
+                border: '1px solid var(--border-card)'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0, flex: 1 }}>
-                <span style={{ color: 'var(--text-muted)' }}>#{idx + 1}</span>
-                <span style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>#{idx + 1}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {item.title}
                 </span>
               </div>
 
               <div style={{
-                padding: '2px 8px',
-                borderRadius: '4px',
-                fontWeight: 600,
+                padding: '3px 9px',
+                borderRadius: 'var(--radius-pill)',
+                fontWeight: 700,
                 fontSize: '10px',
+                letterSpacing: '0.4px',
                 textTransform: 'uppercase',
-                backgroundColor: item.status === 'opened' ? 'rgba(22, 163, 74, 0.15)' :
-                                 item.status === 'opening' ? 'rgba(37, 99, 235, 0.15)' :
-                                 item.status === 'failed' ? 'rgba(220, 38, 38, 0.15)' :
-                                 'var(--bg-surface)',
+                backgroundColor: item.status === 'opened' ? 'rgba(22, 163, 74, 0.18)' :
+                                 item.status === 'opening' ? 'rgba(37, 99, 235, 0.18)' :
+                                 item.status === 'failed' ? 'rgba(220, 38, 38, 0.18)' :
+                                 'rgba(148, 163, 184, 0.16)',
                 color: item.status === 'opened' ? 'var(--success-color)' :
                        item.status === 'opening' ? 'var(--accent-color)' :
                        item.status === 'failed' ? 'var(--danger-color)' :
@@ -339,20 +375,22 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
         <div style={{
           display: 'flex',
           justifyContent: 'flex-end',
-          padding: '12px 20px',
+          padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-surface)'
         }}>
           <button
             onClick={onClose}
             style={{
-              padding: '6px 14px',
+              padding: '8px 18px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',
               border: 'none',
-              fontSize: '12px',
-              cursor: 'pointer'
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
             Close

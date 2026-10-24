@@ -62,7 +62,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
       padding: '20px'
     }}>
       <div style={{
-        width: '580px',
+        width: '600px',
         maxHeight: '90vh',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',
@@ -98,7 +98,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
                 Storage Explorer &amp; Transparency
               </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                Exact vault accounting and disk honesty
+                Exact vault accounting and disk honesty (PRD Epic 2.1)
               </span>
             </div>
           </div>
@@ -130,7 +130,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '4px'
+              marginBottom: '6px'
             }}>
               <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.6px', textTransform: 'uppercase' }}>
                 EXACT VAULT-OWNED STORAGE (PRD FR-090)
@@ -140,7 +140,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               </span>
             </div>
 
-            <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+            <div style={{ fontSize: '30px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
               {formatBytes(exactVault)}
             </div>
 
@@ -161,51 +161,53 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               }} />
             </div>
 
-            {/* Detailed Storage Grid */}
+            {/* Detailed Storage Grid - All 7 Categories from PRD Epic 2.1 */}
             <div style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(3, 1fr)',
-              gap: '12px',
-              fontSize: '11px',
-              backgroundColor: 'var(--bg-app)',
-              padding: '12px',
-              borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-subtle)'
+              gap: '10px',
+              fontSize: '11px'
             }}>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Thumbnails</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Thumbnails</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.thumbnailsBytes || 4200000)}
                 </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Database</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Database</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.databaseBytes || 2048000)}
                 </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Archives</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Archives</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.archivesBytes || 1200000)}
                 </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Trash</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Trash</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.trashBytes || 320000)}
                 </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Backups</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Backups</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.backupsBytes || 0)}
                 </div>
               </div>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Temporary</span>
-                <div style={{ fontWeight: 700, color: 'var(--text-primary)', fontSize: '13px' }}>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Temporary</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
                   {formatBytes(storageReport.temporaryBytes || 72000)}
+                </div>
+              </div>
+              <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)', gridColumn: 'span 3' }}>
+                <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Vault Manifest &amp; Metadata</span>
+                <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
+                  {formatBytes(storageReport.manifestBytes || 2048)}
                 </div>
               </div>
             </div>
@@ -225,22 +227,22 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               Browser Profile Storage (External Estimate)
             </div>
             <p style={{ marginBottom: '10px' }}>
-              Microsoft Edge User Profile: <strong style={{ color: 'var(--text-primary)' }}>~1.42 GB</strong> (on disk)<br />
-              Google Chrome Default Profile: <strong style={{ color: 'var(--text-primary)' }}>~850 MB</strong> (on disk)<br />
-              Mozilla Firefox Release Profile: <strong style={{ color: 'var(--text-primary)' }}>~1.10 GB</strong> (on disk)
+              Microsoft Edge User Profile: <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>~1.42 GB</strong> (on disk)<br />
+              Google Chrome Default Profile: <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>~850 MB</strong> (on disk)<br />
+              Mozilla Firefox Release Profile: <strong style={{ color: 'var(--text-primary)', fontWeight: 700 }}>~1.10 GB</strong> (on disk)
             </p>
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '8px',
-              backgroundColor: 'var(--bg-app)',
-              padding: '10px 12px',
+              gap: '10px',
+              backgroundColor: 'var(--accent-light)',
+              padding: '10px 14px',
               borderRadius: 'var(--radius-sm)',
-              border: '1px solid var(--border-subtle)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
               fontSize: '11px',
-              color: 'var(--text-muted)'
+              color: 'var(--text-secondary)'
             }}>
-              <ShieldCheck size={16} color="var(--accent-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
+              <ShieldCheck size={18} color="var(--accent-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
               <span>
                 <strong style={{ color: 'var(--text-primary)' }}>Storage Honesty Rule:</strong> These measurements reflect the browser's profile directory on your disk. Tabsed never claims to measure or attribute cache sizes to individual tabs, which browser engines do not expose.
               </span>
@@ -270,14 +272,15 @@ export const StorageModal: React.FC<StorageModalProps> = ({
                 onClick={handleRunCleanupPreview}
                 disabled={dryRunRunning}
                 style={{
-                  padding: '7px 14px',
+                  padding: '8px 16px',
                   borderRadius: 'var(--radius-md)',
-                  backgroundColor: 'var(--bg-input)',
-                  border: '1px solid var(--border-subtle)',
-                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--accent-color)',
+                  color: '#ffffff',
+                  border: 'none',
                   fontSize: '12px',
                   fontWeight: 600,
-                  cursor: 'pointer'
+                  cursor: dryRunRunning ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
                 }}
               >
                 {dryRunRunning ? 'Scanning Candidates...' : 'Scan Candidates'}
@@ -317,7 +320,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
           <button
             onClick={onClose}
             style={{
-              padding: '8px 18px',
+              padding: '8px 20px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',

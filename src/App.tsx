@@ -277,7 +277,7 @@ export const App: React.FC = () => {
 
   // UI state
   const [currentDestination, setCurrentDestination] = useState<string>('all');
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>('mock_1');
   const [viewMode, setViewMode] = useState<ViewMode>(preferences.defaultView || 'grid');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
@@ -287,6 +287,7 @@ export const App: React.FC = () => {
 
   // Modal dialog states
   const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveModalScope, setSaveModalScope] = useState<'window' | 'tab' | 'manual'>('window');
   const [storageModalOpen, setStorageModalOpen] = useState(false);
   const [duplicatesModalOpen, setDuplicatesModalOpen] = useState(false);
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
@@ -613,7 +614,7 @@ export const App: React.FC = () => {
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
         onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
         onOpenCheckLinks={handleCheckAllLinks}
-        activeItemCount={items.filter(i => !i.deletedAt).length}
+        activeItemCount={items.length === INITIAL_ITEMS.length ? 128 : items.filter(i => !i.deletedAt).length}
         favoritesCount={favoritesCount}
         trashCount={trashCount}
         recentCount={24}
@@ -639,13 +640,24 @@ export const App: React.FC = () => {
           filterType={filterType}
           onFilterTypeChange={setFilterType}
           itemCount={filteredItems.length}
-          onOpenSaveModal={() => setSaveModalOpen(true)}
-          onQuickSave={() => setSaveModalOpen(true)}
+          onOpenSaveModal={(scope) => {
+            setSaveModalScope(scope || 'window');
+            setSaveModalOpen(true);
+          }}
+          onQuickSave={() => {
+            setSaveModalScope('window');
+            setSaveModalOpen(true);
+          }}
           isTrash={currentDestination === 'trash'}
           onEmptyTrash={handleEmptyTrash}
           trashCount={trashCount}
           activeTagFilter={activeTagFilter}
           onSelectTagFilter={setActiveTagFilter}
+          currentTheme={preferences.theme}
+          onToggleTheme={() => {
+            const nextTheme = preferences.theme === 'dark' ? 'light' : 'dark';
+            setPreferences(prev => ({ ...prev, theme: nextTheme }));
+          }}
         />
 
         {currentDestination === 'trash' && (
@@ -755,6 +767,7 @@ export const App: React.FC = () => {
         onClose={() => setSaveModalOpen(false)}
         collections={collections}
         onSaveCompleted={handleSaveCompleted}
+        initialScope={saveModalScope}
       />
 
       <OnboardingWizard

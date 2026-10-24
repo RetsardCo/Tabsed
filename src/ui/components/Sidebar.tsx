@@ -17,6 +17,7 @@ import {
   RotateCcw
 } from 'lucide-react';
 import { Collection } from '../types';
+import { EdgeIcon, ChromeIcon, FirefoxIcon } from './BrandIcons';
 
 interface SidebarProps {
   currentDestination: string;
@@ -88,12 +89,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     color: isSelected ? 'var(--accent-color)' : 'var(--text-secondary)',
     backgroundColor: isSelected ? 'var(--accent-light)' : 'transparent',
     cursor: 'pointer',
-    border: isSelected ? '1px solid rgba(37, 99, 235, 0.15)' : '1px solid transparent',
+    border: isSelected ? '1px solid var(--accent-color)' : '1px solid transparent',
     width: '100%',
     textAlign: 'left' as const,
     transition: 'all 0.15s ease',
     textDecoration: 'none',
-    boxShadow: isSelected ? '0 1px 2px rgba(0,0,0,0.03)' : 'none'
+    boxShadow: isSelected ? '0 1px 3px rgba(0,0,0,0.06)' : 'none'
   });
 
   const sectionHeaderStyle = {
@@ -114,7 +115,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     color: 'var(--text-muted)',
     padding: '1px 6px',
     borderRadius: '10px',
-    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+    backgroundColor: 'rgba(148, 163, 184, 0.14)'
   };
 
   return (
@@ -311,10 +312,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           style={navItemStyle(currentDestination === 'browser_edge')}
           title="Microsoft Edge"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-            <path d="M21.94 13.11c-.26-1.55-1.2-3.15-2.7-4.11-1.39-.89-3.08-1.2-4.73-1.01.27-.47.63-.88 1.05-1.22 1.48-1.18 3.51-1.3 5.09-.43l.86-.96C19.67 4.15 17.06 4 15.17 5.08c-.76.43-1.42 1.05-1.92 1.8-.75-.12-1.52-.15-2.28-.08-3.4.31-6.18 2.5-7.25 5.75-.41 1.25-.51 2.6-.28 3.91.43 2.45 2.11 4.54 4.47 5.56 2.37 1.02 5.2.78 7.37-.62 2.76-1.78 4.29-4.83 4.29-8.08 0-.07 0-.14-.01-.21h.38z" fill="#0078D7"/>
-            <path d="M12.44 19.8c-3.13 0-5.78-2.03-6.66-4.9-.22-.72-.31-1.47-.28-2.22.46-1.1 1.34-1.97 2.43-2.45 1.09-.48 2.34-.52 3.52-.16 2.05.62 3.58 2.27 4.04 4.34.07.31.11.63.11.95 0 2.45-1.41 4.44-3.16 4.44z" fill="#00BCF2"/>
-          </svg>
+          <EdgeIcon size={17} />
           {!isCollapsed && (
             <span style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Microsoft Edge</span>
@@ -328,13 +326,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           style={navItemStyle(currentDestination === 'browser_chrome')}
           title="Google Chrome"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="#EA4335"/>
-            <circle cx="12" cy="12" r="5" fill="#FFFFFF"/>
-            <circle cx="12" cy="12" r="4" fill="#4285F4"/>
-            <path d="M12 2A10 10 0 0 1 21.6 8.5H12V2z" fill="#34A853"/>
-            <path d="M2.4 15.5A10 10 0 0 1 2 12c0-3.3 1.6-6.2 4.1-8L10 10.5l-7.6 5z" fill="#FBBC05"/>
-          </svg>
+          <ChromeIcon size={17} />
           {!isCollapsed && (
             <span style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Google Chrome</span>
@@ -348,11 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           style={navItemStyle(currentDestination === 'browser_firefox')}
           title="Firefox"
         >
-          <svg width="17" height="17" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" fill="#FF7139"/>
-            <path d="M12 2a10 10 0 0 0-7.8 16.3A8 8 0 0 1 12 7c2 0 3.7.8 5 2l1.5-1.5A10 10 0 0 0 12 2z" fill="#FF9400"/>
-            <circle cx="12" cy="12" r="5" fill="#0060DF"/>
-          </svg>
+          <FirefoxIcon size={17} />
           {!isCollapsed && (
             <span style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Firefox</span>
@@ -374,7 +362,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              fontWeight: 500,
+              fontWeight: 600,
               marginTop: '2px'
             }}
           >
@@ -453,7 +441,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <div style={{
           padding: '14px 16px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'rgba(0, 0, 0, 0.01)'
+          backgroundColor: 'rgba(0, 0, 0, 0.02)'
         }}>
           <div style={{
             display: 'flex',

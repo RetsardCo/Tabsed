@@ -1,7 +1,8 @@
 :root {
-  /* Default Light Theme - High Contrast & Mica Aesthetic */
+  /* Default Light Theme - High Contrast & Mica Aesthetic (Mockup Image 4) */
   --bg-app: #f0f4f9;
-  --bg-sidebar: rgba(255, 255, 255, 0.8);
+  --bg-app-ambient: radial-gradient(circle at 20% 20%, rgba(219, 234, 254, 0.7), transparent 45%), radial-gradient(circle at 80% 80%, rgba(243, 232, 255, 0.5), transparent 45%), #f0f4f9;
+  --bg-sidebar: rgba(255, 255, 255, 0.82);
   --bg-card: #ffffff;
   --bg-card-hover: #f8fafc;
   --bg-card-selected: #edf5ff;
@@ -10,7 +11,7 @@
   --bg-input: #ffffff;
   
   --border-subtle: #e2e8f0;
-  --border-card: rgba(226, 232, 240, 0.9);
+  --border-card: rgba(226, 232, 240, 0.95);
   --border-focus: #2563eb;
   
   --text-primary: #0f172a;
@@ -37,45 +38,51 @@
   --shadow-md: 0 4px 10px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
   --shadow-lg: 0 12px 24px -3px rgba(0, 0, 0, 0.08), 0 4px 8px -2px rgba(0, 0, 0, 0.03);
   
+  --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.8);
   --backdrop-filter: blur(20px);
   --density-multiplier: 1;
 }
 
-/* Dark Theme - High Contrast Crisp Glass (PRD Section 10 & User Reference) */
+/* Dark Theme - High Contrast Crisp Glass (User Reference Image 3) */
 [data-theme='dark'] {
   --bg-app: #0b0f19;
-  --bg-sidebar: rgba(14, 20, 34, 0.85);
+  --bg-app-ambient: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.12), transparent 45%), radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.09), transparent 45%), #0b0f19;
+  --bg-sidebar: rgba(15, 22, 38, 0.88);
   --bg-card: #161c2d;
-  --bg-card-hover: #1c2438;
+  --bg-card-hover: #1e263d;
   --bg-card-selected: #1e2e4e;
-  --bg-surface: #141928;
-  --bg-surface-elevated: #1a2235;
-  --bg-input: #0f1422;
+  --bg-surface: #141a2b;
+  --bg-surface-elevated: #1a2338;
+  --bg-input: #101626;
   
-  --border-subtle: rgba(255, 255, 255, 0.12);
-  --border-card: rgba(255, 255, 255, 0.12);
+  --border-subtle: rgba(255, 255, 255, 0.14);
+  --border-card: rgba(255, 255, 255, 0.14);
   --border-focus: #3b82f6;
   
   --text-primary: #ffffff;
-  --text-secondary: #cbd5e1;
+  --text-secondary: #e2e8f0;
   --text-muted: #94a3b8;
   
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
   --accent-light: rgba(59, 130, 246, 0.2);
   
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 14px -1px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 14px 28px -4px rgba(0, 0, 0, 0.6);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 4px 16px -1px rgba(0, 0, 0, 0.55);
+  --shadow-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.65);
+  
+  --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 /* Solid / Reduced Transparency Fallback (PRD FR-133) */
 [data-mica='disabled'] {
   --bg-sidebar: #f8fafc;
+  --bg-app-ambient: var(--bg-app);
   --backdrop-filter: none;
 }
 [data-theme='dark'][data-mica='disabled'] {
   --bg-sidebar: #0f172a;
+  --bg-app-ambient: var(--bg-app);
 }
 
 /* Density Settings (PRD FR-134) */
@@ -94,6 +101,7 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI Variable Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-app-ambient);
   background-color: var(--bg-app);
   color: var(--text-primary);
   line-height: 1.5;
@@ -106,6 +114,21 @@ body {
 
 button, input, select, textarea {
   font-family: inherit;
+  color: var(--text-primary);
+}
+
+input, select, textarea {
+  background-color: var(--bg-input);
+  color: var(--text-primary);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
+
+select option {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 :focus-visible {
