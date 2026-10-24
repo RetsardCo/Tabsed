@@ -165,6 +165,29 @@ export class PrivacyManager {
   }
 
   /**
+   * Redacts sensitive authentication tokens, passwords, and secret query parameters from URLs (PRD Section 12.2)
+   */
+  public static sanitizeUrlForLogs(rawUrl: string): string {
+    if (!rawUrl || typeof rawUrl !== 'string') return rawUrl || '';
+    try {
+      const parsed = new URL(rawUrl);
+      const sensitiveParams = [
+        'token', 'access_token', 'api_key', 'apikey', 'key',
+        'secret', 'auth', 'password', 'pwd', 'session', 'session_id', 'code'
+      ];
+
+      for (const param of sensitiveParams) {
+        if (parsed.searchParams.has(param)) {
+          parsed.searchParams.set(param, '[REDACTED]');
+        }
+      }
+      return parsed.toString();
+    } catch {
+      return rawUrl;
+    }
+  }
+
+  /**
    * Enforces private tab opt-in policy (PRD FR-121 & FR-122)
    */
   public static validatePrivateTabCapture(isPrivate: boolean, config: PrivateVaultConfig = DEFAULT_PRIVATE_VAULT_CONFIG): boolean {

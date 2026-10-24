@@ -355,7 +355,8 @@ export const App: React.FC = () => {
           settingsModalOpen ||
           helpModalOpen ||
           archiveSearchModalOpen ||
-          backupModalOpen
+          backupModalOpen ||
+          portableVaultModalOpen
         ) {
           setSaveModalOpen(false);
           setStorageModalOpen(false);
@@ -365,6 +366,7 @@ export const App: React.FC = () => {
           setHelpModalOpen(false);
           setArchiveSearchModalOpen(false);
           setBackupModalOpen(false);
+          setPortableVaultModalOpen(false);
           return;
         }
         setSelectedItemId(null);
@@ -381,7 +383,8 @@ export const App: React.FC = () => {
     settingsModalOpen,
     helpModalOpen,
     archiveSearchModalOpen,
-    backupModalOpen
+    backupModalOpen,
+    portableVaultModalOpen
   ]);
 
   // Filtered & Sorted items

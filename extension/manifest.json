@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "Tabsed - Tab Saver & Restorer",
   "version": "1.0.0",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnei2JQMPp+R0zKScR8YgI3L78ZB6k37tOW3/3Ig5+N4NKpaQQogeeSyG21WB3ocKHBFQa/Xq6fPvPuKOmVojuuHpnCYdJOCtTSZhIsDITr+LMPiC5bH2d3j647Jg349ANGInLkry/efCQEFpVY4qlqT2ry/KWi3gJ/8uAYKPoFcuBT4oQNtbnXGnbg4+/LjUcG/99giptLDPeMBY2tNoEsYhc3XjQK8FAPq98XY1fv0OZ3jDLHf36HqwX+81/lgUFaOXfO3mB/bssg7CgIynGnebv07EusYH5AKoST+uz1C+n8QvYLBPpHGebPeAX8NPOdkY5KX6Lkn8hF91kGwb+wIDAQAB",
   "description": "Save tabs with context, thumbnails, and sessions into your private local Tabsed vault.",
   "icons": {
     "16": "icons/icon16.png",

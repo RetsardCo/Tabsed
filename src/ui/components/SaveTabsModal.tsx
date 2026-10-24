@@ -159,7 +159,11 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
       justifyContent: 'center',
       zIndex: 1000
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="save-tabs-modal-title"
+        style={{
         width: '460px',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',

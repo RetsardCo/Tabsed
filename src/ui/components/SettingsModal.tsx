@@ -89,7 +89,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       justifyContent: 'center',
       zIndex: 1500
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="settings-modal-title"
+        style={{
         width: '640px',
         maxHeight: '88vh',
         backgroundColor: 'var(--bg-surface)',

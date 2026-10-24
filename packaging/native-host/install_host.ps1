@@ -1,5 +1,6 @@
-# Tabsed Native Messaging Host Installer for Windows (PowerShell)
-# Registers host in HKCU for Google Chrome, Microsoft Edge, and Mozilla Firefox
+param(
+    [string]$CustomExtensionId
+)
 
 $ErrorActionPreference = "Stop"
 
@@ -14,21 +15,20 @@ Write-Host "============================================================" -Foreg
 Write-Host "Host Directory: $ScriptDir"
 Write-Host "Host Executable: $HostBatPath"
 
-# Ensure host.bat has absolute path in manifests
-$escapedBat = $HostBatPath.Replace('\', '\\')
-
-if (Test-Path $ChromiumManifestPath) {
-    $chromiumJson = Get-Content -Raw -Path $ChromiumManifestPath | ConvertFrom-Json
-    $chromiumJson.path = $HostBatPath
-    $chromiumJson | ConvertTo-Json -Depth 5 | Set-Content -Path $ChromiumManifestPath -Encoding UTF8
-    Write-Host "[OK] Updated Chromium manifest path -> $HostBatPath" -ForegroundColor Green
+if (-not (Test-Path $HostBatPath)) {
+    Write-Warning "host.bat not found at $HostBatPath!"
 }
 
-if (Test-Path $FirefoxManifestPath) {
-    $firefoxJson = Get-Content -Raw -Path $FirefoxManifestPath | ConvertFrom-Json
-    $firefoxJson.path = $HostBatPath
-    $firefoxJson | ConvertTo-Json -Depth 5 | Set-Content -Path $FirefoxManifestPath -Encoding UTF8
-    Write-Host "[OK] Updated Firefox manifest path -> $HostBatPath" -ForegroundColor Green
+# Optional custom extension ID registration
+if ($CustomExtensionId -and (Test-Path $ChromiumManifestPath)) {
+    $cleanId = $CustomExtensionId.Trim().ToLower()
+    $chromiumJson = Get-Content -Raw -Path $ChromiumManifestPath | ConvertFrom-Json
+    $origin = "chrome-extension://$cleanId/"
+    if ($chromiumJson.allowed_origins -notcontains $origin) {
+        $chromiumJson.allowed_origins += $origin
+        $chromiumJson | ConvertTo-Json -Depth 5 | Set-Content -Path $ChromiumManifestPath -Encoding UTF8
+        Write-Host "[OK] Added custom extension origin: $origin" -ForegroundColor Green
+    }
 }
 
 # Registry locations (User-level registration, does not require Admin privileges)

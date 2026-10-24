@@ -33,7 +33,11 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
       justifyContent: 'center',
       zIndex: 1500
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="duplicates-modal-title"
+        style={{
         width: '620px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',

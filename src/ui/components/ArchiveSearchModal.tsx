@@ -47,7 +47,11 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
       zIndex: 1500,
       padding: '20px'
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="archive-search-modal-title"
+        style={{
         width: '680px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',

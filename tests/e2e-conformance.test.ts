@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SavedTabItem } from '../src/ui/types';
+import { SaveTransactionSession, TabItemInput, StagedTabRecord } from '../src/core/transaction/save-and-close';
+import { TrashManager } from '../src/core/vault/trash-manager';
+import { BackupManager } from '../src/core/vault/backup-manager';
 
 describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 16 & Epics 0.4, 1.2, 2.3, 4.1)', () => {
   interface SimulatedVaultState {
     items: SavedTabItem[];
-    trash: SavedTabItem[];
     collections: { id: string; name: string }[];
   }
 
@@ -13,7 +15,6 @@ describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 
   beforeEach(() => {
     vault = {
       items: [],
-      trash: [],
       collections: [
         { id: 'inbox', name: 'Inbox' },
         { id: 'dev', name: 'Development' },
@@ -23,67 +24,73 @@ describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 
   });
 
   describe('Full Save-Before-Close Transaction Guarantee (PRD Section 11.5 & FR-011)', () => {
-    it('executes end-to-end save transaction: closes only successfully committed tabs', async () => {
-      const sourceBrowserTabs = [
+    it('executes end-to-end save transaction: closes only successfully committed tabs via SaveTransactionSession', async () => {
+      const sourceBrowserTabs: TabItemInput[] = [
         { tabId: 101, url: 'https://react.dev/learn', title: 'React Documentation' },
         { tabId: 102, url: 'https://tauri.app/v2', title: 'Tauri v2 Overview' },
         { tabId: 103, url: 'https://example.com/unreachable', title: 'Flaky Site' }
       ];
 
-      // Simulated atomic save transaction engine
-      async function executeSaveAndCloseTransaction(tabs: typeof sourceBrowserTabs, shouldFailId?: number) {
-        const committedTabIds: number[] = [];
-        const failedTabIds: number[] = [];
-        const createdItems: SavedTabItem[] = [];
+      const session = new SaveTransactionSession('job_test_101');
+      expect(session.getState()).toBe('requested');
 
-        for (const t of tabs) {
-          if (t.tabId === shouldFailId) {
-            // Simulated write failure (e.g. disk write failure, lock contention)
-            failedTabIds.push(t.tabId);
-            continue;
+      // 1. Validate
+      session.validate(sourceBrowserTabs, { closeAfterSave: true });
+      expect(session.getState()).toBe('validated');
+
+      // 2. Stage
+      session.stage();
+      expect(session.getState()).toBe('staged');
+
+      // 3. Persist with simulated failure on tab 103
+      session.persist((records: StagedTabRecord[]) => {
+        const persisted: StagedTabRecord[] = [];
+        const failed: StagedTabRecord[] = [];
+
+        for (const rec of records) {
+          if (rec.tabId === 103) {
+            rec.error = 'Simulated database disk error';
+            failed.push(rec);
+          } else {
+            persisted.push(rec);
+            vault.items.push({
+              id: rec.id,
+              vaultId: 'default',
+              itemType: 'tab',
+              title: rec.title,
+              url: rec.url,
+              normalizedUrl: rec.normalizedUrl,
+              domain: rec.domain,
+              browserFamily: 'Chrome',
+              savedAt: new Date().toISOString(),
+              notes: '',
+              isFavorite: false,
+              collectionIds: ['inbox'],
+              tags: [],
+              availabilityStatus: 'reachable'
+            });
           }
-
-          const item: SavedTabItem = {
-            id: `tab_saved_${t.tabId}`,
-            vaultId: 'default',
-            itemType: 'tab',
-            title: t.title,
-            url: t.url,
-            normalizedUrl: t.url.split('?')[0],
-            domain: new URL(t.url).hostname,
-            browserFamily: 'Edge',
-            savedAt: new Date().toISOString(),
-            notes: '',
-            isFavorite: false,
-            collectionIds: ['inbox'],
-            tags: [],
-            availabilityStatus: 'reachable'
-          };
-
-          vault.items.push(item);
-          createdItems.push(item);
-          committedTabIds.push(t.tabId);
         }
+        return { persisted, failed };
+      });
+      expect(session.getState()).toBe('partial');
 
-        // Safety gate: source browser close occurs ONLY for committed IDs
-        const closedBrowserTabIds = committedTabIds.slice();
+      // 4. Verify & Commit
+      const summary = session.verifyAndCommit((records) => {
+        return records.filter(r => r.status === 'persisted').map(r => r.tabId);
+      });
+      expect(session.getState()).toBe('partial');
+      expect(summary.committedIds).toEqual([101, 102]);
+      expect(summary.failedIds).toEqual([103]);
 
-        return {
-          success: failedTabIds.length === 0,
-          committedTabIds,
-          failedTabIds,
-          closedBrowserTabIds
-        };
-      }
+      // 5. Close source tabs: ONLY committed tabs are closed
+      const closureSummary = session.executeTabClosure((tabId) => {
+        return true;
+      });
 
-      // Run with one tab failing to persist
-      const result = await executeSaveAndCloseTransaction(sourceBrowserTabs, 103);
-
-      expect(result.committedTabIds).toEqual([101, 102]);
-      expect(result.failedTabIds).toEqual([103]);
-      // Critical PRD Principle 2: tab 103 is NEVER closed because save failed!
-      expect(result.closedBrowserTabIds).not.toContain(103);
-      expect(result.closedBrowserTabIds).toEqual([101, 102]);
+      expect(closureSummary.closedIds).toEqual([101, 102]);
+      expect(closureSummary.closedIds).not.toContain(103); // Critical safety gate: failed tab remains open!
+      expect(session.getState()).toBe('partial');
       expect(vault.items.length).toBe(2);
     });
   });
@@ -150,7 +157,7 @@ describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 
   });
 
   describe('Trash, Soft-Delete & Permanent Purge Lifecycle (PRD Epic 2.3)', () => {
-    it('moves item to trash, hides from active library, restores safely, and supports permanent delete', () => {
+    it('moves item to trash, hides from active library, restores safely, and supports permanent delete via TrashManager', () => {
       const tab: SavedTabItem = {
         id: 't_trash_1',
         vaultId: 'default',
@@ -161,53 +168,43 @@ describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 
         domain: 'temp.org',
         browserFamily: 'Edge',
         savedAt: new Date().toISOString(),
-        notes: '',
+        notes: 'Temporary review notes',
         isFavorite: false,
         collectionIds: ['inbox'],
-        tags: []
+        tags: ['Temp']
       };
 
-      vault.items.push(tab);
-      expect(vault.items.length).toBe(1);
+      let items = [tab];
+      expect(items.length).toBe(1);
 
-      // 1. Move to Trash (Soft delete)
-      const index = vault.items.findIndex(i => i.id === tab.id);
-      const [trashedItem] = vault.items.splice(index, 1);
-      const itemWithTrashStamp = { ...trashedItem, deletedAt: new Date().toISOString() };
-      vault.trash.push(itemWithTrashStamp);
+      // 1. Soft-delete via TrashManager
+      items = TrashManager.softDelete(items, 't_trash_1');
+      expect(items[0].deletedAt).toBeDefined();
 
-      expect(vault.items.length).toBe(0);
-      expect(vault.trash.length).toBe(1);
-      expect(vault.trash[0].deletedAt).toBeDefined();
+      // Active library excludes soft-deleted items
+      const activeLibrary = items.filter(i => !i.deletedAt);
+      expect(activeLibrary.length).toBe(0);
 
-      // 2. Restore from Trash
-      const trashIdx = vault.trash.findIndex(i => i.id === tab.id);
-      const [recovered] = vault.trash.splice(trashIdx, 1);
-      delete recovered.deletedAt;
-      vault.items.push(recovered);
+      // Trash view contains the item
+      const trashView = items.filter(i => !!i.deletedAt);
+      expect(trashView.length).toBe(1);
+      expect(trashView[0].id).toBe('t_trash_1');
 
-      expect(vault.items.length).toBe(1);
-      expect(vault.trash.length).toBe(0);
-      expect(vault.items[0].id).toBe('t_trash_1');
+      // 2. Restore from Trash via TrashManager
+      items = TrashManager.restoreFromTrash(items, 't_trash_1');
+      expect(items[0].deletedAt).toBeNull();
+      expect(items.filter(i => !i.deletedAt).length).toBe(1);
+      expect(items[0].notes).toBe('Temporary review notes'); // Preserves notes & tags
 
-      // 3. Move back to trash and Permanently Delete with Confirmation
-      vault.items.pop();
-      vault.trash.push(itemWithTrashStamp);
-      expect(vault.trash.length).toBe(1);
-
-      // User confirms permanent delete in alertdialog
-      const confirmedPurge = true;
-      if (confirmedPurge) {
-        vault.trash = vault.trash.filter(i => i.id !== tab.id);
-      }
-
-      expect(vault.items.length).toBe(0);
-      expect(vault.trash.length).toBe(0);
+      // 3. Move back to trash and empty trash permanently
+      items = TrashManager.softDelete(items, 't_trash_1');
+      items = TrashManager.permanentDelete(items, 't_trash_1');
+      expect(items.length).toBe(0);
     });
   });
 
   describe('Full Vault Backup & Integrity Verification (PRD 4.1 & 7.10)', () => {
-    it('creates versioned backup manifest, exports JSON, and verifies hash on restore', () => {
+    it('creates versioned backup manifest, exports JSON, and verifies hash on restore via BackupManager', () => {
       const item: SavedTabItem = {
         id: 't_backup_1',
         vaultId: 'default',
@@ -224,22 +221,27 @@ describe('Cross-Cutting End-to-End Conformance & Integration Suite (PRD Section 
         tags: ['Architecture']
       };
 
-      // Create portable manifest
-      const manifest = {
-        manifestVersion: '1.0.0',
-        exportedAt: new Date().toISOString(),
-        vaultId: 'default',
-        itemCount: 1,
-        items: [item]
-      };
+      // Create backup via real BackupManager
+      const backupResult = BackupManager.createBackup([item], 'default-vault');
+      expect(backupResult.manifest.schemaVersion).toBe(1);
+      expect(backupResult.manifest.itemCount).toBe(1);
+      expect(backupResult.manifest.sha256).toBeDefined();
+      expect(backupResult.manifest.files[0].path).toBe('vault_items.json');
 
-      const serialized = JSON.stringify(manifest);
+      // Verify and restore backup via real BackupManager
+      const isVerified = BackupManager.verifyBackup(
+        backupResult.backupBlobJson,
+        backupResult.manifest
+      );
+      expect(isVerified).toBe(true);
 
-      // Restore simulation
-      const parsed = JSON.parse(serialized);
-      expect(parsed.manifestVersion).toBe('1.0.0');
-      expect(parsed.items.length).toBe(1);
-      expect(parsed.items[0].title).toBe('Distributed Systems Patterns');
+      const restoredItems = BackupManager.restoreFromBackup(
+        backupResult.backupBlobJson,
+        backupResult.manifest
+      );
+
+      expect(restoredItems.length).toBe(1);
+      expect(restoredItems[0].title).toBe('Distributed Systems Patterns');
     });
   });
 });

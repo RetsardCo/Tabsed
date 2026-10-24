@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, HelpCircle, ShieldCheck, Download, CheckCircle2, AlertCircle } from 'lucide-react';
+import { PrivacyManager } from '../../core/vault/privacy-manager';
 
 interface HelpDiagnosticsModalProps {
   isOpen: boolean;
@@ -19,6 +20,9 @@ export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOp
   };
 
   const handleExportRedactedLogs = () => {
+    const rawUrlSample = 'https://example.com/oauth/callback?code=sec_12345&access_token=token_abcdef987';
+    const cleanUrl = PrivacyManager.sanitizeUrlForLogs(rawUrlSample);
+
     const sampleLog = {
       timestamp: new Date().toISOString(),
       version: '1.0.0',
@@ -28,6 +32,7 @@ export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOp
       logs: [
         '[INFO] Staging subsystem initialized with SHA-256 verification',
         '[INFO] Transaction engine started with Save-and-Close safety invariants',
+        `[INFO] Redacted destination sample: ${cleanUrl}`,
         '[INFO] Redaction active: All URLs containing query tokens were scrubbed'
       ]
     };
@@ -55,7 +60,11 @@ export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOp
       justifyContent: 'center',
       zIndex: 1500
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-diagnostics-title"
+        style={{
         width: '540px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',

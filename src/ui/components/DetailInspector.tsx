@@ -477,6 +477,38 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           </div>
         </div>
 
+        {/* Section: Offline Page Archive (PRD Epic 3.4 & Section 12.3 Sandboxed) */}
+        {(item.archiveHtml || item.archiveContent) && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
+                Offline Archive (Sandboxed)
+              </span>
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                Isolated iframe (PRD 12.3)
+              </span>
+            </div>
+            <div style={{
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--border-subtle)',
+              overflow: 'hidden',
+              backgroundColor: 'var(--bg-app)'
+            }}>
+              <iframe
+                title="Offline Archive Sandbox"
+                sandbox="allow-scripts"
+                srcDoc={item.archiveHtml || `<!DOCTYPE html><html><body style="font-family: sans-serif; font-size: 12px; color: #334155; padding: 12px;"><h3>Cached Page Text</h3><pre style="white-space: pre-wrap;">${item.archiveContent}</pre></body></html>`}
+                style={{
+                  width: '100%',
+                  height: '160px',
+                  border: 'none',
+                  display: 'block'
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Section: Tags */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>

@@ -10,7 +10,7 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
   const scriptsDir = path.join(rootDir, 'scripts');
 
   describe('Chromium Browser Extension Manifest (Chrome & Edge)', () => {
-    it('contains valid Manifest V3 structure and permissions', () => {
+    it('contains valid Manifest V3 structure, deterministic public key, and permissions', () => {
       const manifestPath = path.join(extDir, 'manifest.json');
       expect(fs.existsSync(manifestPath)).toBe(true);
 
@@ -18,6 +18,11 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       expect(manifest.manifest_version).toBe(3);
       expect(manifest.name).toContain('Tabsed');
       expect(manifest.version).toBe('1.0.0');
+
+      // Deterministic extension public key for stable extension ID across all installations
+      expect(manifest.key).toBeDefined();
+      expect(typeof manifest.key).toBe('string');
+      expect(manifest.key.length).toBeGreaterThan(100);
 
       // Permissions
       expect(manifest.permissions).toContain('tabs');
@@ -61,7 +66,7 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
   });
 
   describe('Windows Native Messaging Manifests & Scripts', () => {
-    it('validates Chromium host manifest (com.tabsed.app.json)', () => {
+    it('validates Chromium host manifest (com.tabsed.app.json) strictly: valid origins and no wildcards', () => {
       const manifestPath = path.join(packagingDir, 'com.tabsed.app.json');
       expect(fs.existsSync(manifestPath)).toBe(true);
 
@@ -70,6 +75,15 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       expect(manifest.type).toBe('stdio');
       expect(manifest.allowed_origins).toBeDefined();
       expect(manifest.allowed_origins.length).toBeGreaterThan(0);
+
+      // Verify each origin is a valid chrome-extension URI format without illegal wildcards
+      for (const origin of manifest.allowed_origins) {
+        expect(origin).not.toContain('*');
+        expect(origin).toMatch(/^chrome-extension:\/\/[a-z0-9]+\/$/);
+      }
+
+      // Must contain deterministic extension ID derived from extension/manifest.json key
+      expect(manifest.allowed_origins).toContain('chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/');
     });
 
     it('validates Firefox host manifest (com.tabsed.app-firefox.json)', () => {
@@ -126,6 +140,7 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       // Verify manifest in unpacked chromium
       const chromManifest = JSON.parse(fs.readFileSync(path.join(unpackedChromium, 'manifest.json'), 'utf8'));
       expect(chromManifest.manifest_version).toBe(3);
+      expect(chromManifest.key).toBeDefined();
 
       // Verify manifest in unpacked firefox
       const ffManifest = JSON.parse(fs.readFileSync(path.join(unpackedFirefox, 'manifest.json'), 'utf8'));

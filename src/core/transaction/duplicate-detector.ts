@@ -95,7 +95,7 @@ export class UrlNormalizer {
     const map = new Map<string, T[]>();
 
     for (const item of items) {
-      const norm = this.normalize(item.url, options);
+      const norm = (item as any).normalizedUrl || this.normalize(item.url, options);
       if (!map.has(norm)) {
         map.set(norm, []);
       }
@@ -119,3 +119,5 @@ export class UrlNormalizer {
     return groups;
   }
 }
+
+export const DuplicateDetector = UrlNormalizer;

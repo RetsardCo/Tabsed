@@ -61,7 +61,11 @@ export const StorageModal: React.FC<StorageModalProps> = ({
       zIndex: 1500,
       padding: '20px'
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="storage-modal-title"
+        style={{
         width: '600px',
         maxHeight: '90vh',
         backgroundColor: 'var(--bg-surface)',

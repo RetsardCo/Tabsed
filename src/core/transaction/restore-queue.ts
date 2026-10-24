@@ -14,9 +14,12 @@ export interface RestoreItem {
   error?: string;
 }
 
+export type RestoreItemInput = Partial<RestoreItem> & Pick<RestoreItem, 'id' | 'url' | 'title'>;
+
 export interface RestoreQueueConfig {
   batchSize: number;
   delayMs: number;
+  batchDelayMs?: number;
   targetBrowser: string;
   targetProfile?: string;
 }
@@ -28,11 +31,16 @@ export class RestoreQueue {
   private isCancelled = false;
   private currentIndex = 0;
 
-  constructor(items: RestoreItem[], config: Partial<RestoreQueueConfig> = {}) {
-    this.items = items.map(i => ({ ...i })).sort((a, b) => a.orderIndex - b.orderIndex);
+  constructor(items: (RestoreItem | RestoreItemInput)[], config: Partial<RestoreQueueConfig> = {}) {
+    this.items = items.map((i, idx) => ({
+      ...i,
+      status: i.status || 'queued',
+      orderIndex: i.orderIndex ?? idx,
+      pinned: !!i.pinned
+    })).sort((a, b) => a.orderIndex - b.orderIndex);
     this.config = {
       batchSize: config.batchSize ?? 5,
-      delayMs: config.delayMs ?? 300,
+      delayMs: config.batchDelayMs ?? config.delayMs ?? 300,
       targetBrowser: config.targetBrowser ?? 'Default',
       targetProfile: config.targetProfile
     };
@@ -40,6 +48,18 @@ export class RestoreQueue {
 
   public getItems(): RestoreItem[] {
     return [...this.items];
+  }
+
+  /**
+   * Returns current queued items partitioned into batches according to configured batchSize
+   */
+  public getBatches(): RestoreItem[][] {
+    const queued = this.items.filter(i => i.status === 'queued');
+    const batches: RestoreItem[][] = [];
+    for (let i = 0; i < queued.length; i += this.config.batchSize) {
+      batches.push(queued.slice(i, i + this.config.batchSize));
+    }
+    return batches;
   }
 
   public getStatus(): {

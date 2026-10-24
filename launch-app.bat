@@ -27,14 +27,10 @@ if not exist "node_modules\" (
 )
 
 echo.
-echo [2/3] Preparing web application...
-echo Opening browser to http://localhost:3000 in 3 seconds...
-start "" "http://localhost:3000"
-
-echo.
-echo [3/3] Starting Tabsed development server...
+echo [2/2] Starting Tabsed server and opening browser...
+echo The app will open in your default browser once the server is ready.
 echo Press Ctrl+C in this window anytime to stop the server.
 echo.
-call npm.cmd run dev -- --host --port 3000
+call npm.cmd run dev -- --open --port 3000
 
 pause

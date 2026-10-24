@@ -28,9 +28,6 @@ if (-not (Test-Path "node_modules")) {
 }
 
 # Open browser and run server
-Write-Host "[...] Opening http://localhost:3000 in your browser..." -ForegroundColor Cyan
-Start-Process "http://localhost:3000"
-
-Write-Host "[...] Starting Vite server on port 3000..." -ForegroundColor Cyan
+Write-Host "[...] Starting Tabsed Vite development server and opening browser..." -ForegroundColor Cyan
 Write-Host "Press Ctrl+C to terminate." -ForegroundColor Gray
-& cmd.exe /c "npm run dev -- --host --port 3000"
+& cmd.exe /c "npm run dev -- --open --port 3000"

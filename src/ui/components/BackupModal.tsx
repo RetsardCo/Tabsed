@@ -96,7 +96,11 @@ export const BackupModal: React.FC<BackupModalProps> = ({
       zIndex: 1500,
       padding: '20px'
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="backup-modal-title"
+        style={{
         width: '580px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',

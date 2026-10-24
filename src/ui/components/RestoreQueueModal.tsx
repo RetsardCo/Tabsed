@@ -120,7 +120,11 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
       zIndex: 1500,
       padding: '20px'
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="restore-queue-modal-title"
+        style={{
         width: '580px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',

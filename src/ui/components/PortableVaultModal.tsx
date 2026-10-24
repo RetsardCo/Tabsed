@@ -91,7 +91,11 @@ export const PortableVaultModal: React.FC<PortableVaultModalProps> = ({
       justifyContent: 'center',
       zIndex: 1500
     }}>
-      <div style={{
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="portable-vault-modal-title"
+        style={{
         width: '600px',
         maxHeight: '85vh',
         backgroundColor: 'var(--bg-surface)',
