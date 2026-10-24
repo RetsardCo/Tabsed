@@ -69,10 +69,15 @@ export class EncryptionManager {
   }
 
   /**
-   * Normalizes a secret string (strips formatting from recovery key if entered)
+   * Normalizes a secret string (strips formatting from recovery key if entered, case-insensitive)
    */
   public static normalizeSecret(secret: string): string {
-    return secret.trim();
+    if (!secret || typeof secret !== 'string') return '';
+    const trimmed = secret.trim();
+    if (/^tabsed[- ]/i.test(trimmed)) {
+      return trimmed.toUpperCase().replace(/\s+/g, '-');
+    }
+    return trimmed;
   }
 
   /**

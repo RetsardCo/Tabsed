@@ -20,10 +20,20 @@ describe('Epic 4.3 --- Preview Redaction & Private Vault', () => {
       expect(PrivacyManager.matchesDomainPattern('news.ycombinator.com', '*bank*.*')).toBe(false);
     });
 
-    it('correctly finds matching redaction rule for a URL', () => {
+    it('correctly finds matching redaction rule for a URL, including ports and protocol-less URLs', () => {
       const rule = PrivacyManager.getMatchingRule('https://secure.chase.com/my-accounts', DEFAULT_REDACTION_RULES);
       expect(rule).not.toBeNull();
       expect(rule?.category).toBe('banking');
+
+      // Port attached to URL
+      const ruleWithPort = PrivacyManager.getMatchingRule('https://secure.chase.com:8443/login', DEFAULT_REDACTION_RULES);
+      expect(ruleWithPort).not.toBeNull();
+      expect(ruleWithPort?.category).toBe('banking');
+
+      // Protocol-less URL
+      const ruleNoProtocol = PrivacyManager.getMatchingRule('chase.com/portal', DEFAULT_REDACTION_RULES);
+      expect(ruleNoProtocol).not.toBeNull();
+      expect(ruleNoProtocol?.category).toBe('banking');
     });
   });
 
@@ -178,8 +188,11 @@ describe('Epic 4.3 --- Preview Redaction & Private Vault', () => {
       expect(res.remainingItems.length).toBe(1);
       expect(res.remainingItems[0].id).toBe('tab_public_1');
 
-      // Verify associated files were unlinked
+      // Verify associated files were unlinked (thumbnail and all archive extensions)
       expect(deletedFiles.some(f => f.includes('private_thumb.png'))).toBe(true);
+      expect(deletedFiles.some(f => f.includes('tab_private_1.json'))).toBe(true);
+      expect(deletedFiles.some(f => f.includes('tab_private_1.html'))).toBe(true);
+      expect(deletedFiles.some(f => f.includes('tab_private_1_content.txt'))).toBe(true);
     });
 
     it('excludes private tabs from search indexing when excludeFromSearchIndex is enabled', () => {

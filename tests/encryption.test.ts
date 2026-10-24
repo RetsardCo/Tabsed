@@ -114,6 +114,15 @@ describe('Epic 4.2 --- Encryption and Key Management', () => {
       const decrypted = EncryptionManager.decryptData(payload, recoveryKey);
 
       expect(decrypted.toString('utf8')).toBe(secretData);
+
+      // Verify case-insensitive recovery key entry (e.g. user typed lowercase or space-separated)
+      const lowercaseKey = recoveryKey.toLowerCase();
+      const decryptedWithLower = EncryptionManager.decryptData(payload, lowercaseKey);
+      expect(decryptedWithLower.toString('utf8')).toBe(secretData);
+
+      const spaceSeparatedKey = recoveryKey.replace(/-/g, ' ');
+      const decryptedWithSpaces = EncryptionManager.decryptData(payload, spaceSeparatedKey);
+      expect(decryptedWithSpaces.toString('utf8')).toBe(secretData);
     });
 
     it('produces unambiguous user warning regarding key loss', () => {

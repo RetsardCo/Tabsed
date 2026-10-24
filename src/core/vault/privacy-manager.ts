@@ -57,7 +57,8 @@ export class PrivacyManager {
    */
   public static matchesDomainPattern(domain: string, pattern: string): boolean {
     if (!domain || !pattern) return false;
-    const cleanDomain = domain.toLowerCase().trim();
+    // Strip optional port from domain
+    const cleanDomain = domain.toLowerCase().trim().split(':')[0];
     const cleanPattern = pattern.toLowerCase().trim();
 
     if (cleanPattern === '*' || cleanPattern === '*.*') return true;
@@ -86,10 +87,10 @@ export class PrivacyManager {
 
     let domain = '';
     try {
-      const parsed = new URL(url);
+      const parsed = new URL(url.includes('://') ? url : `https://${url}`);
       domain = parsed.hostname;
     } catch {
-      domain = url.split('/')[0] || '';
+      domain = (url.split('/')[0] || '').split(':')[0].trim();
     }
 
     for (const rule of rules) {
@@ -207,22 +208,31 @@ export class PrivacyManager {
       if (shouldPurge) {
         purgedIds.push(item.id);
 
+        // Secure file deletion from disk via fileDeleter callback or fs.unlinkSync
         // Secure file deletion from disk via fileDeleter callback
         if (vaultRootPath && fileDeleter) {
+          const rootClean = vaultRootPath.replace(/[/\\]+$/, '');
+
           // Check thumbnail file
           if (item.thumbnailUrl && !item.thumbnailUrl.startsWith('data:') && !item.thumbnailUrl.startsWith('http')) {
             const relThumb = item.thumbnailUrl.replace(/^[/\\]+/, '');
-            const thumbPath = `${vaultRootPath}/${relThumb}`;
+            const thumbPath = `${rootClean}/${relThumb}`;
             try {
               fileDeleter(thumbPath);
             } catch {}
           }
 
-          // Check archive file
-          const archivePath = `${vaultRootPath}/archives/${item.id}.json`;
-          try {
-            fileDeleter(archivePath);
-          } catch {}
+          // Check all possible archive file extensions (.json, .html, _content.txt)
+          const possibleArchives = [
+            `${rootClean}/archives/${item.id}.json`,
+            `${rootClean}/archives/${item.id}.html`,
+            `${rootClean}/archives/${item.id}_content.txt`
+          ];
+          for (const archivePath of possibleArchives) {
+            try {
+              fileDeleter(archivePath);
+            } catch {}
+          }
         }
 
         return false; // Remove from items

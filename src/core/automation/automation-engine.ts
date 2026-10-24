@@ -85,11 +85,23 @@ export class AutomationEngine {
     }
 
     // 2. Allowlisted domain protection
-    const tabDomain = tab.domain.toLowerCase();
+    let rawDomain = tab.domain || '';
+    if (!rawDomain && tab.url) {
+      try {
+        rawDomain = new URL(tab.url.includes('://') ? tab.url : `https://${tab.url}`).hostname;
+      } catch {
+        rawDomain = '';
+      }
+    }
+    const tabDomain = rawDomain.toLowerCase().split(':')[0];
+
     for (const allowed of protection.allowlistedDomains) {
-      const cleanAllowed = allowed.toLowerCase().trim();
+      let cleanAllowed = allowed.toLowerCase().trim();
+      if (cleanAllowed.startsWith('*.')) {
+        cleanAllowed = cleanAllowed.substring(2);
+      }
       if (tabDomain === cleanAllowed || tabDomain.endsWith(`.${cleanAllowed}`)) {
-        return { isProtected: true, reason: `Domain '${tab.domain}' is allowlisted` };
+        return { isProtected: true, reason: `Domain '${rawDomain}' is allowlisted` };
       }
     }
 
@@ -137,6 +149,55 @@ export class AutomationEngine {
       };
     }
 
+    // Special handling for tab_count trigger: only overflow tabs beyond threshold are targeted
+    if (rule.trigger === 'tab_count') {
+      const threshold = rule.maxTabsThreshold ?? 30;
+      const unprotectedCandidates: CandidateTab[] = [];
+
+      for (const tab of candidateTabs) {
+        const protectionResult = this.isTabProtected(tab, protection);
+        if (protectionResult.isProtected) {
+          protectedList.push({ tab, reason: protectionResult.reason || 'Protected by rule' });
+        } else {
+          unprotectedCandidates.push(tab);
+        }
+      }
+
+      if (candidateTabs.length > threshold) {
+        const overflowCount = candidateTabs.length - threshold;
+        // Sort unprotected tabs by inactivity (highest inactive minutes first)
+        const sorted = [...unprotectedCandidates].sort(
+          (a, b) => (b.lastActiveMinutesAgo ?? 0) - (a.lastActiveMinutesAgo ?? 0)
+        );
+
+        const targetTabs = sorted.slice(0, overflowCount);
+        const keptTabs = sorted.slice(overflowCount);
+
+        for (const tab of targetTabs) {
+          wouldSave.push(tab);
+          if (rule.action === 'save_and_close') {
+            wouldClose.push(tab);
+          }
+        }
+
+        for (const tab of keptTabs) {
+          skippedList.push({ tab, reason: `Within tab threshold (${threshold})` });
+        }
+      } else {
+        for (const tab of unprotectedCandidates) {
+          skippedList.push({ tab, reason: `Total tab count ${candidateTabs.length} <= ${threshold}` });
+        }
+      }
+
+      return {
+        rule,
+        wouldSave,
+        wouldClose,
+        protected: protectedList,
+        skipped: skippedList
+      };
+    }
+
     for (const tab of candidateTabs) {
       // Protection check
       const protectionResult = this.isTabProtected(tab, protection);
@@ -147,24 +208,14 @@ export class AutomationEngine {
 
       // Trigger condition check
       let matchesTrigger = false;
-      let matchReason = '';
 
       if (rule.trigger === 'inactivity') {
         const threshold = rule.inactivityThresholdMinutes ?? 60;
         const minutesAgo = tab.lastActiveMinutesAgo ?? 0;
         if (minutesAgo >= threshold) {
           matchesTrigger = true;
-          matchReason = `Inactive for ${minutesAgo}m (threshold: ${threshold}m)`;
         } else {
           skippedList.push({ tab, reason: `Active recently (${minutesAgo}m < ${threshold}m)` });
-        }
-      } else if (rule.trigger === 'tab_count') {
-        const threshold = rule.maxTabsThreshold ?? 30;
-        if (candidateTabs.length > threshold) {
-          matchesTrigger = true;
-          matchReason = `Vaulting overflow tabs (total ${candidateTabs.length} > ${threshold})`;
-        } else {
-          skippedList.push({ tab, reason: `Total tab count ${candidateTabs.length} <= ${threshold}` });
         }
       } else {
         matchesTrigger = true;

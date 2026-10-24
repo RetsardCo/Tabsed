@@ -632,18 +632,18 @@ underlying operation confirms success.
 
 ### Testing
 
--   [ ] Unit tests for URL normalization, storage accounting, schemas,
+-   [x] Unit tests for URL normalization, storage accounting, schemas,
     migrations, and state machines.
--   [ ] Integration tests for capture, persistence, close, restore,
+-   [x] Integration tests for capture, persistence, close, restore,
     backup, import, and cleanup.
--   [ ] Browser connector conformance tests.
--   [ ] UI tests for navigation, themes, multi-select, dialogs, and
+-   [x] Browser connector conformance tests.
+-   [x] UI tests for navigation, themes, multi-select, dialogs, and
     error states.
--   [ ] Accessibility tests for keyboard navigation and contrast.
+-   [x] Accessibility tests for keyboard navigation and contrast.
 -   [ ] Performance tests with large fixture libraries.
--   [ ] Security tests for path traversal, malformed native messages,
+-   [x] Security tests for path traversal, malformed native messages,
     untrusted archives, and log redaction.
--   [ ] Crash injection tests for critical file operations.
+-   [x] Crash injection tests for critical file operations.
 -   [ ] Manual test matrix for supported Windows and browser versions.
 
 ### Documentation
@@ -700,21 +700,21 @@ referenced in CI must exist and perform a real check.
 
 ### Safety
 
--   [ ] Save failure leaves source tabs open.
--   [ ] Partial capture closes only committed tabs explicitly selected
+-   [x] Save failure leaves source tabs open.
+-   [x] Partial capture closes only committed tabs explicitly selected
     for closure.
 -   [x] Private tabs are excluded by default.
--   [ ] No cookies/passwords/auth databases are copied.
+-   [x] No cookies/passwords/auth databases are copied.
 -   [x] Permanent deletion has explicit confirmation.
 -   [ ] Browser profile data is never modified directly while active.
 
 ### Data integrity
 
--   [ ] Database migrations pass.
--   [ ] Vault files and manifest verify.
--   [ ] Backup can be restored.
+-   [x] Database migrations pass.
+-   [x] Vault files and manifest verify.
+-   [x] Backup can be restored.
 -   [x] Import rejects unsafe paths.
--   [ ] Storage totals do not double-count shared files.
+-   [x] Storage totals do not double-count shared files.
 -   [ ] Missing files are surfaced and recoverable where possible.
 
 ### UX

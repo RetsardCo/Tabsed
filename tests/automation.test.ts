@@ -65,6 +65,26 @@ describe('Epic 4.4 --- Automation Engine & Protected Tab Rules', () => {
       const res = AutomationEngine.isTabProtected(candidateTabs[1], DEFAULT_PROTECTION_RULES);
       expect(res.isProtected).toBe(true);
       expect(res.reason).toContain("allowlisted");
+
+      // Wildcard allowlist test (*.github.com protecting github.com and subdomains)
+      const wildcardRules: AutomationProtectionRules = {
+        ...DEFAULT_PROTECTION_RULES,
+        allowlistedDomains: ['*.mycompany.com']
+      };
+      const rootTab: CandidateTab = {
+        id: 't_root',
+        title: 'Company Portal',
+        url: 'https://mycompany.com',
+        domain: 'mycompany.com'
+      };
+      const subTab: CandidateTab = {
+        id: 't_sub',
+        title: 'Internal Wiki',
+        url: 'https://wiki.mycompany.com',
+        domain: 'wiki.mycompany.com'
+      };
+      expect(AutomationEngine.isTabProtected(rootTab, wildcardRules).isProtected).toBe(true);
+      expect(AutomationEngine.isTabProtected(subTab, wildcardRules).isProtected).toBe(true);
     });
 
     it('protects tabs in user-defined protected collections', () => {
@@ -106,6 +126,42 @@ describe('Epic 4.4 --- Automation Engine & Protected Tab Rules', () => {
 
       // 4 tabs must be protected
       expect(sim.protected.length).toBe(4);
+    });
+
+    it('targets only overflow tabs exceeding threshold for tab_count trigger', () => {
+      const tabCountRule: AutomationRule = {
+        id: 'rule_count',
+        name: 'Vault when tabs exceed 3',
+        trigger: 'tab_count',
+        enabled: true,
+        maxTabsThreshold: 3, // Candidate list has 5 tabs, 4 protected, 1 unprotected
+        action: 'save_and_close'
+      };
+
+      // Create a list with 6 tabs (all unprotected) to clearly verify overflow count calculation
+      const manyTabs: CandidateTab[] = [
+        { id: 't1', title: 'T1', url: 'https://ex1.com', domain: 'ex1.com', lastActiveMinutesAgo: 10 },
+        { id: 't2', title: 'T2', url: 'https://ex2.com', domain: 'ex2.com', lastActiveMinutesAgo: 100 }, // Oldest
+        { id: 't3', title: 'T3', url: 'https://ex3.com', domain: 'ex3.com', lastActiveMinutesAgo: 80 },  // 2nd oldest
+        { id: 't4', title: 'T4', url: 'https://ex4.com', domain: 'ex4.com', lastActiveMinutesAgo: 20 },
+        { id: 't5', title: 'T5', url: 'https://ex5.com', domain: 'ex5.com', lastActiveMinutesAgo: 5 }
+      ];
+
+      // Total 5 tabs, threshold 3 -> overflow is 2 tabs!
+      const sim = AutomationEngine.simulate(manyTabs, tabCountRule, {
+        protectPinnedTabs: false,
+        allowlistedDomains: [],
+        protectedCollectionIds: [],
+        excludePrivateTabs: false
+      });
+
+      // Exactly 2 overflow tabs should be targeted for save and close
+      expect(sim.wouldSave.length).toBe(2);
+      expect(sim.wouldClose.length).toBe(2);
+      // The 2 targeted tabs must be the least active ones (t2: 100m, t3: 80m)
+      expect(sim.wouldSave.map(t => t.id)).toEqual(['t2', 't3']);
+      // The remaining 3 tabs are kept
+      expect(sim.skipped.length).toBe(3);
     });
 
     it('skips all tabs when rule is disabled', () => {

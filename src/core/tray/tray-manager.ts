@@ -104,6 +104,15 @@ export class TrayManager {
         };
 
       case 'restore_recent': {
+        // Gated on browser connector availability! (PRD Epic 4.5 & Acceptance Criteria)
+        if (!this.isConnectorConnected) {
+          return {
+            actionId,
+            success: false,
+            message: 'Browser connector is unavailable. Cannot restore session without active browser connection.'
+          };
+        }
+
         if (items.length === 0) {
           return {
             actionId,
@@ -114,13 +123,25 @@ export class TrayManager {
 
         const recent = items[0];
         if (this.callbacks.onRestoreRecent) {
-          const res = await this.callbacks.onRestoreRecent(recent);
-          return {
-            actionId,
-            success: res !== false,
-            message: `Restored recent session: "${recent.title}"`,
-            data: recent
-          };
+          try {
+            const res = await this.callbacks.onRestoreRecent(recent);
+            const isSuccess = res !== false;
+            return {
+              actionId,
+              success: isSuccess,
+              message: isSuccess
+                ? `Restored recent session: "${recent.title}"`
+                : `Failed to restore recent session: "${recent.title}"`,
+              data: recent
+            };
+          } catch (err: any) {
+            return {
+              actionId,
+              success: false,
+              message: `Error restoring recent session: ${err.message}`,
+              data: recent
+            };
+          }
         }
         return {
           actionId,
@@ -141,12 +162,20 @@ export class TrayManager {
         }
 
         if (this.callbacks.onSaveCurrentWindow) {
-          const res = await this.callbacks.onSaveCurrentWindow();
-          return {
-            actionId,
-            success: res.success,
-            message: res.message || `Saved ${res.savedCount} tabs from current window`
-          };
+          try {
+            const res = await this.callbacks.onSaveCurrentWindow();
+            return {
+              actionId,
+              success: res.success,
+              message: res.message || `Saved ${res.savedCount} tabs from current window`
+            };
+          } catch (err: any) {
+            return {
+              actionId,
+              success: false,
+              message: `Error saving current window: ${err.message}`
+            };
+          }
         }
 
         return {

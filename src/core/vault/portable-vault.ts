@@ -11,6 +11,7 @@ import {
   Tag
 } from '../../ui/types';
 import { VaultManager } from './vault-manager';
+import { UrlNormalizer } from '../transaction/duplicate-detector';
 
 export interface PortableExportOptions {
   vaultManager: VaultManager;
@@ -27,6 +28,7 @@ export interface PortableExportOptions {
 export interface PortableImportOptions {
   conflictStrategy?: ImportConflictStrategy;
   simulateFailureDuringStaging?: boolean; // For testing staged rollback
+  existingItems?: SavedTabItem[]; // In-memory existing items to merge with
 }
 
 export interface PortableImportResult {
@@ -49,16 +51,33 @@ export interface MigrationResult {
 export class PortableVaultManager {
   public static readonly SUPPORTED_SCHEMA_VERSIONS = ['1.0.0'];
 
+  private static readonly WINDOWS_DEVICE_NAMES = new Set([
+    'CON', 'PRN', 'AUX', 'NUL',
+    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9'
+  ]);
+
   /**
-   * Validates relative path strictly against path traversal, absolute paths, drive letters, and null bytes (PRD Epic 4.1 & FR-111)
+   * Validates relative path strictly against path traversal, absolute paths, drive letters,
+   * null bytes, Windows device names, and NTFS alternate data streams (PRD Epic 4.1 & FR-111)
    */
   public static validateRelativePath(relPath: string, baseDir?: string): boolean {
     if (!relPath || typeof relPath !== 'string') {
       throw new Error(`Path traversal or unsafe path rejected: empty or invalid path`);
     }
 
+    const trimmed = relPath.trim();
+    if (trimmed !== relPath) {
+      throw new Error(`Path traversal or unsafe path rejected: path contains leading or trailing whitespace (${relPath})`);
+    }
+
     if (relPath.includes('\0')) {
       throw new Error(`Path traversal or unsafe path rejected: null byte detected in path (${relPath})`);
+    }
+
+    // Reject NTFS alternate data streams (e.g. file:stream) and colons
+    if (relPath.includes(':')) {
+      throw new Error(`Path traversal or unsafe path rejected: colon or NTFS alternate data stream detected (${relPath})`);
     }
 
     // Reject Windows drive letters (e.g. C:, D:)
@@ -75,6 +94,27 @@ export class PortableVaultManager {
       throw new Error(`Path traversal or unsafe path rejected: absolute paths are forbidden (${relPath})`);
     }
 
+    // Universal separator normalization to defend against mixed/cross-platform traversal
+    const universal = relPath.replace(/\\/g, '/');
+    const segments = universal.split('/');
+
+    for (const segment of segments) {
+      if (segment === '..' || segment === '.') {
+        throw new Error(`Path traversal or unsafe path rejected: directory climbing ('..') detected (${relPath})`);
+      }
+
+      // Check Windows reserved device names (e.g. CON, PRN, AUX, NUL, COM1-9, LPT1-9, CON.txt)
+      const baseName = segment.split('.')[0].toUpperCase();
+      if (this.WINDOWS_DEVICE_NAMES.has(baseName)) {
+        throw new Error(`Path traversal or unsafe path rejected: Windows reserved device name detected (${segment})`);
+      }
+
+      // Check for trailing dots or spaces in segments (Windows NTFS aliases)
+      if (segment.endsWith(' ') || segment.endsWith('.')) {
+        throw new Error(`Path traversal or unsafe path rejected: segment ends with dot or space (${segment})`);
+      }
+    }
+
     // Check for directory climbing '../' or '..\\'
     const normalized = path.normalize(relPath);
     if (normalized.startsWith('..') || normalized.split(path.sep).includes('..')) {
@@ -84,7 +124,12 @@ export class PortableVaultManager {
     if (baseDir) {
       const resolvedBase = path.resolve(baseDir);
       const resolvedTarget = path.resolve(resolvedBase, normalized);
-      if (!resolvedTarget.startsWith(resolvedBase + path.sep) && resolvedTarget !== resolvedBase) {
+
+      const isWin = process.platform === 'win32';
+      const cmpBase = isWin ? resolvedBase.toLowerCase() : resolvedBase;
+      const cmpTarget = isWin ? resolvedTarget.toLowerCase() : resolvedTarget;
+
+      if (!cmpTarget.startsWith(cmpBase + path.sep) && cmpTarget !== cmpBase) {
         throw new Error(`Path traversal or unsafe path rejected: path escapes root boundary (${relPath})`);
       }
     }
@@ -353,31 +398,64 @@ export class PortableVaultManager {
         throw new Error(`Simulated unexpected disk/system failure during import staging`);
       }
 
-      // Step 4: Duplicate conflict resolution on items
+      // Step 4: Load existing items and perform duplicate conflict resolution
+      const targetItemsPath = path.join(vaultRoot, 'metadata', 'items.json');
+      let existingItems: SavedTabItem[] = [];
+      if (options.existingItems && options.existingItems.length > 0) {
+        existingItems = [...options.existingItems];
+      } else if (fs.existsSync(targetItemsPath)) {
+        try {
+          existingItems = JSON.parse(fs.readFileSync(targetItemsPath, 'utf8'));
+        } catch {
+          existingItems = [];
+        }
+      }
+
       const importedItems: SavedTabItem[] = [];
+      const finalItemsList: SavedTabItem[] = [...existingItems];
       let conflictsResolvedCount = 0;
 
       for (const item of manifest.items) {
-        if (conflictStrategy === 'skip') {
-          importedItems.push(item);
-        } else if (conflictStrategy === 'keep-both') {
-          // Generate new UUID to prevent ID collision
-          const newItemId = 'imported_' + crypto.randomUUID().slice(0, 8);
-          conflictsResolvedCount++;
-          importedItems.push({
-            ...item,
-            id: newItemId,
-            title: `${item.title} (Imported)`
-          });
+        const existingMatchIndex = finalItemsList.findIndex(
+          existing => existing.id === item.id || UrlNormalizer.normalize(existing.url) === UrlNormalizer.normalize(item.url)
+        );
+
+        if (existingMatchIndex !== -1) {
+          // Conflict detected!
+          if (conflictStrategy === 'skip') {
+            conflictsResolvedCount++;
+            continue;
+          } else if (conflictStrategy === 'overwrite') {
+            finalItemsList[existingMatchIndex] = item;
+            importedItems.push(item);
+            conflictsResolvedCount++;
+          } else {
+            // 'keep-both'
+            const newItemId = 'imported_' + crypto.randomUUID().slice(0, 8);
+            const importedVersion: SavedTabItem = {
+              ...item,
+              id: newItemId,
+              title: `${item.title} (Imported)`
+            };
+            finalItemsList.push(importedVersion);
+            importedItems.push(importedVersion);
+            conflictsResolvedCount++;
+          }
         } else {
-          // 'overwrite'
-          conflictsResolvedCount++;
+          // Non-duplicate item
+          finalItemsList.push(item);
           importedItems.push(item);
         }
       }
 
       // Step 5: Commit staged files to target vault directories
       for (const fileEntry of manifest.files) {
+        const normalizedRel = fileEntry.relativePath.replace(/\\/g, '/');
+        if (normalizedRel === 'metadata/items.json') {
+          // Skip copying the raw export metadata/items.json so existing items are not wiped out
+          continue;
+        }
+
         const stagedFilePath = path.join(stagingDir, fileEntry.relativePath);
         const targetFilePath = path.join(vaultRoot, fileEntry.relativePath);
         const targetDir = path.dirname(targetFilePath);
@@ -388,6 +466,13 @@ export class PortableVaultManager {
 
         fs.copyFileSync(stagedFilePath, targetFilePath);
       }
+
+      // Commit merged items list to metadata/items.json
+      const metaDir = path.join(vaultRoot, 'metadata');
+      if (!fs.existsSync(metaDir)) {
+        fs.mkdirSync(metaDir, { recursive: true });
+      }
+      fs.writeFileSync(targetItemsPath, JSON.stringify(finalItemsList, null, 2), 'utf8');
 
       // Clean up staging directory on success
       fs.rmSync(stagingDir, { recursive: true, force: true });

@@ -93,8 +93,20 @@ describe('Epic 4.1 --- Portable Vault & Drive Migration', () => {
     });
 
     it('rejects drive letters and null bytes', () => {
-      expect(() => PortableVaultManager.validateRelativePath('D:items.json')).toThrow(/drive letters are forbidden/);
+      expect(() => PortableVaultManager.validateRelativePath('D:items.json')).toThrow(/colon or NTFS alternate data stream|drive letters are forbidden/);
       expect(() => PortableVaultManager.validateRelativePath('thumbnails/test\0.png')).toThrow(/null byte detected/);
+    });
+
+    it('rejects Windows reserved device names (CON, PRN, AUX, NUL, COM1-9, LPT1-9)', () => {
+      expect(() => PortableVaultManager.validateRelativePath('thumbnails/CON.png')).toThrow(/Windows reserved device name/);
+      expect(() => PortableVaultManager.validateRelativePath('metadata/aux.json')).toThrow(/Windows reserved device name/);
+      expect(() => PortableVaultManager.validateRelativePath('prn')).toThrow(/Windows reserved device name/);
+      expect(() => PortableVaultManager.validateRelativePath('archives/com1.txt')).toThrow(/Windows reserved device name/);
+    });
+
+    it('rejects NTFS alternate data streams and colon sequences', () => {
+      expect(() => PortableVaultManager.validateRelativePath('thumbnails/ts_doc.png:hidden.exe')).toThrow(/colon or NTFS alternate data stream/);
+      expect(() => PortableVaultManager.validateRelativePath('data.txt::$DATA')).toThrow(/colon or NTFS alternate data stream/);
     });
   });
 
@@ -155,6 +167,51 @@ describe('Epic 4.1 --- Portable Vault & Drive Migration', () => {
       // Verify committed files in destination vault
       expect(fs.existsSync(path.join(destinationVaultDir, 'thumbnails', 'ts_doc.png'))).toBe(true);
       expect(fs.existsSync(path.join(destinationVaultDir, 'metadata', 'items.json'))).toBe(true);
+    });
+
+    it('preserves pre-existing vault items and resolves conflicts per strategy', () => {
+      // 1. Create a pre-existing item in destination vault
+      const existingItem: SavedTabItem = {
+        id: 'tab_dest_existing',
+        vaultId: 'vault_dest',
+        itemType: 'tab',
+        title: 'Pre-existing Documentation',
+        url: 'https://www.typescriptlang.org/docs', // Duplicate URL of mockItems[0]
+        normalizedUrl: 'https://www.typescriptlang.org/docs',
+        domain: 'typescriptlang.org',
+        savedAt: '2026-10-20T10:00:00Z',
+        notes: 'Original note that must not be lost',
+        isFavorite: true,
+        collectionIds: [],
+        tags: [],
+        browserFamily: 'Chrome'
+      };
+
+      const metaDir = path.join(destinationVaultDir, 'metadata');
+      fs.mkdirSync(metaDir, { recursive: true });
+      fs.writeFileSync(path.join(metaDir, 'items.json'), JSON.stringify([existingItem], null, 2), 'utf8');
+
+      // 2. Export package with 2 items (one duplicate URL, one new)
+      PortableVaultManager.exportVault({
+        vaultManager,
+        targetDirectory: targetExportDir,
+        items: mockItems
+      });
+
+      // 3. Test 'skip' strategy: duplicate item is skipped, new item is added, existing item preserved
+      const skipResult = PortableVaultManager.importVault(targetExportDir, destVaultManager, {
+        conflictStrategy: 'skip'
+      });
+      expect(skipResult.conflictsResolvedCount).toBe(1); // 1 conflict skipped
+      expect(skipResult.importedItemCount).toBe(1); // Only tab_test_2 imported
+
+      const onDiskItems: SavedTabItem[] = JSON.parse(
+        fs.readFileSync(path.join(destinationVaultDir, 'metadata', 'items.json'), 'utf8')
+      );
+      // Both existingItem and non-duplicate tab_test_2 must exist on disk!
+      expect(onDiskItems.some(i => i.id === 'tab_dest_existing')).toBe(true);
+      expect(onDiskItems.some(i => i.id === 'tab_test_2')).toBe(true);
+      expect(onDiskItems.length).toBe(2);
     });
 
     it('rejects import packages with unsupported schema version', () => {

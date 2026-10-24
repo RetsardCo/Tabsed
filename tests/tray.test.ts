@@ -87,19 +87,36 @@ describe('Epic 4.5 --- System Tray & Quick Actions', () => {
       expect(onExitApp).toHaveBeenCalledTimes(1);
     });
 
-    it('restores recent session and handles empty vault gracefully', async () => {
+    it('gates restore_recent on browser connector availability and handles empty vault gracefully', async () => {
       const onRestoreRecent = vi.fn().mockResolvedValue(true);
       const tray = new TrayManager({}, { onRestoreRecent });
 
-      // With items
+      // 1. When connector is disconnected, fails safely
+      tray.setConnectorStatus(false);
+      const disconnectedRes = await tray.executeQuickAction('restore_recent', mockItems);
+      expect(disconnectedRes.success).toBe(false);
+      expect(disconnectedRes.message).toContain('Browser connector is unavailable');
+      expect(onRestoreRecent).not.toHaveBeenCalled();
+
+      // 2. When connector is connected, restores session successfully
+      tray.setConnectorStatus(true);
       const res = await tray.executeQuickAction('restore_recent', mockItems);
       expect(res.success).toBe(true);
       expect(onRestoreRecent).toHaveBeenCalledWith(mockItems[0]);
 
-      // With empty items
+      // 3. When vault has empty items, fails safely
       const emptyRes = await tray.executeQuickAction('restore_recent', []);
       expect(emptyRes.success).toBe(false);
       expect(emptyRes.message).toContain('No saved tabs');
+
+      // 4. When callback throws or fails
+      const failingTray = new TrayManager({}, {
+        onRestoreRecent: vi.fn().mockRejectedValue(new Error('Browser closed tab unexpectedly'))
+      });
+      failingTray.setConnectorStatus(true);
+      const failRes = await failingTray.executeQuickAction('restore_recent', mockItems);
+      expect(failRes.success).toBe(false);
+      expect(failRes.message).toContain('Error restoring recent session');
     });
 
     it('pauses and resumes automation via quick action', async () => {
