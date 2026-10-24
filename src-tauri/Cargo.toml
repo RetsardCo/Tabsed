@@ -1,0 +1,20 @@
+[package]
+name = "tabsed"
+version = "1.0.0"
+description = "Your tabs, thoughtfully put away."
+authors = ["Tabsed Contributors"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2.0", features = [] }
+
+[dependencies]
+tauri = { version = "2.0", features = [] }
+tauri-plugin-window-state = "2.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+rusqlite = { version = "0.31", features = ["bundled"] }
+sha2 = "0.10"
+uuid = { version = "1.10", features = ["v4", "serde"] }
+thiserror = "1.0"
+log = "0.4"
