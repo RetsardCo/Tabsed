@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "lint": "echo Lint check passed"
+    "lint": "echo Lint check passed",
+    "package:extensions": "node scripts/package-extensions.cjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",

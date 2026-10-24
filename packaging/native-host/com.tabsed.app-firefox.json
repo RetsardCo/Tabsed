@@ -1,0 +1,9 @@
+{
+  "name": "com.tabsed.app",
+  "description": "Tabsed Native Messaging Host for Mozilla Firefox",
+  "path": "host.bat",
+  "type": "stdio",
+  "allowed_extensions": [
+    "tabsed@tabsed.com"
+  ]
+}

@@ -77,27 +77,62 @@ cd Tabsed
 npm install
 ```
 
-### Development & Testing
+### Quick Launch (Try the App Right Now)
 
+Double-click `launch-app.bat` in the project root (or run `launch-app.ps1` in PowerShell). This automated launcher verifies dependencies, starts the local dev server on port 3000, and opens your default browser automatically.
+
+Alternatively, start the server via terminal:
 ```bash
-# Run unit & integration tests
-npm test
-
-# Run TypeScript type check
-npm run typecheck
-
-# Start local development server
 npm run dev
-
-# Build production web bundle
-npm run build
+# or
+npm start
 ```
+Then open your browser to: **http://localhost:3000**
 
-### Loading the Browser Extension (Edge / Chrome)
+---
 
-1. Open your browser and navigate to `edge://extensions` or `chrome://extensions`.
-2. Enable **Developer mode** toggle.
-3. Click **Load unpacked** and select the `Tabsed/extension` folder.
+### Loading & Packaging Browser Extensions
+
+#### 1. Packaging Extensions (Chrome, Edge & Firefox)
+Run the automated packager to generate unpacked builds and release `.zip` archives:
+```bash
+npm run package:extensions
+```
+Generated artifacts:
+- `dist/extensions/unpacked-chromium/` (Manifest V3 for Microsoft Edge, Google Chrome, Brave)
+- `dist/extensions/unpacked-firefox/` (Manifest V3 for Mozilla Firefox with Gecko ID)
+- `dist/extensions/tabsed-chromium-v1.0.0.zip`
+- `dist/extensions/tabsed-firefox-v1.0.0.zip`
+
+#### 2. Installing the Windows Native Messaging Host
+To enable communication between browser extensions and Tabsed:
+1. Open `packaging/native-host/`
+2. Run `install_host.bat` (or `install_host.ps1`) to register `com.tabsed.app` in `HKCU\Software\[Browser]\NativeMessagingHosts`.
+3. Restart your browser.
+
+#### 3. Loading in Chrome / Edge
+1. Navigate to `edge://extensions` or `chrome://extensions`.
+2. Turn on **Developer mode**.
+3. Click **Load unpacked** and select `dist/extensions/unpacked-chromium` (or `Tabsed/extension`).
+
+#### 4. Loading in Firefox
+1. Navigate to `about:debugging#/runtime/this-firefox`.
+2. Click **Load Temporary Add-on...** and select `dist/extensions/unpacked-firefox/manifest.json`.
+
+---
+
+### Native Desktop Window (.exe via Tauri)
+To run Tabsed as a standalone native Windows desktop application with Mica transparency:
+1. Run `scripts/setup-toolchain.bat` to check if Rust and Visual Studio C++ Build Tools are installed.
+2. If needed, install via winget:
+   ```cmd
+   winget install Rustlang.Rustup
+   winget install Microsoft.VisualStudio.2022.BuildTools
+   ```
+3. Launch native desktop shell:
+   ```bash
+   npm run tauri dev
+   ```
 
 ---
 

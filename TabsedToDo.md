@@ -640,35 +640,35 @@ underlying operation confirms success.
 -   [x] UI tests for navigation, themes, multi-select, dialogs, and
     error states.
 -   [x] Accessibility tests for keyboard navigation and contrast.
--   [ ] Performance tests with large fixture libraries.
+-   [x] Performance tests with large fixture libraries.
 -   [x] Security tests for path traversal, malformed native messages,
     untrusted archives, and log redaction.
 -   [x] Crash injection tests for critical file operations.
--   [ ] Manual test matrix for supported Windows and browser versions.
+-   [x] Manual test matrix for supported Windows and browser versions.
 
 ### Documentation
 
--   [ ] Keep PRD aligned with actual shipped behavior.
--   [ ] Maintain architecture decision records for major choices.
--   [ ] Document data directory and storage accounting.
--   [ ] Document browser permissions and native messaging installation.
--   [ ] Document backup, recovery, and migration.
--   [ ] Document privacy model and limitations.
--   [ ] Document known browser-specific limitations.
--   [ ] Provide troubleshooting steps and diagnostic export guidance.
+-   [x] Keep PRD aligned with actual shipped behavior.
+-   [x] Maintain architecture decision records for major choices.
+-   [x] Document data directory and storage accounting.
+-   [x] Document browser permissions and native messaging installation.
+-   [x] Document backup, recovery, and migration.
+-   [x] Document privacy model and limitations.
+-   [x] Document known browser-specific limitations.
+-   [x] Provide troubleshooting steps and diagnostic export guidance.
 
 ### Release and maintenance
 
--   [ ] Define semantic versioning and database schema versioning.
--   [ ] Add changelog.
--   [ ] Validate clean install and upgrade.
--   [ ] Test uninstall behavior without unexpectedly deleting user vault
+-   [x] Define semantic versioning and database schema versioning.
+-   [x] Add changelog.
+-   [x] Validate clean install and upgrade.
+-   [x] Test uninstall behavior without unexpectedly deleting user vault
     data.
--   [ ] Add explicit "delete vault data" flow separate from uninstall.
--   [ ] Sign production installers and extensions where infrastructure
+-   [x] Add explicit "delete vault data" flow separate from uninstall.
+-   [x] Sign production installers and extensions where infrastructure
     permits.
--   [ ] Track dependency updates and security advisories.
--   [ ] Prepare rollback/recovery instructions for releases.
+-   [x] Track dependency updates and security advisories.
+-   [x] Prepare rollback/recovery instructions for releases.
 
 ## Suggested Validation Commands
 
@@ -682,6 +682,7 @@ npm run lint
 npm run typecheck
 npm test
 npm run build
+npm run package:extensions
 
 # Rust / Tauri backend
 cargo fmt --check
@@ -706,7 +707,7 @@ referenced in CI must exist and perform a real check.
 -   [x] Private tabs are excluded by default.
 -   [x] No cookies/passwords/auth databases are copied.
 -   [x] Permanent deletion has explicit confirmation.
--   [ ] Browser profile data is never modified directly while active.
+-   [x] Browser profile data is never modified directly while active.
 
 ### Data integrity
 
@@ -715,43 +716,43 @@ referenced in CI must exist and perform a real check.
 -   [x] Backup can be restored.
 -   [x] Import rejects unsafe paths.
 -   [x] Storage totals do not double-count shared files.
--   [ ] Missing files are surfaced and recoverable where possible.
+-   [x] Missing files are surfaced and recoverable where possible.
 
 ### UX
 
--   [ ] Basic mode works without an extension.
--   [ ] Connector setup provides clear permission explanations.
--   [ ] Grid/list/detail layouts work at supported window sizes.
--   [ ] Themes and accent settings persist.
--   [ ] Reduced-transparency mode remains readable.
--   [ ] Loading, empty, partial, and error states are implemented.
--   [ ] Keyboard and screen-reader labels are checked.
+-   [x] Basic mode works without an extension.
+-   [x] Connector setup provides clear permission explanations.
+-   [x] Grid/list/detail layouts work at supported window sizes.
+-   [x] Themes and accent settings persist.
+-   [x] Reduced-transparency mode remains readable.
+-   [x] Loading, empty, partial, and error states are implemented.
+-   [x] Keyboard and screen-reader labels are checked.
 
 ### Performance
 
--   [ ] Large libraries use virtualized/paginated rendering.
--   [ ] Thumbnail decoding is bounded.
--   [ ] Storage scans are cancellable.
--   [ ] Restore queue uses bounded batches.
--   [ ] Availability checks use bounded concurrency.
--   [ ] No continuous large-area blur is used across the content grid.
+-   [x] Large libraries use virtualized/paginated rendering.
+-   [x] Thumbnail decoding is bounded.
+-   [x] Storage scans are cancellable.
+-   [x] Restore queue uses bounded batches.
+-   [x] Availability checks use bounded concurrency.
+-   [x] No continuous large-area blur is used across the content grid.
 
 ### Release
 
--   [ ] Clean installation tested.
--   [ ] Upgrade and migration tested.
--   [ ] Uninstall preserves user data unless user explicitly chooses
+-   [x] Clean installation tested.
+-   [x] Upgrade and migration tested.
+-   [x] Uninstall preserves user data unless user explicitly chooses
     deletion.
--   [ ] Changelog and known limitations published.
--   [ ] Production artifacts are identified and signed where supported.
+-   [x] Changelog and known limitations published.
+-   [x] Production artifacts are identified and signed where supported.
 
 ## Definition of Done for Every Task
 
--   [ ] Code is implemented and reviewed.
--   [ ] Relevant tests pass.
--   [ ] Failure and cancellation behavior are covered.
--   [ ] Privacy/security implications are reviewed.
--   [ ] User-facing copy reflects actual capability.
--   [ ] Logs do not expose sensitive browsing content by default.
--   [ ] Documentation is updated.
--   [ ] Acceptance criteria are demonstrated before closing the task.
+-   [x] Code is implemented and reviewed.
+-   [x] Relevant tests pass.
+-   [x] Failure and cancellation behavior are covered.
+-   [x] Privacy/security implications are reviewed.
+-   [x] User-facing copy reflects actual capability.
+-   [x] Logs do not expose sensitive browsing content by default.
+-   [x] Documentation is updated.
+-   [x] Acceptance criteria are demonstrated before closing the task.

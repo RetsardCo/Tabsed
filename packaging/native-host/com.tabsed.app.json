@@ -1,0 +1,11 @@
+{
+  "name": "com.tabsed.app",
+  "description": "Tabsed Native Messaging Host for Chromium browsers (Microsoft Edge & Google Chrome)",
+  "path": "host.bat",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://kldpkehlfggflahcefgmhnohkndidmho/",
+    "chrome-extension://ibjflamlnbfeodfbfbbgofhkplkgnkbi/",
+    "chrome-extension://*"
+  ]
+}
