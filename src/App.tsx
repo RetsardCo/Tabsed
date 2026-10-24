@@ -16,7 +16,8 @@ import { HelpDiagnosticsModal } from './ui/components/HelpDiagnosticsModal';
 import { ConfirmationModal } from './ui/components/ConfirmationModal';
 import { ArchiveSearchModal } from './ui/components/ArchiveSearchModal';
 import { BackupModal } from './ui/components/BackupModal';
-import { SavedTabItem, Collection, ViewMode, UserPreferences } from './ui/types';
+import { PortableVaultModal } from './ui/components/PortableVaultModal';
+import { SavedTabItem, Collection, ViewMode, UserPreferences, Tag } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
 
@@ -295,6 +296,7 @@ export const App: React.FC = () => {
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [archiveSearchModalOpen, setArchiveSearchModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
+  const [portableVaultModalOpen, setPortableVaultModalOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -614,6 +616,7 @@ export const App: React.FC = () => {
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
         onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
         onOpenCheckLinks={handleCheckAllLinks}
+        onOpenPortableVault={() => setPortableVaultModalOpen(true)}
         activeItemCount={items.length === INITIAL_ITEMS.length ? 128 : items.filter(i => !i.deletedAt).length}
         favoritesCount={favoritesCount}
         trashCount={trashCount}
@@ -823,6 +826,15 @@ export const App: React.FC = () => {
         onClose={() => setBackupModalOpen(false)}
         items={items}
         onRestoreBackup={(restored) => setItems(restored)}
+      />
+
+      <PortableVaultModal
+        isOpen={portableVaultModalOpen}
+        onClose={() => setPortableVaultModalOpen(false)}
+        items={items}
+        collections={collections}
+        tags={INITIAL_COLLECTIONS.map(c => ({ id: c.id, name: c.name }))}
+        onImportItems={(imported) => setItems(imported)}
       />
 
       <SettingsModal

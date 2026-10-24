@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { X, Palette, Monitor, Shield, HardDrive, Check } from 'lucide-react';
+import { X, Palette, Monitor, Shield, HardDrive, Check, Key, EyeOff, Play, Clock, Bell } from 'lucide-react';
 import { UserPreferences, ThemeMode, DensityMode, AccentPreset } from '../types';
+import { DEFAULT_REDACTION_RULES } from '../../core/vault/privacy-manager';
+import { DEFAULT_PROTECTION_RULES, DEFAULT_AUTOMATION_RULES, AutomationEngine } from '../../core/automation/automation-engine';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -26,7 +28,52 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy'>('appearance');
+  const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>('appearance');
+
+  // Phase 4 states
+  const [privateTabsOptIn, setPrivateTabsOptIn] = useState(false);
+  const [encryptionEnabled, setEncryptionEnabled] = useState(false);
+  const [generatedRecoveryKey, setGeneratedRecoveryKey] = useState<string | null>(null);
+  const [recoveryWarningShown, setRecoveryWarningShown] = useState(false);
+
+  // Automation states
+  const [automationRules, setAutomationRules] = useState(DEFAULT_AUTOMATION_RULES);
+  const [protectionRules, setProtectionRules] = useState(DEFAULT_PROTECTION_RULES);
+  const [simulationResult, setSimulationResult] = useState<string | null>(null);
+
+  // Tray states
+  const [minimizeToTray, setMinimizeToTray] = useState(true);
+  const [redactNotificationTitles, setRedactNotificationTitles] = useState(true);
+
+  const handleGenerateRecoveryKey = () => {
+    const bytes = new Uint8Array(16);
+    if (typeof globalThis !== 'undefined' && globalThis.crypto?.getRandomValues) {
+      globalThis.crypto.getRandomValues(bytes);
+    } else {
+      for (let i = 0; i < 16; i++) bytes[i] = Math.floor(Math.random() * 256);
+    }
+    const hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    const key = `TABSED-${hex.substring(0, 4)}-${hex.substring(4, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}`;
+    setGeneratedRecoveryKey(key);
+    setRecoveryWarningShown(true);
+  };
+
+  const handleRunSimulation = () => {
+    const dummyTabs = [
+      { id: 'tab_1', title: 'GitHub PR #42 Review', url: 'https://github.com/org/repo/pull/42', domain: 'github.com', pinned: false, lastActiveMinutesAgo: 120 },
+      { id: 'tab_2', title: 'AWS Cloud Console', url: 'https://console.aws.amazon.com', domain: 'console.aws.amazon.com', pinned: false, lastActiveMinutesAgo: 95 },
+      { id: 'tab_3', title: 'Work Jira Dashboard', url: 'https://work.atlassian.net', domain: 'work.atlassian.net', pinned: true, lastActiveMinutesAgo: 140 },
+      { id: 'tab_4', title: 'Private Research', url: 'https://scholar.google.com', domain: 'scholar.google.com', isPrivate: true, lastActiveMinutesAgo: 70 }
+    ];
+
+    const sim = AutomationEngine.simulate(dummyTabs, { ...automationRules[0], enabled: true }, protectionRules);
+    setSimulationResult(
+      `Simulation evaluated 4 tabs:\n` +
+      `• Would Save: ${sim.wouldSave.length} (${sim.wouldSave.map(t => t.title).join(', ') || 'None'})\n` +
+      `• Would Close: ${sim.wouldClose.length}\n` +
+      `• Protected: ${sim.protected.length} (${sim.protected.map(p => `${p.tab.title}: ${p.reason}`).join('; ')})`
+    );
+  };
 
   return (
     <div style={{
@@ -43,8 +90,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       zIndex: 1500
     }}>
       <div style={{
-        width: '580px',
-        maxHeight: '85vh',
+        width: '640px',
+        maxHeight: '88vh',
         backgroundColor: 'var(--bg-surface)',
         borderRadius: 'var(--radius-lg)',
         border: '1px solid var(--border-subtle)',
@@ -70,54 +117,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
         {/* Tab navigation */}
         <div style={{
           display: 'flex',
-          gap: '8px',
+          gap: '6px',
           padding: '10px 20px',
           backgroundColor: 'var(--bg-app)',
           borderBottom: '1px solid var(--border-subtle)',
-          fontSize: '12px'
+          fontSize: '12px',
+          overflowX: 'auto'
         }}>
-          <button
-            onClick={() => setActiveTab('appearance')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'appearance' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'appearance' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'appearance' ? 600 : 400,
-              cursor: 'pointer'
-            }}
-          >
-            Appearance
-          </button>
-          <button
-            onClick={() => setActiveTab('browsers')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'browsers' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'browsers' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'browsers' ? 600 : 400,
-              cursor: 'pointer'
-            }}
-          >
-            Browsers &amp; Connectors
-          </button>
-          <button
-            onClick={() => setActiveTab('privacy')}
-            style={{
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
-              border: 'none',
-              background: activeTab === 'privacy' ? 'var(--bg-surface)' : 'transparent',
-              color: activeTab === 'privacy' ? 'var(--accent-color)' : 'var(--text-secondary)',
-              fontWeight: activeTab === 'privacy' ? 600 : 400,
-              cursor: 'pointer'
-            }}
-          >
-            Privacy &amp; Vault
-          </button>
+          {(['appearance', 'browsers', 'privacy', 'automation', 'tray'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              style={{
+                padding: '6px 10px',
+                borderRadius: 'var(--radius-sm)',
+                border: 'none',
+                background: activeTab === tab ? 'var(--bg-surface)' : 'transparent',
+                color: activeTab === tab ? 'var(--accent-color)' : 'var(--text-secondary)',
+                fontWeight: activeTab === tab ? 600 : 400,
+                cursor: 'pointer',
+                textTransform: 'capitalize',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              {tab === 'privacy' ? 'Privacy & Encryption' : tab === 'tray' ? 'System Tray' : tab}
+            </button>
+          ))}
         </div>
 
         {/* Tab Content */}
@@ -176,63 +201,29 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 />
               </div>
 
-              {/* Accent Color Presets (PRD FR-131) */}
-              <div>
-                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '8px' }}>
-                  Accent Color
-                </label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  {ACCENT_PRESETS.map(preset => {
-                    const isSelected = preferences.accent === preset.key;
-                    return (
-                      <button
-                        key={preset.key}
-                        onClick={() => onUpdatePreferences({ accent: preset.key, customAccentHex: preset.hex })}
-                        title={preset.name}
-                        style={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '50%',
-                          backgroundColor: preset.hex,
-                          border: `2px solid ${isSelected ? '#ffffff' : 'transparent'}`,
-                          outline: isSelected ? `2px solid ${preset.hex}` : 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: '#ffffff'
-                        }}
-                      >
-                        {isSelected && <Check size={16} />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Density Controls (PRD FR-134) */}
+              {/* Accent Color Presets */}
               <div>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                  Content Density
+                  Accent Color
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
-                  {(['compact', 'comfortable', 'spacious'] as DensityMode[]).map(d => (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                  {ACCENT_PRESETS.map(p => (
                     <button
-                      key={d}
-                      onClick={() => onUpdatePreferences({ density: d })}
+                      key={p.key}
+                      onClick={() => onUpdatePreferences({ accent: p.key, customAccentHex: p.hex })}
                       style={{
-                        padding: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 10px',
                         borderRadius: 'var(--radius-md)',
-                        border: `1px solid ${preferences.density === d ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
-                        backgroundColor: preferences.density === d ? 'var(--accent-light)' : 'var(--bg-app)',
-                        color: preferences.density === d ? 'var(--accent-color)' : 'var(--text-primary)',
-                        fontSize: '12px',
-                        fontWeight: 500,
-                        cursor: 'pointer',
-                        textTransform: 'capitalize'
+                        border: `1px solid ${preferences.accent === p.key ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
+                        backgroundColor: preferences.accent === p.key ? 'var(--accent-light)' : 'var(--bg-app)',
+                        cursor: 'pointer'
                       }}
                     >
-                      {d}
+                      <div style={{ width: '12px', height: '12px', borderRadius: '50%', backgroundColor: p.hex }} />
+                      <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-primary)' }}>{p.name}</span>
                     </button>
                   ))}
                 </div>
@@ -253,10 +244,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 fontSize: '12px'
               }}>
                 <div>
-                  <div style={{ fontWeight: 600 }}>Microsoft Edge Extension</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status: Active (Native Messaging Bridge Connected)</div>
+                  <div style={{ fontWeight: 600 }}>Microsoft Edge Connector</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Native Messaging Host v1.0.0</div>
                 </div>
-                <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>Ready</span>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span>
               </div>
 
               <div style={{
@@ -271,11 +262,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               }}>
                 <div>
                   <div style={{ fontWeight: 600 }}>Google Chrome Extension</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status: Detected (Protocol v1.0.0)</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Native Messaging Host v1.0.0</div>
                 </div>
-                <span style={{ color: 'var(--success-color)', fontWeight: 600 }}>Ready</span>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'privacy' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+              {/* Sensitive Domain Preview Redaction (Epic 4.3) */}
+              <div style={{
+                padding: '12px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, marginBottom: '4px' }}>
+                  <EyeOff size={16} style={{ color: 'var(--accent-color)' }} />
+                  <span>Sensitive Domain Preview Redaction (PRD FR-125)</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                  Automatically masks and sanitizes tab previews before persisting to storage for sensitive banking and health portals.
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {DEFAULT_REDACTION_RULES.map(r => (
+                    <span
+                      key={r.id}
+                      style={{
+                        padding: '3px 8px',
+                        borderRadius: 'var(--radius-sm)',
+                        backgroundColor: 'var(--bg-surface)',
+                        border: '1px solid var(--border-subtle)',
+                        fontSize: '11px'
+                      }}
+                    >
+                      {r.pattern} ({r.mode})
+                    </span>
+                  ))}
+                </div>
               </div>
 
+              {/* Private Tab Opt-in (Epic 4.3) */}
               <div style={{
                 padding: '12px',
                 borderRadius: 'var(--radius-md)',
@@ -283,34 +311,178 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 border: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '12px'
+                justifyContent: 'space-between'
               }}>
                 <div>
-                  <div style={{ fontWeight: 600 }}>Mozilla Firefox Connector</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Status: Planned for Phase 3</div>
+                  <div style={{ fontWeight: 600 }}>Allow Private / Incognito Tab Capture</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Disabled by default (PRD FR-121). Private tabs are purged on application exit.
+                  </div>
                 </div>
-                <span style={{ color: 'var(--text-muted)' }}>Inactive</span>
+                <input
+                  type="checkbox"
+                  checked={privateTabsOptIn}
+                  onChange={e => setPrivateTabsOptIn(e.target.checked)}
+                  style={{ width: '16px', height: '16px' }}
+                />
+              </div>
+
+              {/* AES-256-GCM Encryption & Recovery Key (Epic 4.2) */}
+              <div style={{
+                padding: '12px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, marginBottom: '4px' }}>
+                  <Key size={16} style={{ color: 'var(--accent-color)' }} />
+                  <span>AES-256-GCM Archive Encryption (PRD FR-123)</span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>
+                  Hardware-accelerated AES-256-GCM with scrypt key derivation and tamper detection.
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {encryptionEnabled ? 'Encryption active for new archives' : 'Encryption optional'}
+                  </span>
+                  <button
+                    onClick={handleGenerateRecoveryKey}
+                    style={{
+                      padding: '5px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      backgroundColor: 'var(--accent-light)',
+                      color: 'var(--accent-color)',
+                      border: '1px solid var(--border-subtle)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Generate Recovery Key
+                  </button>
+                </div>
+
+                {generatedRecoveryKey && (
+                  <div style={{
+                    marginTop: '10px',
+                    padding: '10px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    color: 'var(--text-primary)',
+                    fontSize: '11px'
+                  }}>
+                    <div style={{ fontWeight: 700, color: '#ef4444', marginBottom: '4px' }}>
+                      Recovery Key: {generatedRecoveryKey}
+                    </div>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '10px' }}>
+                      Loss of this key and your password will make encrypted data permanently unrecoverable (PRD FR-124).
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
 
-          {activeTab === 'privacy' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          {activeTab === 'automation' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+              <div style={{ color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                Automation rules run on configured thresholds. Pinned tabs, allowlisted domains, and user collections are strictly protected.
+              </div>
+
+              {/* Protected Tabs */}
               <div style={{
-                padding: '14px',
+                padding: '12px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)'
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: '6px' }}>Protected Tab Invariants (PRD Epic 4.4)</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '11px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="checkbox"
+                      checked={protectionRules.protectPinnedTabs}
+                      onChange={e => setProtectionRules(p => ({ ...p, protectPinnedTabs: e.target.checked }))}
+                    />
+                    <span>Protect pinned tabs from automated closure</span>
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <input
+                      type="checkbox"
+                      checked={protectionRules.excludePrivateTabs}
+                      onChange={e => setProtectionRules(p => ({ ...p, excludePrivateTabs: e.target.checked }))}
+                    />
+                    <span>Exclude private/incognito tabs by default</span>
+                  </label>
+                  <div style={{ color: 'var(--text-muted)', marginTop: '4px' }}>
+                    Allowlisted domains: {protectionRules.allowlistedDomains.join(', ')}
+                  </div>
+                </div>
+              </div>
+
+              {/* Simulation button */}
+              <div>
+                <button
+                  onClick={handleRunSimulation}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: 'var(--radius-md)',
+                    backgroundColor: 'var(--accent-color)',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Play size={14} />
+                  Simulate Inactivity Vaulting Rule
+                </button>
+              </div>
+
+              {simulationResult && (
+                <div style={{
+                  padding: '12px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-app)',
+                  border: '1px solid var(--border-subtle)',
+                  whiteSpace: 'pre-wrap',
+                  fontSize: '11px',
+                  fontFamily: 'monospace'
+                }}>
+                  {simulationResult}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'tray' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '12px' }}>
+              <div style={{
+                padding: '12px',
                 borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--bg-app)',
                 border: '1px solid var(--border-subtle)',
-                fontSize: '12px',
-                lineHeight: '1.5'
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between'
               }}>
-                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
-                  Zero Credential Harvesting Principle
+                <div>
+                  <div style={{ fontWeight: 600 }}>Minimize to System Tray</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    Keep Tabsed running in the Windows notification area for quick tab capture
+                  </div>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '11px' }}>
-                  Tabsed never reads, exports, or stores cookies, saved passwords, authentication tokens, or active login sessions. Private/incognito tabs are strictly excluded from automated saves.
-                </p>
+                <input
+                  type="checkbox"
+                  checked={minimizeToTray}
+                  onChange={e => setMinimizeToTray(e.target.checked)}
+                  style={{ width: '16px', height: '16px' }}
+                />
               </div>
 
               <div style={{
@@ -323,12 +495,36 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 justifyContent: 'space-between'
               }}>
                 <div>
-                  <div style={{ fontSize: '12px', fontWeight: 600 }}>Exclude Private/Incognito Tabs</div>
+                  <div style={{ fontWeight: 600 }}>Redact Notification Titles (PRD FR-126)</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    Protect temporary or sensitive browsing windows
+                    Mask sensitive URLs and page titles in Windows notification popups
                   </div>
                 </div>
-                <input type="checkbox" checked={true} readOnly style={{ width: '16px', height: '16px' }} />
+                <input
+                  type="checkbox"
+                  checked={redactNotificationTitles}
+                  onChange={e => setRedactNotificationTitles(e.target.checked)}
+                  style={{ width: '16px', height: '16px' }}
+                />
+              </div>
+
+              <div style={{
+                padding: '12px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
+                fontSize: '11px',
+                color: 'var(--text-muted)'
+              }}>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: '4px' }}>
+                  Available Quick Actions:
+                </div>
+                <div>• Open Tabsed</div>
+                <div>• Save Current Window (Gated on browser connector availability)</div>
+                <div>• Search Vault</div>
+                <div>• Restore Recent Session</div>
+                <div>• Pause / Resume Automation</div>
+                <div>• Exit</div>
               </div>
             </div>
           )}

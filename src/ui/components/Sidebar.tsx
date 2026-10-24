@@ -33,6 +33,7 @@ interface SidebarProps {
   onOpenRestoreQueue: () => void;
   onOpenArchiveSearch?: () => void;
   onOpenCheckLinks?: () => void;
+  onOpenPortableVault?: () => void;
   activeItemCount: number;
   favoritesCount: number;
   trashCount: number;
@@ -60,6 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenRestoreQueue,
   onOpenArchiveSearch,
   onOpenCheckLinks,
+  onOpenPortableVault,
   activeItemCount,
   favoritesCount,
   trashCount,
@@ -434,6 +436,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <RotateCcw size={17} />
           {!isCollapsed && <span>Restore Sessions</span>}
         </button>
+
+        {onOpenPortableVault && (
+          <button
+            onClick={onOpenPortableVault}
+            style={navItemStyle(false)}
+            title="Portable Vault"
+          >
+            <Folder size={17} />
+            {!isCollapsed && <span>Portable Vault</span>}
+          </button>
+        )}
       </div>
 
       {/* Section 4: STORAGE (Exact mockup representation) */}

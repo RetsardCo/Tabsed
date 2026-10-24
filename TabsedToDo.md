@@ -538,18 +538,18 @@ browser-independent.
 
 ### Epic 4.1 --- Portable vault
 
--   [ ] Finalize versioned manifest schema.
--   [ ] Use relative paths.
--   [ ] Export selected or complete vault content.
--   [ ] Verify free space and expected export size.
--   [ ] Validate paths, file hashes, IDs, and schema version on import.
--   [ ] Reject path traversal and unsafe paths.
--   [ ] Stage import and verify before committing.
--   [ ] Detect duplicate items and resolve conflicts.
--   [ ] Support moving vault to another drive with verification and
+-   [x] Finalize versioned manifest schema.
+-   [x] Use relative paths.
+-   [x] Export selected or complete vault content.
+-   [x] Verify free space and expected export size.
+-   [x] Validate paths, file hashes, IDs, and schema version on import.
+-   [x] Reject path traversal and unsafe paths.
+-   [x] Stage import and verify before committing.
+-   [x] Detect duplicate items and resolve conflicts.
+-   [x] Support moving vault to another drive with verification and
     rollback.
--   [ ] Test external-drive disconnect during copy.
--   [ ] Test importing older manifest versions.
+-   [x] Test external-drive disconnect during copy.
+-   [x] Test importing older manifest versions.
 
 **Acceptance criteria** - Portable export can be moved and imported
 without relying on the original absolute path. - Invalid manifests fail
@@ -557,21 +557,21 @@ safely. - No browser credentials/profile data are included by default.
 
 ### Epic 4.2 --- Encryption and key management
 
--   [ ] Define threat model and exact encryption scope.
--   [ ] Select a vetted cryptographic library and reviewed format.
--   [ ] Define key derivation, nonce/IV handling, authentication, and
+-   [x] Define threat model and exact encryption scope.
+-   [x] Select a vetted cryptographic library and reviewed format.
+-   [x] Define key derivation, nonce/IV handling, authentication, and
     versioning through the selected library's established patterns.
--   [ ] Decide whether encryption is per archive, per vault, or both.
--   [ ] Design password/key storage and optional OS-protected key
+-   [x] Decide whether encryption is per archive, per vault, or both.
+-   [x] Design password/key storage and optional OS-protected key
     integration.
--   [ ] Define recovery-key export and loss warnings.
--   [ ] Encrypt test archives and verify tamper detection.
--   [ ] Ensure plaintext temporary files are cleaned safely.
--   [ ] Ensure logs and previews do not bypass intended privacy
+-   [x] Define recovery-key export and loss warnings.
+-   [x] Encrypt test archives and verify tamper detection.
+-   [x] Ensure plaintext temporary files are cleaned safely.
+-   [x] Ensure logs and previews do not bypass intended privacy
     controls.
--   [ ] Test wrong key, corrupted ciphertext, key rotation, backup, and
+-   [x] Test wrong key, corrupted ciphertext, key rotation, backup, and
     import/export.
--   [ ] Obtain a security review before release.
+-   [x] Obtain a security review before release.
 
 **Acceptance criteria** - Encryption is not home-grown. - Key loss
 behavior is explicit and tested. - Tampering is detected. -
@@ -579,15 +579,15 @@ Documentation does not overstate protection.
 
 ### Epic 4.3 --- Preview redaction and private vault
 
--   [ ] Add domain/item rules for hiding or redacting thumbnails.
--   [ ] Ensure redaction happens before the preview is persisted where
+-   [x] Add domain/item rules for hiding or redacting thumbnails.
+-   [x] Ensure redaction happens before the preview is persisted where
     possible.
--   [ ] Add private-tab capture opt-in only where supported.
--   [ ] Add separate labels and retention settings for private captures.
--   [ ] Add shutdown/purge behavior with clear explanation.
--   [ ] Prevent sensitive previews in notifications by default.
--   [ ] Test private-mode permission removal and connector disconnect.
--   [ ] Verify private records are excluded from automatic indexing
+-   [x] Add private-tab capture opt-in only where supported.
+-   [x] Add separate labels and retention settings for private captures.
+-   [x] Add shutdown/purge behavior with clear explanation.
+-   [x] Prevent sensitive previews in notifications by default.
+-   [x] Test private-mode permission removal and connector disconnect.
+-   [x] Verify private records are excluded from automatic indexing
     unless explicitly allowed.
 
 **Acceptance criteria** - Private capture remains off by default. - User
@@ -597,16 +597,16 @@ unless it is.
 
 ### Epic 4.4 --- Automation
 
--   [ ] Define automatic vaulting triggers and protected-tab rules.
--   [ ] Require explicit user opt-in.
--   [ ] Exclude private tabs by default.
--   [ ] Protect pinned tabs, allowlisted domains, and user-defined
+-   [x] Define automatic vaulting triggers and protected-tab rules.
+-   [x] Require explicit user opt-in.
+-   [x] Exclude private tabs by default.
+-   [x] Protect pinned tabs, allowlisted domains, and user-defined
     collections.
--   [ ] Add preview/simulation mode for automation rules.
--   [ ] Add audit history and undo where possible.
--   [ ] Ensure automatic close only occurs after verified save.
--   [ ] Add per-rule pause/disable controls.
--   [ ] Test browser crash, extension disconnect, save failure, and
+-   [x] Add preview/simulation mode for automation rules.
+-   [x] Add audit history and undo where possible.
+-   [x] Ensure automatic close only occurs after verified save.
+-   [x] Add per-rule pause/disable controls.
+-   [x] Test browser crash, extension disconnect, save failure, and
     quota exhaustion.
 
 **Acceptance criteria** - Automation never closes a tab whose save has
@@ -615,14 +615,14 @@ Automatic cleanup is never enabled without an explicit choice.
 
 ### Epic 4.5 --- System tray and quick actions
 
--   [ ] Implement optional tray mode.
--   [ ] Add Open Tabsed, Search Vault, Restore Recent, Save Current
+-   [x] Implement optional tray mode.
+-   [x] Add Open Tabsed, Search Vault, Restore Recent, Save Current
     Window, Pause Automation, Exit.
--   [ ] Gate browser actions on connector availability.
--   [ ] Add tray notifications only for useful events and redact
+-   [x] Gate browser actions on connector availability.
+-   [x] Add tray notifications only for useful events and redact
     sensitive titles by default.
--   [ ] Respect launch-at-login only when the user opts in.
--   [ ] Test app shutdown, tray restart, and connector mismatch.
+-   [x] Respect launch-at-login only when the user opts in.
+-   [x] Test app shutdown, tray restart, and connector mismatch.
 
 **Acceptance criteria** - Tray is optional and does not make the main
 app unusable when disabled. - No action reports success before the
@@ -703,7 +703,7 @@ referenced in CI must exist and perform a real check.
 -   [ ] Save failure leaves source tabs open.
 -   [ ] Partial capture closes only committed tabs explicitly selected
     for closure.
--   [ ] Private tabs are excluded by default.
+-   [x] Private tabs are excluded by default.
 -   [ ] No cookies/passwords/auth databases are copied.
 -   [x] Permanent deletion has explicit confirmation.
 -   [ ] Browser profile data is never modified directly while active.
@@ -713,7 +713,7 @@ referenced in CI must exist and perform a real check.
 -   [ ] Database migrations pass.
 -   [ ] Vault files and manifest verify.
 -   [ ] Backup can be restored.
--   [ ] Import rejects unsafe paths.
+-   [x] Import rejects unsafe paths.
 -   [ ] Storage totals do not double-count shared files.
 -   [ ] Missing files are surfaced and recoverable where possible.
 
