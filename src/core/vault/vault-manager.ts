@@ -28,6 +28,7 @@ export interface StorageReport {
   trashBytes: number;
   backupsBytes: number;
   temporaryBytes: number;
+  manifestBytes: number;
   freeSpaceBytes: number | null;
   profileEstimateBytes: number | null; // clearly labeled as profile-level estimate
 }
@@ -120,21 +121,47 @@ export class VaultManager {
   /**
    * Atomically commit staged file to final vault destination
    */
+  /**
+   * Atomically commit staged file to final vault destination
+   */
   public commitStagedFile(staged: StagedFile): string {
     if (!this.verifyStagedFile(staged)) {
       throw new Error(`Integrity verification failed for staged file ${staged.stageId}`);
     }
 
-    // Path traversal protection (PRD 12.2)
-    const normalizedRelative = path.normalize(staged.expectedRelativePath).replace(/^(\.\.[\/\\])+/, '');
-    const destinationPath = path.join(this.rootPath, normalizedRelative);
+    // Path traversal and unsafe path protection (PRD 12.2 and Epic 4.1)
+    if (!staged.expectedRelativePath || staged.expectedRelativePath.includes('\0')) {
+      throw new Error(`Path traversal or unsafe path rejected: invalid path string`);
+    }
+
+    if (path.isAbsolute(staged.expectedRelativePath)) {
+      throw new Error(`Path traversal or unsafe path rejected: absolute paths are not permitted (${staged.expectedRelativePath})`);
+    }
+
+    const resolvedRoot = path.resolve(this.rootPath);
+    const destinationPath = path.resolve(resolvedRoot, staged.expectedRelativePath);
+
+    if (!destinationPath.startsWith(resolvedRoot + path.sep)) {
+      throw new Error(`Path traversal or unsafe path rejected: destination path escapes vault root (${staged.expectedRelativePath})`);
+    }
+
+    const normalizedRelative = path.relative(resolvedRoot, destinationPath);
     const destinationDir = path.dirname(destinationPath);
 
     if (!fs.existsSync(destinationDir)) {
       fs.mkdirSync(destinationDir, { recursive: true });
     }
 
-    fs.renameSync(staged.tempFilePath, destinationPath);
+    try {
+      fs.renameSync(staged.tempFilePath, destinationPath);
+    } catch (err: any) {
+      if (err.code === 'EXDEV') {
+        fs.copyFileSync(staged.tempFilePath, destinationPath);
+        fs.unlinkSync(staged.tempFilePath);
+      } else {
+        throw err;
+      }
+    }
     return normalizedRelative;
   }
 
@@ -202,7 +229,20 @@ export class VaultManager {
     const backupsBytes = getDirSize('backups');
     const temporaryBytes = getDirSize('temp');
 
-    const exactVaultBytes = thumbnailsBytes + archivesBytes + databaseBytes + trashBytes + backupsBytes + temporaryBytes;
+    // Account for root-level vault metadata files (manifest.json, etc.)
+    let manifestBytes = 0;
+    try {
+      const rootEntries = fs.readdirSync(this.rootPath, { withFileTypes: true });
+      for (const entry of rootEntries) {
+        if (entry.isFile()) {
+          manifestBytes += fs.statSync(path.join(this.rootPath, entry.name)).size;
+        }
+      }
+    } catch {
+      // Ignore if root directory unreadable
+    }
+
+    const exactVaultBytes = thumbnailsBytes + archivesBytes + databaseBytes + trashBytes + backupsBytes + temporaryBytes + manifestBytes;
 
     return {
       exactVaultBytes,
@@ -212,6 +252,7 @@ export class VaultManager {
       trashBytes,
       backupsBytes,
       temporaryBytes,
+      manifestBytes,
       freeSpaceBytes: null, // Queried via OS if supported
       profileEstimateBytes: null // Explicitly separate, never conflated with vault-owned files
     };

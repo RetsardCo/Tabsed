@@ -39,4 +39,22 @@ describe('UrlNormalizer', () => {
     expect(duplicatesStripped.length).toBe(1);
     expect(duplicatesStripped[0].items.length).toBe(3);
   });
+
+  it('correctly trims trailing slashes on sub-paths and root paths when configured', () => {
+    const subPathWithSlash = 'https://example.com/docs/';
+    const subPathWithoutSlash = 'https://example.com/docs';
+    expect(UrlNormalizer.normalize(subPathWithSlash, { trimTrailingSlash: true })).toBe('https://example.com/docs');
+    expect(UrlNormalizer.normalize(subPathWithoutSlash, { trimTrailingSlash: true })).toBe('https://example.com/docs');
+
+    const rootWithSlash = 'https://example.com/';
+    expect(UrlNormalizer.normalize(rootWithSlash, { trimTrailingSlash: true })).toBe('https://example.com');
+
+    // Matching as duplicates
+    const dups = UrlNormalizer.findDuplicates(
+      [{ url: subPathWithSlash }, { url: subPathWithoutSlash }],
+      { trimTrailingSlash: true }
+    );
+    expect(dups.length).toBe(1);
+    expect(dups[0].items.length).toBe(2);
+  });
 });

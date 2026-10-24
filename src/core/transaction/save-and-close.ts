@@ -64,6 +64,8 @@ export class SaveTransactionSession {
   private closedTabIds: (number | string)[] = [];
   private errorSummary?: string;
   private closeRequested = false;
+  private totalRequestedCount = 0;
+  private excludedCount = 0;
 
   constructor(jobId = 'job_' + Date.now()) {
     this.jobId = jobId;
@@ -85,6 +87,7 @@ export class SaveTransactionSession {
       throw new Error(`Cannot validate in state: ${this.state}`);
     }
 
+    this.totalRequestedCount = tabs.length;
     this.closeRequested = !!options.closeAfterSave;
 
     // Enforce PRD FR-016: Private/incognito tabs excluded by default
@@ -95,12 +98,15 @@ export class SaveTransactionSession {
       if (tab.incognito && !allowPrivate) {
         continue; // Excluded by default
       }
-      if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('edge://')) {
+      if (!tab.url || typeof tab.url !== 'string' || !tab.url.trim() ||
+          tab.url.startsWith('chrome://') || tab.url.startsWith('edge://') ||
+          tab.url.startsWith('about:') || tab.url.startsWith('javascript:')) {
         continue; // Internal/unsupported schemes
       }
       validatedTabs.push(tab);
     }
 
+    this.excludedCount = tabs.length - validatedTabs.length;
     this.tabs = validatedTabs;
     this.state = 'validated';
   }
@@ -164,17 +170,28 @@ export class SaveTransactionSession {
       throw new Error(`Cannot persist in state: ${this.state}`);
     }
 
-    const { persisted, failed } = persistDatabaseCallback(this.stagedRecords);
+    try {
+      const { persisted, failed } = persistDatabaseCallback(this.stagedRecords);
 
-    for (const record of persisted) {
-      record.status = 'persisted';
-    }
-    for (const record of failed) {
-      record.status = 'failed';
-      this.failedTabIds.push(record.tabId);
-    }
+      for (const record of persisted) {
+        record.status = 'persisted';
+      }
+      for (const record of failed) {
+        record.status = 'failed';
+        this.failedTabIds.push(record.tabId);
+      }
 
-    this.state = failed.length > 0 && persisted.length > 0 ? 'partial' : failed.length > 0 ? 'failed' : 'persisted';
+      this.state = failed.length > 0 && persisted.length > 0 ? 'partial' : failed.length > 0 ? 'failed' : 'persisted';
+    } catch (err: any) {
+      this.state = 'failed';
+      this.errorSummary = err?.message || 'Database persistence error';
+      for (const record of this.stagedRecords) {
+        record.status = 'failed';
+        record.error = this.errorSummary;
+        this.failedTabIds.push(record.tabId);
+      }
+      throw err;
+    }
   }
 
   /**
@@ -185,29 +202,35 @@ export class SaveTransactionSession {
       throw new Error(`Cannot verify/commit in state: ${this.state}`);
     }
 
-    this.state = 'verified';
-    const verifiedIds = verifyCallback(this.stagedRecords.filter(r => r.status === 'persisted'));
-    this.committedTabIds = verifiedIds;
+    try {
+      this.state = 'verified';
+      const verifiedIds = verifyCallback(this.stagedRecords.filter(r => r.status === 'persisted'));
+      this.committedTabIds = verifiedIds;
 
-    for (const record of this.stagedRecords) {
-      if (verifiedIds.includes(record.tabId)) {
-        record.status = 'committed';
-      } else if (record.status !== 'failed') {
-        record.status = 'failed';
-        record.error = 'Verification check failed';
-        this.failedTabIds.push(record.tabId);
+      for (const record of this.stagedRecords) {
+        if (verifiedIds.includes(record.tabId)) {
+          record.status = 'committed';
+        } else if (record.status !== 'failed') {
+          record.status = 'failed';
+          record.error = 'Verification check failed';
+          this.failedTabIds.push(record.tabId);
+        }
       }
-    }
 
-    if (this.committedTabIds.length === this.stagedRecords.length && this.failedTabIds.length === 0) {
-      this.state = 'committed';
-    } else if (this.committedTabIds.length > 0) {
-      this.state = 'partial';
-    } else {
+      if (this.committedTabIds.length === this.stagedRecords.length && this.failedTabIds.length === 0) {
+        this.state = 'committed';
+      } else if (this.committedTabIds.length > 0) {
+        this.state = 'partial';
+      } else {
+        this.state = 'failed';
+      }
+
+      return this.getSummary();
+    } catch (err: any) {
       this.state = 'failed';
+      this.errorSummary = err?.message || 'Verification check exception';
+      throw err;
     }
-
-    return this.getSummary();
   }
 
   /**
@@ -250,8 +273,8 @@ export class SaveTransactionSession {
     return {
       jobId: this.jobId,
       state: this.state,
-      requestedCount: this.tabs.length,
-      excludedCount: this.stagedRecords.length - this.tabs.length,
+      requestedCount: this.totalRequestedCount,
+      excludedCount: this.excludedCount,
       committedIds: [...this.committedTabIds],
       failedIds: [...this.failedTabIds],
       closedIds: [...this.closedTabIds],

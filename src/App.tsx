@@ -207,13 +207,15 @@ export const App: React.FC = () => {
 
     // Destination filter
     if (currentDestination === 'favorites') {
-      result = result.filter(i => i.isFavorite);
+      result = result.filter(i => i.isFavorite && !i.deletedAt);
     } else if (currentDestination === 'trash') {
-      // In a real database this filters deleted_at IS NOT NULL
-      result = [];
+      result = result.filter(i => Boolean(i.deletedAt));
     } else if (currentDestination.startsWith('col_')) {
       const colId = currentDestination.replace('col_', '');
-      result = result.filter(i => i.collectionIds.includes(colId));
+      result = result.filter(i => i.collectionIds.includes(colId) && !i.deletedAt);
+    } else {
+      // Default: All active tabs
+      result = result.filter(i => !i.deletedAt);
     }
 
     // Search filter
@@ -249,8 +251,20 @@ export const App: React.FC = () => {
   };
 
   const handleDeleteItem = (id: string) => {
-    setItems(prev => prev.filter(item => item.id !== id));
+    setItems(prev => {
+      const existing = prev.find(item => item.id === id);
+      if (existing?.deletedAt) {
+        // Already in trash: permanent deletion
+        return prev.filter(item => item.id !== id);
+      }
+      // Soft-delete to trash
+      return prev.map(item => item.id === id ? { ...item, deletedAt: new Date().toISOString() } : item);
+    });
     if (selectedItemId === id) setSelectedItemId(null);
+  };
+
+  const handleRestoreFromTrash = (id: string) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, deletedAt: null } : item));
   };
 
   const handleUpdateNotes = (id: string, notes: string) => {
@@ -319,9 +333,9 @@ export const App: React.FC = () => {
         onOpenSettings={() => setSettingsModalOpen(true)}
         onOpenHelp={() => setHelpModalOpen(true)}
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
-        activeItemCount={items.length}
-        favoritesCount={items.filter(i => i.isFavorite).length}
-        trashCount={0}
+        activeItemCount={items.filter(i => !i.deletedAt).length}
+        favoritesCount={items.filter(i => i.isFavorite && !i.deletedAt).length}
+        trashCount={items.filter(i => Boolean(i.deletedAt)).length}
       />
 
       {/* Main Content Workspace */}
@@ -417,6 +431,7 @@ export const App: React.FC = () => {
           trashBytes: 320000,
           backupsBytes: 0,
           temporaryBytes: 72000,
+          manifestBytes: 2048,
           freeSpaceBytes: 56700000000,
           profileEstimateBytes: null
         }}

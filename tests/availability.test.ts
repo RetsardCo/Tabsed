@@ -5,9 +5,18 @@ describe('AvailabilityChecker', () => {
   it('blocks private IPs and localhost destinations (SSRF Safeguard PRD 12.3)', async () => {
     const localTargets = [
       'http://localhost:8080/admin',
+      'http://service.localhost/api',
       'http://127.0.0.1:3000',
       'http://192.168.1.1/router',
-      'http://10.0.0.1/'
+      'http://10.0.0.1/',
+      'http://172.16.0.1/',
+      'http://169.254.169.254/latest/meta-data',
+      'http://[::1]:8080/',
+      'http://[::]:8080/',
+      'http://[fe80::1]/',
+      'http://[fc00::1]/',
+      'http://router.local/',
+      'http://internal-dashboard.internal/'
     ];
 
     for (const url of localTargets) {

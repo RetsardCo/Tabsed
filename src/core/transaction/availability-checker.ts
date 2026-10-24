@@ -26,13 +26,24 @@ export interface AvailabilityResult {
 export class AvailabilityChecker {
   private static readonly PRIVATE_IP_PATTERNS = [
     /^localhost$/i,
+    /\.localhost$/i,
+    /\.local$/i,
+    /\.internal$/i,
+    /\.lan$/i,
+    /\.corp$/i,
+    /\.home$/i,
+    /\.home\.arpa$/i,
     /^127\.\d+\.\d+\.\d+$/,
     /^10\.\d+\.\d+\.\d+$/,
     /^192\.168\.\d+\.\d+$/,
     /^172\.(1[6-9]|2\d|3[01])\.\d+\.\d+$/,
     /^169\.254\.\d+\.\d+$/,
-    /^0\.0\.0\.0$/,
-    /^\[::1\]$/
+    /^0\.\d+\.\d+\.\d+$/,
+    /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\.\d+\.\d+$/,
+    /^\[::1?\]$/i,
+    /^\[fe[89ab][0-9a-f:]*\]$/i,
+    /^\[f[cd][0-9a-f:]*\]$/i,
+    /^\[::ffff:(127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|169\.254\.)/i
   ];
 
   /**

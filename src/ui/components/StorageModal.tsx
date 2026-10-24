@@ -118,6 +118,10 @@ export const StorageModal: React.FC<StorageModalProps> = ({ isOpen, onClose, sto
                 <span style={{ color: 'var(--text-muted)' }}>Temporary:</span>
                 <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.temporaryBytes || 72000)}</div>
               </div>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Manifest:</span>
+                <div style={{ fontWeight: 600 }}>{formatBytes(storageReport.manifestBytes || 2048)}</div>
+              </div>
             </div>
           </div>
 

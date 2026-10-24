@@ -74,30 +74,64 @@ export class RestoreQueue {
 
   public cancel(): void {
     this.isCancelled = true;
-    for (let i = this.currentIndex; i < this.items.length; i++) {
-      if (this.items[i].status === 'queued') {
-        this.items[i].status = 'skipped';
+    for (const item of this.items) {
+      if (item.status === 'queued') {
+        item.status = 'skipped';
       }
     }
   }
 
   /**
-   * Process the next batch of tabs
+   * Retry a specific failed or skipped item
+   */
+  public retry(itemId: string): boolean {
+    const item = this.items.find(i => i.id === itemId);
+    if (item && (item.status === 'failed' || item.status === 'skipped')) {
+      item.status = 'queued';
+      item.error = undefined;
+      this.isCancelled = false;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Retry all failed and skipped items
+   */
+  public retryFailed(): number {
+    let count = 0;
+    for (const item of this.items) {
+      if (item.status === 'failed' || item.status === 'skipped') {
+        item.status = 'queued';
+        item.error = undefined;
+        count++;
+      }
+    }
+    if (count > 0) {
+      this.isCancelled = false;
+    }
+    return count;
+  }
+
+  /**
+   * Process the next batch of queued tabs
    */
   public async processNextBatch(
     openTabFn: (item: RestoreItem) => Promise<boolean>
   ): Promise<{ processed: number; hasMore: boolean }> {
     if (this.isPaused || this.isCancelled) {
-      return { processed: 0, hasMore: !this.isCancelled && this.currentIndex < this.items.length };
+      const remainingQueued = this.items.some(i => i.status === 'queued');
+      return { processed: 0, hasMore: !this.isCancelled && remainingQueued };
     }
 
-    const batch = this.items.slice(this.currentIndex, this.currentIndex + this.config.batchSize);
+    const queuedItems = this.items.filter(i => i.status === 'queued');
+    const batch = queuedItems.slice(0, this.config.batchSize);
     if (batch.length === 0) {
       return { processed: 0, hasMore: false };
     }
 
     for (const item of batch) {
-      if (this.isCancelled) break;
+      if (this.isCancelled || this.isPaused) break;
       item.status = 'opening';
       try {
         const ok = await openTabFn(item);
@@ -113,8 +147,7 @@ export class RestoreQueue {
       }
     }
 
-    this.currentIndex += batch.length;
-    const hasMore = this.currentIndex < this.items.length && !this.isCancelled;
+    const hasMore = this.items.some(i => i.status === 'queued') && !this.isCancelled;
 
     return { processed: batch.length, hasMore };
   }

@@ -65,9 +65,15 @@ export class UrlNormalizer {
         parsed.hash = '';
       }
 
+      // 5. Trim trailing slash from sub-paths or root path if configured
+      if (options.trimTrailingSlash) {
+        if (parsed.pathname.length > 1 && parsed.pathname.endsWith('/')) {
+          parsed.pathname = parsed.pathname.replace(/\/+$/, '');
+        }
+      }
+
       let result = parsed.toString();
 
-      // 5. Trim trailing slash from root path if configured
       if (options.trimTrailingSlash && parsed.pathname === '/' && !parsed.search && !parsed.hash) {
         result = result.slice(0, -1);
       }

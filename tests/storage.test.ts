@@ -33,11 +33,13 @@ describe('Storage Accounting (PRD Section 11.8 & Epic 2.1)', () => {
     fs.writeFileSync(arch, Buffer.alloc(512));    // 512B
 
     const report = vault.calculateStorageReport();
+    const manifestSize = fs.statSync(path.join(tempDir, 'manifest.json')).size;
 
     expect(report.thumbnailsBytes).toBe(1024 + 2048);
     expect(report.databaseBytes).toBe(4096);
     expect(report.archivesBytes).toBe(512);
-    expect(report.exactVaultBytes).toBe(1024 + 2048 + 4096 + 512);
+    expect(report.manifestBytes).toBe(manifestSize);
+    expect(report.exactVaultBytes).toBe(1024 + 2048 + 4096 + 512 + manifestSize);
 
     // Profile estimate is explicitly distinct and not conflated
     expect(report.profileEstimateBytes).toBeNull();

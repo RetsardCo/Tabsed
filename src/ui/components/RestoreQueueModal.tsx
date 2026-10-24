@@ -18,6 +18,9 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
 
+  const queueRef = React.useRef<RestoreQueue | null>(null);
+  const pauseRequestedRef = React.useRef<boolean>(false);
+
   const [restoreItems, setRestoreItems] = useState<RestoreItem[]>(() =>
     items.slice(0, 8).map((it, idx) => ({
       id: it.id,
@@ -32,33 +35,74 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
   const handleStartQueue = async () => {
     setIsRunning(true);
     setIsPaused(false);
+    pauseRequestedRef.current = false;
 
-    const queue = new RestoreQueue(restoreItems, { batchSize, delayMs });
+    if (!queueRef.current) {
+      queueRef.current = new RestoreQueue(restoreItems, { batchSize, delayMs });
+    } else {
+      queueRef.current.resume();
+    }
+
+    const queue = queueRef.current;
 
     while (true) {
-      if (queue.getStatus().isCancelled) break;
-      const res = await queue.processNextBatch(async (item) => {
+      if (pauseRequestedRef.current) {
+        setIsPaused(true);
+        setIsRunning(false);
+        break;
+      }
+      if (queue.getStatus().isCancelled) {
+        setIsRunning(false);
+        break;
+      }
+
+      const res = await queue.processNextBatch(async () => {
         await new Promise(r => setTimeout(r, delayMs));
         return true;
       });
 
       setRestoreItems(queue.getItems());
 
-      if (!res.hasMore) break;
+      if (!res.hasMore) {
+        setIsRunning(false);
+        break;
+      }
+      if (pauseRequestedRef.current) {
+        setIsPaused(true);
+        setIsRunning(false);
+        break;
+      }
       await new Promise(r => setTimeout(r, delayMs));
     }
-
-    setIsRunning(false);
   };
 
   const handlePause = () => {
+    pauseRequestedRef.current = true;
+    if (queueRef.current) {
+      queueRef.current.pause();
+    }
     setIsPaused(true);
   };
 
   const handleCancel = () => {
+    pauseRequestedRef.current = false;
     setIsRunning(false);
     setIsPaused(false);
-    setRestoreItems(prev => prev.map(i => i.status === 'queued' ? { ...i, status: 'skipped' } : i));
+    if (queueRef.current) {
+      queueRef.current.cancel();
+      setRestoreItems(queueRef.current.getItems());
+    } else {
+      setRestoreItems(prev => prev.map(i => i.status === 'queued' ? { ...i, status: 'skipped' } : i));
+    }
+  };
+
+  const handleRetryFailed = () => {
+    if (queueRef.current) {
+      queueRef.current.retryFailed();
+      setRestoreItems(queueRef.current.getItems());
+    } else {
+      setRestoreItems(prev => prev.map(i => (i.status === 'failed' || i.status === 'skipped') ? { ...i, status: 'queued' } : i));
+    }
   };
 
   return (
@@ -217,6 +261,27 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
               >
                 <Square size={14} />
                 <span>Cancel</span>
+              </button>
+            )}
+
+            {restoreItems.some(i => i.status === 'failed' || i.status === 'skipped') && !isRunning && (
+              <button
+                onClick={handleRetryFailed}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 12px',
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--bg-surface)',
+                  border: '1px solid var(--border-subtle)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                <RefreshCw size={14} />
+                <span>Retry Failed</span>
               </button>
             )}
           </div>

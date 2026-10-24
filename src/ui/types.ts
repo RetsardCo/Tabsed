@@ -24,6 +24,7 @@ export interface SavedTabItem {
   archiveSizeBytes?: number | null;
   availabilityStatus?: 'reachable' | 'redirect' | 'auth_required' | 'blocked_uncertain' | 'timeout' | 'network_error';
   availabilityCheckedAt?: string | null;
+  deletedAt?: string | null;
 }
 
 export interface Collection {

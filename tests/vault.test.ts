@@ -70,15 +70,26 @@ describe('VaultManager', () => {
     expect(fs.existsSync(staged.tempFilePath)).toBe(false);
   });
 
-  it('sanitizes path traversal attempts during commit', () => {
+  it('strictly rejects path traversal and unsafe paths during commit (PRD 12.2)', () => {
     vault.initializeVault();
     const testData = Buffer.from('malicious attempt');
-    const staged = vault.stageBuffer(testData, '../../secret.txt');
 
-    const committedRelative = vault.commitStagedFile(staged);
-    expect(committedRelative).not.toContain('..');
-    const finalPath = path.join(tempDir, committedRelative);
-    expect(finalPath.startsWith(tempDir)).toBe(true);
+    const stagedRelative = vault.stageBuffer(testData, '../../secret.txt');
+    expect(() => vault.commitStagedFile(stagedRelative)).toThrow(/Path traversal or unsafe path rejected/);
+
+    const stagedAbsolute = vault.stageBuffer(testData, path.resolve(tempDir, '..', 'escaped.txt'));
+    expect(() => vault.commitStagedFile(stagedAbsolute)).toThrow(/Path traversal or unsafe path rejected/);
+  });
+
+  it('fails safely when staged file disappears or is unreadable', () => {
+    vault.initializeVault();
+    const testData = Buffer.from('missing staged file');
+    const staged = vault.stageBuffer(testData, 'thumbnails/missing.png');
+
+    // Remove the temp file
+    fs.unlinkSync(staged.tempFilePath);
+    expect(vault.verifyStagedFile(staged)).toBe(false);
+    expect(() => vault.commitStagedFile(staged)).toThrow(/Integrity verification failed/);
   });
 
   it('reconciles expired orphaned staging files', () => {

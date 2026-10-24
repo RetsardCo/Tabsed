@@ -1,7 +1,5 @@
 // Tabsed Background Service Worker (Manifest V3)
 
-const DESKTOP_BRIDGE_URL = 'http://127.0.0.1:39201/api/save';
-
 chrome.runtime.onInstalled.addListener(() => {
   console.log('Tabsed Extension installed successfully.');
 });
@@ -62,25 +60,28 @@ async function handleSaveTabs(request) {
     });
   }
 
-  // Transaction Step: Send staged tabs to local Tabsed Desktop Service or Local Storage
+  // Transaction Step: Send staged tabs via Chrome/Edge Native Messaging to Tabsed Desktop
   let commitResult = null;
   try {
-    const res = await fetch(DESKTOP_BRIDGE_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'commitSave',
-        tabs: stagedTabs
-      })
+    commitResult = await new Promise((resolve, reject) => {
+      if (typeof chrome.runtime.sendNativeMessage === 'function') {
+        chrome.runtime.sendNativeMessage('com.tabsed.app', {
+          type: 'saveTabs',
+          payload: { tabs: stagedTabs },
+          timestamp: new Date().toISOString()
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+          } else {
+            resolve(response || { success: true, committedTabIds: stagedTabs.map(t => t.tabId) });
+          }
+        });
+      } else {
+        reject(new Error('Native messaging unavailable'));
+      }
     });
-    
-    if (res.ok) {
-      commitResult = await res.json();
-    } else {
-      throw new Error(`Desktop service returned HTTP ${res.status}`);
-    }
   } catch (err) {
-    console.warn('Direct desktop bridge unreachable. Falling back to local storage cache:', err.message);
+    console.warn('Native messaging host unreachable. Falling back to local extension storage cache:', err.message);
     // Fallback: save to chrome.storage.local so Tabsed desktop can sync upon launch
     await saveToLocalStorage(stagedTabs);
     commitResult = {

@@ -59,4 +59,32 @@ describe('RestoreQueue', () => {
     expect(currentItems[2].status).toBe('skipped');
     expect(currentItems[3].status).toBe('skipped');
   });
+
+  it('retries individual failed items and all failed items (PRD Epic 3.1)', async () => {
+    const queue = new RestoreQueue(items, { batchSize: 2 });
+    // First batch fails item 2
+    const mockOpen = vi.fn().mockImplementation((item: RestoreItem) => {
+      if (item.id === '2') return Promise.resolve(false);
+      return Promise.resolve(true);
+    });
+
+    await queue.processNextBatch(mockOpen);
+    const status1 = queue.getStatus();
+    expect(status1.opened).toBe(1);
+    expect(status1.failed).toBe(1);
+
+    // Retry individual failed item 2
+    expect(queue.retry('2')).toBe(true);
+    const retryStatus = queue.getStatus();
+    expect(retryStatus.failed).toBe(0);
+    expect(retryStatus.remaining).toBe(3); // 2, 3, 4 queued
+
+    // Process next batch which includes item 2 again
+    const nextMock = vi.fn().mockResolvedValue(true);
+    const nextBatch = await queue.processNextBatch(nextMock);
+    expect(nextBatch.processed).toBe(2);
+
+    const openedItems = queue.getItems().filter(i => i.status === 'opened');
+    expect(openedItems.map(i => i.id)).toContain('2');
+  });
 });
