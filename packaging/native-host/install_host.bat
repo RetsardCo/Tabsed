@@ -18,6 +18,11 @@ if not "%STORE_ARG%"=="" (
 
 if exist "%SCRIPT_DIR%install_host.ps1" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%install_host.ps1" %*
+    set PS_EXIT=!ERRORLEVEL!
+    if !PS_EXIT! NEQ 0 (
+        echo [ERROR] Native messaging host registration failed with exit code !PS_EXIT!.
+        exit /b !PS_EXIT!
+    )
 ) else (
     echo Registering Google Chrome...
     reg add "HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tabsed.app" /ve /t REG_SZ /d "%CHROMIUM_MANIFEST%" /f
@@ -48,5 +53,6 @@ echo.
 echo Registration complete! You can now use the browser extension.
 echo Tip: To register an Edge Add-ons Store ID after publishing:
 echo      install_host.bat [STORE_EXTENSION_ID]
-pause
+if "%~1"=="" if not defined CI pause
+
 

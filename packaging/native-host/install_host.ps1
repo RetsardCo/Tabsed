@@ -47,7 +47,16 @@ function Normalize-ExtensionId {
     param([string]$RawId)
     if ([string]::IsNullOrWhiteSpace($RawId)) { return $null }
     $id = $RawId.Trim().ToLower()
-    $id = $id -replace '^chrome-extension://', ''
+    # Check if a 32-character Chromium/Edge extension ID [a-p]{32} is embedded (e.g. in a Store URL or URI)
+    if ($id -match '([a-p]{32})') {
+        return $Matches[1]
+    }
+    # Strip browser scheme prefixes
+    $id = $id -replace '^(?:chrome-extension|edge-extension)://', ''
+    # If a URL path was passed, take the trailing segment
+    if ($id -match '/([^/?#]+)/?$') {
+        $id = $Matches[1]
+    }
     $id = $id.Trim('/')
     $id = $id -replace '[^a-z0-9]', ''
     return $id

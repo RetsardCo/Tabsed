@@ -136,6 +136,46 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
         fs.writeFileSync(manifestPath, originalContent, 'utf8');
       }
     });
+
+    it('normalizes edge-extension scheme and Edge Add-ons store URLs in install_host.ps1', () => {
+      const psInstaller = path.join(packagingDir, 'install_host.ps1');
+      const manifestPath = path.join(packagingDir, 'com.tabsed.app.json');
+      const originalContent = fs.readFileSync(manifestPath, 'utf8');
+
+      try {
+        const edgeId = 'gmgoamodcdcjnbaobigkjelfplakmdhh';
+        const edgeUrl = `https://microsoftedge.microsoft.com/addons/detail/tabsed/${edgeId}`;
+        execSync(`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${psInstaller}" -EdgeStoreId "${edgeUrl}"`, {
+          cwd: packagingDir,
+          stdio: 'pipe',
+        });
+
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        expect(manifest.allowed_origins).toContain(`chrome-extension://${edgeId}/`);
+      } finally {
+        fs.writeFileSync(manifestPath, originalContent, 'utf8');
+      }
+    });
+
+    it('allows registering extension ID via install_host.bat without hanging', () => {
+      const batInstaller = path.join(packagingDir, 'install_host.bat');
+      const manifestPath = path.join(packagingDir, 'com.tabsed.app.json');
+      const originalContent = fs.readFileSync(manifestPath, 'utf8');
+
+      try {
+        const testBatStoreId = 'pabcdefghijklmnoabcdefghijklmnop';
+        execSync(`cmd.exe /c "call "${batInstaller}" ${testBatStoreId}"`, {
+          cwd: packagingDir,
+          stdio: 'pipe',
+          timeout: 10000,
+        });
+
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        expect(manifest.allowed_origins).toContain(`chrome-extension://${testBatStoreId}/`);
+      } finally {
+        fs.writeFileSync(manifestPath, originalContent, 'utf8');
+      }
+    });
   });
 
   describe('Packaging Script Execution & Release Outputs', () => {

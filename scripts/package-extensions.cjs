@@ -25,14 +25,20 @@ fs.mkdirSync(UNPACKED_CHROMIUM, { recursive: true });
 fs.mkdirSync(UNPACKED_FIREFOX, { recursive: true });
 
 function copyRecursive(src, dest) {
+  const baseName = path.basename(src);
+  if (baseName === '.DS_Store' || baseName === 'Thumbs.db' || baseName.endsWith('.tmp')) {
+    return;
+  }
   const stat = fs.statSync(src);
   if (stat.isDirectory()) {
     if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
     for (const child of fs.readdirSync(src)) {
       copyRecursive(path.join(src, child), path.join(dest, child));
     }
+    fs.utimesSync(dest, stat.atime, stat.mtime);
   } else {
     fs.copyFileSync(src, dest);
+    fs.utimesSync(dest, stat.atime, stat.mtime);
   }
 }
 
@@ -50,7 +56,9 @@ copyRecursive(EXT_SRC, UNPACKED_FIREFOX);
 // Replace manifest.json with manifest.firefox.json
 const ffManifestSource = path.join(EXT_SRC, 'manifest.firefox.json');
 if (fs.existsSync(ffManifestSource)) {
+  const ffStat = fs.statSync(ffManifestSource);
   fs.copyFileSync(ffManifestSource, path.join(UNPACKED_FIREFOX, 'manifest.json'));
+  fs.utimesSync(path.join(UNPACKED_FIREFOX, 'manifest.json'), ffStat.atime, ffStat.mtime);
   fs.unlinkSync(path.join(UNPACKED_FIREFOX, 'manifest.firefox.json'));
 }
 
@@ -65,10 +73,12 @@ copyRecursive(UNPACKED_CHROMIUM, STAGING_STORE);
 
 const storeManifestPath = path.join(STAGING_STORE, 'manifest.json');
 if (fs.existsSync(storeManifestPath)) {
+  const srcManifestStat = fs.statSync(path.join(EXT_SRC, 'manifest.json'));
   const storeManifest = JSON.parse(fs.readFileSync(storeManifestPath, 'utf8'));
   // Microsoft Partner Center & Chrome Web Store reject any package containing a 'key' field
   delete storeManifest.key;
   fs.writeFileSync(storeManifestPath, JSON.stringify(storeManifest, null, 2) + '\n', 'utf8');
+  fs.utimesSync(storeManifestPath, srcManifestStat.atime, srcManifestStat.mtime);
 }
 
 // Create ZIP archives
@@ -89,7 +99,8 @@ try {
   execSync(`powershell.exe -NoProfile -Command "Compress-Archive -Path '${UNPACKED_FIREFOX}\\*' -DestinationPath '${firefoxZip}' -Force"`);
   console.log('✓ Created:', firefoxZip);
 } catch (e) {
-  console.warn('Zip creation via PowerShell had a non-fatal note:', e.message);
+  console.error('Failed to create extension zip archives:', e.message);
+  process.exit(1);
 } finally {
   // Clean up temporary store staging directory
   if (fs.existsSync(STAGING_STORE)) {
