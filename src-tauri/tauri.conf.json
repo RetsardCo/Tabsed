@@ -22,7 +22,7 @@
         "decorations": true,
         "transparent": true,
         "windowEffects": {
-          "effects": ["mica"],
+          "effects": ["mica", "acrylic"],
           "state": "active"
         }
       }

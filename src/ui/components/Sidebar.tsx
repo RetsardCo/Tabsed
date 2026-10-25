@@ -65,14 +65,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeItemCount,
   favoritesCount,
   trashCount,
-  recentCount = 24,
-  storageUsedBytes = 12.4 * 1024 * 1024 * 1024,
+  recentCount = 0,
+  storageUsedBytes = 0,
   storageLimitBytes = 50 * 1024 * 1024 * 1024,
-  duplicatesCount = 12,
-  brokenLinksCount = 3,
-  edgeCount = 42,
-  chromeCount = 38,
-  firefoxCount = 20
+  duplicatesCount = 0,
+  brokenLinksCount = 0,
+  edgeCount = 0,
+  chromeCount = 0,
+  firefoxCount = 0
 }) => {
   const sidebarWidth = isCollapsed ? '64px' : '260px';
 

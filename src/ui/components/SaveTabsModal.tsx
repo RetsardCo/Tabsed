@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Layers, ShieldCheck, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { X, Layers, ShieldCheck, AlertTriangle, CheckCircle2, Clipboard } from 'lucide-react';
 import { Collection } from '../types';
 import { SaveTransactionSession } from '../../core/transaction/save-and-close';
 import { MockBrowserConnector } from '../../core/connector/mock-connector';
@@ -31,10 +31,28 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   const [closeAfterSave, setCloseAfterSave] = useState(false);
   const [manualUrl, setManualUrl] = useState('');
   const [manualTitle, setManualTitle] = useState('');
+  const [manualBrowser, setManualBrowser] = useState<'Edge' | 'Chrome' | 'Firefox'>('Edge');
+  const [manualTags, setManualTags] = useState('Imported, Web');
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressState, setProgressState] = useState<string>('idle');
   const [statusMessage, setStatusMessage] = useState<string>('');
+
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        const clean = text.trim();
+        setManualUrl(clean);
+        try {
+          const u = new URL(clean.startsWith('http') ? clean : `https://${clean}`);
+          if (!manualTitle) {
+            setManualTitle(u.hostname.replace(/^www\./, ''));
+          }
+        } catch {}
+      }
+    } catch {}
+  };
 
   const handleStartSave = async () => {
     setIsProcessing(true);
@@ -125,12 +143,17 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
         domain: st.domain,
         faviconUrl: `https://${st.domain}/favicon.ico`,
         thumbnailUrl: captureThumbnails ? st.stagedThumbnailPath || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' : null,
-        browserFamily: 'Edge' as const,
+        browserFamily: scope === 'manual' ? manualBrowser : ('Edge' as const),
         savedAt: new Date().toISOString(),
         notes: '',
         isFavorite: false,
         collectionIds: [selectedCollectionId],
-        tags: ['saved-session']
+        tags: scope === 'manual'
+          ? manualTags.split(',').map(t => t.trim()).filter(Boolean)
+          : ['saved-session'],
+        tabCount: 1,
+        archiveSizeBytes: 128 * 1024,
+        availabilityStatus: 'reachable' as const
       }));
 
       onSaveCompleted(newItems);
@@ -254,35 +277,124 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
           </div>
 
           {scope === 'manual' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <input
-                type="url"
-                placeholder="https://example.com"
-                value={manualUrl}
-                onChange={e => setManualUrl(e.target.value)}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  backgroundColor: 'var(--bg-app)',
-                  fontSize: '12px',
-                  color: 'var(--text-primary)'
-                }}
-              />
-              <input
-                type="text"
-                placeholder="Optional Title"
-                value={manualTitle}
-                onChange={e => setManualTitle(e.target.value)}
-                style={{
-                  padding: '8px 10px',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  backgroundColor: 'var(--bg-app)',
-                  fontSize: '12px',
-                  color: 'var(--text-primary)'
-                }}
-              />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                  Target Web URL
+                </label>
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <input
+                    type="url"
+                    placeholder="https://example.com/article"
+                    value={manualUrl}
+                    onChange={e => {
+                      setManualUrl(e.target.value);
+                      try {
+                        const u = new URL(e.target.value.startsWith('http') ? e.target.value : `https://${e.target.value}`);
+                        if (!manualTitle) setManualTitle(u.hostname.replace(/^www\./, ''));
+                      } catch {}
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: '8px 10px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: 'var(--bg-app)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handlePasteClipboard}
+                    title="Paste URL from clipboard"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '8px 12px',
+                      backgroundColor: 'var(--accent-light)',
+                      color: 'var(--accent-color)',
+                      border: '1px solid var(--accent-color)',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    <Clipboard size={13} />
+                    <span>Paste</span>
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                  Tab Title
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. Documentation or Article Title"
+                  value={manualTitle}
+                  onChange={e => setManualTitle(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '8px 10px',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-subtle)',
+                    backgroundColor: 'var(--bg-app)',
+                    fontSize: '12px',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Browser Origin
+                  </label>
+                  <select
+                    value={manualBrowser}
+                    onChange={e => setManualBrowser(e.target.value as any)}
+                    style={{
+                      width: '100%',
+                      padding: '7px 8px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: 'var(--bg-app)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <option value="Edge">Microsoft Edge</option>
+                    <option value="Chrome">Google Chrome</option>
+                    <option value="Firefox">Mozilla Firefox</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Tags (comma-separated)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Work, Notes, Design"
+                    value={manualTags}
+                    onChange={e => setManualTags(e.target.value)}
+                    style={{
+                      width: '100%',
+                      padding: '7px 8px',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-subtle)',
+                      backgroundColor: 'var(--bg-app)',
+                      fontSize: '12px',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

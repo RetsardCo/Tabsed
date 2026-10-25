@@ -55,7 +55,14 @@ const INITIAL_ITEMS: SavedTabItem[] = [
       { id: 'sub_1_2', title: 'Blender — 3D for everyone and open pipeline', url: 'https://www.blender.org/', domain: 'blender.org', faviconUrl: 'https://www.blender.org/favicon.ico' },
       { id: 'sub_1_3', title: 'Free Game Assets & Textures — Itch.io Collections', url: 'https://itch.io/game-assets', domain: 'itch.io', faviconUrl: 'https://itch.io/favicon.ico' },
       { id: 'sub_1_4', title: 'Game Design Notes — Mechanics and Level Flow', url: 'https://notion.so/gamedesign', domain: 'notion.so', faviconUrl: 'https://www.notion.so/front-static/favicon.ico' },
-      { id: 'sub_1_5', title: 'Pixel Art References — Visual Palette & Moodboards', url: 'https://pinterest.com/pin/pixelart', domain: 'pinterest.com', faviconUrl: 'https://pinterest.com/favicon.ico' }
+      { id: 'sub_1_5', title: 'Pixel Art References — Visual Palette & Moodboards', url: 'https://pinterest.com/pin/pixelart', domain: 'pinterest.com', faviconUrl: 'https://pinterest.com/favicon.ico' },
+      { id: 'sub_1_6', title: 'Godot Engine 4 Documentation — Getting Started & Nodes', url: 'https://docs.godotengine.org/en/stable/', domain: 'godotengine.org', faviconUrl: 'https://godotengine.org/favicon.ico' },
+      { id: 'sub_1_7', title: 'Shadertoy — Real-time GLSL Shader Experiments', url: 'https://www.shadertoy.com/browse', domain: 'shadertoy.com', faviconUrl: 'https://www.shadertoy.com/favicon.ico' },
+      { id: 'sub_1_8', title: 'OpenGameArt.org — Free 2D Sprites, Tilesets & Sounds', url: 'https://opengameart.org/', domain: 'opengameart.org', faviconUrl: 'https://opengameart.org/favicon.ico' },
+      { id: 'sub_1_9', title: 'GDC Vault — Architecture & Procedural Generation', url: 'https://www.gdcvault.com/', domain: 'gdcvault.com', faviconUrl: 'https://www.gdcvault.com/favicon.ico' },
+      { id: 'sub_1_10', title: 'Kenney — Thousands of Free Game Assets & Audio', url: 'https://kenney.nl/assets', domain: 'kenney.nl', faviconUrl: 'https://kenney.nl/favicon.ico' },
+      { id: 'sub_1_11', title: 'Freesound — Creative Commons Audio & Foley Effects', url: 'https://freesound.org/', domain: 'freesound.org', faviconUrl: 'https://freesound.org/favicon.ico' },
+      { id: 'sub_1_12', title: 'Figma — Game UI Components & HUD Design System', url: 'https://www.figma.com/@gamedev-hud', domain: 'figma.com', faviconUrl: 'https://static.figma.com/app/icon/1/favicon.ico' }
     ]
   },
   {
@@ -79,8 +86,14 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     archiveSizeBytes: 128 * 1024 * 1024,
     availabilityStatus: 'reachable',
     sessionTabs: [
-      { id: 'sub_2_1', title: 'OpenAI Platform — API Documentation', url: 'https://platform.openai.com/docs', domain: 'openai.com' },
-      { id: 'sub_2_2', title: 'Anthropic Claude — Prompt Engineering Best Practices', url: 'https://docs.anthropic.com/', domain: 'anthropic.com' }
+      { id: 'sub_2_1', title: 'OpenAI Platform — API Documentation', url: 'https://platform.openai.com/docs', domain: 'openai.com', faviconUrl: 'https://openai.com/favicon.ico' },
+      { id: 'sub_2_2', title: 'Anthropic Claude — Prompt Engineering Best Practices', url: 'https://docs.anthropic.com/', domain: 'anthropic.com', faviconUrl: 'https://anthropic.com/favicon.ico' },
+      { id: 'sub_2_3', title: 'Hugging Face — Open Source Models & Datasets Hub', url: 'https://huggingface.co/models', domain: 'huggingface.co', faviconUrl: 'https://huggingface.co/favicon.ico' },
+      { id: 'sub_2_4', title: 'LangChain — Building Context-Aware Reasoning Agents', url: 'https://python.langchain.com/', domain: 'langchain.com', faviconUrl: 'https://python.langchain.com/favicon.ico' },
+      { id: 'sub_2_5', title: 'ArXiv — Attention Is All You Need Paper Archive', url: 'https://arxiv.org/abs/1706.03762', domain: 'arxiv.org', faviconUrl: 'https://arxiv.org/favicon.ico' },
+      { id: 'sub_2_6', title: 'GitHub — LLM Inference Engine Benchmarks', url: 'https://github.com/vllm-project/vllm', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
+      { id: 'sub_2_7', title: 'DeepSeek — Open Reasoning Models Technical Report', url: 'https://github.com/deepseek-ai', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
+      { id: 'sub_2_8', title: 'Weights & Biases — Machine Learning Experiment Tracking', url: 'https://wandb.ai/site', domain: 'wandb.ai', faviconUrl: 'https://wandb.ai/favicon.ico' }
     ]
   },
   {
@@ -239,7 +252,15 @@ export const App: React.FC = () => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(item => {
+            const initialMatch = INITIAL_ITEMS.find(init => init.id === item.id);
+            if (initialMatch && (!item.sessionTabs || item.sessionTabs.length < (initialMatch.sessionTabs?.length || 0))) {
+              return { ...item, sessionTabs: initialMatch.sessionTabs, tabCount: initialMatch.tabCount };
+            }
+            return item;
+          });
+        }
       } catch {}
     }
     return INITIAL_ITEMS;
@@ -472,11 +493,72 @@ export const App: React.FC = () => {
     }));
   }, [collections, items]);
 
+  const activeItemCount = useMemo(() => items.filter(i => !i.deletedAt).length, [items]);
+
+  const recentCount = useMemo(() => {
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return items.filter(i => !i.deletedAt && new Date(i.savedAt).getTime() >= oneWeekAgo).length;
+  }, [items]);
+
   const edgeCount = useMemo(() => items.filter(i => i.browserFamily === 'Edge' && !i.deletedAt).length, [items]);
   const chromeCount = useMemo(() => items.filter(i => i.browserFamily === 'Chrome' && !i.deletedAt).length, [items]);
   const firefoxCount = useMemo(() => items.filter(i => i.browserFamily === 'Firefox' && !i.deletedAt).length, [items]);
 
+  const storageUsedBytes = useMemo(() => {
+    return items.filter(i => !i.deletedAt).reduce((acc, i) => acc + (i.archiveSizeBytes || 128 * 1024), 0);
+  }, [items]);
+
+  const duplicatesCount = useMemo(() => {
+    const active = items.filter(i => !i.deletedAt);
+    const seen = new Set<string>();
+    let dupes = 0;
+    for (const item of active) {
+      const url = item.normalizedUrl || item.url;
+      if (seen.has(url)) {
+        dupes++;
+      } else {
+        seen.add(url);
+      }
+    }
+    return dupes;
+  }, [items]);
+
+  const brokenLinksCount = useMemo(() => {
+    return items.filter(i => !i.deletedAt && (i.availabilityStatus === 'network_error' || i.availabilityStatus === 'timeout')).length;
+  }, [items]);
+
   // Actions
+  const handleUpdateTitle = (id: string, title: string) => {
+    setItems(prev => prev.map(item => item.id === id ? { ...item, title } : item));
+  };
+
+  const handleDeleteSubTab = (parentId: string, subTabId: string) => {
+    setItems(prev => prev.map(item => {
+      if (item.id === parentId) {
+        const currentTabs = item.sessionTabs || [];
+        const updated = currentTabs.filter(st => st.id !== subTabId);
+        return {
+          ...item,
+          sessionTabs: updated,
+          tabCount: updated.length
+        };
+      }
+      return item;
+    }));
+  };
+
+  const handleMoveItemToCollection = (itemId: string, collectionId: string) => {
+    setItems(prev => prev.map(item => {
+      if (item.id === itemId) {
+        const currentCols = item.collectionIds || [];
+        const newCols = currentCols.includes(collectionId)
+          ? currentCols
+          : [...currentCols, collectionId];
+        return { ...item, collectionIds: newCols };
+      }
+      return item;
+    }));
+  };
   const handleToggleFavorite = (id: string) => {
     setItems(prev => prev.map(item => item.id === id ? { ...item, isFavorite: !item.isFavorite } : item));
   };
@@ -620,17 +702,17 @@ export const App: React.FC = () => {
         onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
         onOpenCheckLinks={handleCheckAllLinks}
         onOpenPortableVault={() => setPortableVaultModalOpen(true)}
-        activeItemCount={items.length === INITIAL_ITEMS.length ? 128 : items.filter(i => !i.deletedAt).length}
+        activeItemCount={activeItemCount}
         favoritesCount={favoritesCount}
         trashCount={trashCount}
-        recentCount={24}
-        edgeCount={edgeCount || 42}
-        chromeCount={chromeCount || 38}
-        firefoxCount={firefoxCount || 20}
-        storageUsedBytes={12.4 * 1024 * 1024 * 1024}
-        storageLimitBytes={50 * 1024 * 1024 * 1024}
-        duplicatesCount={12}
-        brokenLinksCount={3}
+        recentCount={recentCount}
+        edgeCount={edgeCount}
+        chromeCount={chromeCount}
+        firefoxCount={firefoxCount}
+        storageUsedBytes={storageUsedBytes}
+        storageLimitBytes={preferences.storageQuotaBytes || (50 * 1024 * 1024 * 1024)}
+        duplicatesCount={duplicatesCount}
+        brokenLinksCount={brokenLinksCount}
       />
 
       {/* Main Content Workspace */}
@@ -752,8 +834,10 @@ export const App: React.FC = () => {
           {selectedItem && (
             <DetailInspector
               item={selectedItem}
+              collections={collections}
               onClose={() => setSelectedItemId(null)}
               onUpdateNotes={handleUpdateNotes}
+              onUpdateTitle={handleUpdateTitle}
               onAddTag={handleAddTag}
               onRemoveTag={handleRemoveTag}
               onOpenLiveUrl={handleOpenLiveUrl}
@@ -761,6 +845,8 @@ export const App: React.FC = () => {
               onRestoreItem={handleRestoreFromTrash}
               onDeleteItem={handleDeleteItem}
               onToggleFavorite={handleToggleFavorite}
+              onDeleteSubTab={handleDeleteSubTab}
+              onMoveToCollection={handleMoveItemToCollection}
               isTrash={currentDestination === 'trash'}
             />
           )}
