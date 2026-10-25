@@ -15,7 +15,7 @@ import {
   Layers,
   Link
 } from 'lucide-react';
-import { ViewMode } from '../types';
+import { ViewMode, GroupMode } from '../types';
 
 interface HeaderProps {
   searchQuery: string;
@@ -39,6 +39,8 @@ interface HeaderProps {
   currentTheme?: 'light' | 'dark' | 'system';
   onToggleTheme?: () => void;
   syncStatus?: 'ready' | 'synced' | 'syncing';
+  groupMode?: GroupMode;
+  onGroupModeChange?: (mode: GroupMode) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -62,7 +64,9 @@ export const Header: React.FC<HeaderProps> = ({
   onSelectTagFilter,
   currentTheme = 'light',
   onToggleTheme,
-  syncStatus = 'ready'
+  syncStatus = 'ready',
+  groupMode = 'individual',
+  onGroupModeChange
 }) => {
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -597,38 +601,97 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </div>
 
-        {/* Right: Sort By Dropdown */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sort by</span>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            backgroundColor: 'var(--bg-input)',
-            border: '1px solid var(--border-subtle)',
-            borderRadius: 'var(--radius-md)',
-            padding: '4px 10px'
-          }}>
-            <select
-              value={sortBy}
-              onChange={(e) => onSortByChange(e.target.value)}
-              style={{
-                fontSize: '12px',
-                fontWeight: 500,
-                border: 'none',
-                background: 'transparent',
-                color: 'var(--text-primary)',
-                cursor: 'pointer',
-                outline: 'none'
-              }}
-            >
-              <option value="newest">Saved date</option>
-              <option value="oldest">Oldest date</option>
-              <option value="title">Title (A-Z)</option>
-              <option value="domain">Domain</option>
-              <option value="size">Size</option>
-            </select>
-            <ArrowUpDown size={12} color="var(--text-muted)" />
+        {/* Right: Personalization View Toggle & Sort By Dropdown */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          {onGroupModeChange && (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'var(--bg-input)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '2px',
+              gap: '2px'
+            }}>
+              <button
+                onClick={() => onGroupModeChange('individual')}
+                title="Individual Tabs (Default) — See every tab with its own card & preview"
+                style={{
+                  border: 'none',
+                  background: groupMode === 'individual' ? 'var(--bg-surface)' : 'transparent',
+                  color: groupMode === 'individual' ? 'var(--accent-color)' : 'var(--text-muted)',
+                  fontSize: '12px',
+                  fontWeight: groupMode === 'individual' ? 600 : 500,
+                  padding: '5px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: groupMode === 'individual' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Globe size={13} />
+                <span>Individual Tabs</span>
+              </button>
+              <button
+                onClick={() => onGroupModeChange('session')}
+                title="Group by Window Session"
+                style={{
+                  border: 'none',
+                  background: groupMode === 'session' ? 'var(--bg-surface)' : 'transparent',
+                  color: groupMode === 'session' ? 'var(--accent-color)' : 'var(--text-muted)',
+                  fontSize: '12px',
+                  fontWeight: groupMode === 'session' ? 600 : 500,
+                  padding: '5px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  boxShadow: groupMode === 'session' ? '0 1px 3px rgba(0,0,0,0.08)' : 'none',
+                  transition: 'all 0.15s ease'
+                }}
+              >
+                <Layers size={13} />
+                <span>Group by Session</span>
+              </button>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Sort by</span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              backgroundColor: 'var(--bg-input)',
+              border: '1px solid var(--border-subtle)',
+              borderRadius: 'var(--radius-md)',
+              padding: '4px 10px'
+            }}>
+              <select
+                value={sortBy}
+                onChange={(e) => onSortByChange(e.target.value)}
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  border: 'none',
+                  background: 'transparent',
+                  color: 'var(--text-primary)',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                <option value="newest">Saved date</option>
+                <option value="oldest">Oldest date</option>
+                <option value="title">Title (A-Z)</option>
+                <option value="domain">Domain</option>
+                <option value="size">Size</option>
+              </select>
+              <ArrowUpDown size={12} color="var(--text-muted)" />
+            </div>
           </div>
         </div>
       </div>

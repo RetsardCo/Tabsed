@@ -56,7 +56,8 @@ async function handleSaveTabs(request) {
       thumbnail: thumbnailDataUrl,
       collectionId: collectionId || 'inbox',
       browserFamily: navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome',
-      capturedAt: new Date().toISOString()
+      capturedAt: new Date().toISOString(),
+      saveAsIndividual: request.saveAsIndividual ?? true
     });
   }
 
@@ -67,7 +68,10 @@ async function handleSaveTabs(request) {
       if (typeof chrome.runtime.sendNativeMessage === 'function') {
         chrome.runtime.sendNativeMessage('com.tabsed.app', {
           type: 'saveTabs',
-          payload: { tabs: stagedTabs },
+          payload: {
+            tabs: stagedTabs,
+            saveAsIndividual: request.saveAsIndividual ?? true
+          },
           timestamp: new Date().toISOString()
         }, (response) => {
           if (chrome.runtime.lastError) {

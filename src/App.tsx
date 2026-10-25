@@ -18,9 +18,10 @@ import { ConfirmationModal } from './ui/components/ConfirmationModal';
 import { ArchiveSearchModal } from './ui/components/ArchiveSearchModal';
 import { BackupModal } from './ui/components/BackupModal';
 import { PortableVaultModal } from './ui/components/PortableVaultModal';
-import { SavedTabItem, Collection, ViewMode, UserPreferences, Tag } from './ui/types';
+import { SavedTabItem, Collection, ViewMode, GroupMode, UserPreferences, Tag } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
+import { unpackAllSessionItems, groupTabsBySession, extractDomainFromUrl } from './core/vault/unpack-sessions';
 
 const INITIAL_COLLECTIONS: Collection[] = [
   { id: 'inbox', name: 'Inbox', description: 'Default incoming tab bucket', accentColor: '#2563eb', itemCount: 4 },
@@ -329,17 +330,18 @@ export const App: React.FC = () => {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.map(item => {
+          const rehydrated = parsed.map(item => {
             const initialMatch = INITIAL_ITEMS.find(init => init.id === item.id);
             if (initialMatch && initialMatch.sessionTabs && (!item.sessionTabs || item.sessionTabs.length < initialMatch.sessionTabs.length)) {
               return { ...item, sessionTabs: initialMatch.sessionTabs, tabCount: initialMatch.tabCount };
             }
             return item;
           });
+          return unpackAllSessionItems(rehydrated);
         }
       } catch {}
     }
-    return INITIAL_ITEMS;
+    return unpackAllSessionItems(INITIAL_ITEMS);
   });
 
   const [collections, setCollections] = useState<Collection[]>(() => {
@@ -375,8 +377,9 @@ export const App: React.FC = () => {
 
   // UI state
   const [currentDestination, setCurrentDestination] = useState<string>('all');
-  const [selectedItemId, setSelectedItemId] = useState<string | null>('mock_1');
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>(preferences.defaultView || 'grid');
+  const [groupMode, setGroupMode] = useState<GroupMode>('individual');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('newest');
   const [filterType, setFilterType] = useState<string>('all');
@@ -413,9 +416,10 @@ export const App: React.FC = () => {
       if (!isMounted) return;
       isInitialVaultLoaded.current = true;
       if (diskItems && diskItems.length > 0) {
+        const unpackedDisk = unpackAllSessionItems(diskItems);
         setItems(prevItems => {
-          const diskIds = new Set(diskItems.map(i => i.id));
-          const merged = [...diskItems, ...prevItems.filter(p => !diskIds.has(p.id))];
+          const diskIds = new Set(unpackedDisk.map(i => i.id));
+          const merged = [...unpackedDisk, ...prevItems.filter(p => !diskIds.has(p.id))];
           return merged;
         });
       } else {
@@ -436,9 +440,10 @@ export const App: React.FC = () => {
   // Live real-time synchronization listener for incoming extension saves
   useEffect(() => {
     const unsubscribe = VaultSyncService.startLiveSync((updatedItems) => {
+      const unpackedUpdated = unpackAllSessionItems(updatedItems);
       setItems(prevItems => {
         const prevIds = new Set(prevItems.map(i => i.id));
-        const newIncoming = updatedItems.filter(i => !prevIds.has(i.id));
+        const newIncoming = unpackedUpdated.filter(i => !prevIds.has(i.id));
 
         if (newIncoming.length > 0) {
           setSyncStatus('synced');
@@ -453,7 +458,7 @@ export const App: React.FC = () => {
             setSyncStatus('ready');
           }, 4500);
 
-          const diskMap = new Map(updatedItems.map(i => [i.id, i]));
+          const diskMap = new Map(unpackedUpdated.map(i => [i.id, i]));
           const merged = [
             ...newIncoming,
             ...prevItems.map(p => diskMap.get(p.id) || p)
@@ -624,6 +629,48 @@ export const App: React.FC = () => {
       return 0;
     });
   }, [items, currentDestination, activeTagFilter, searchQuery, sortBy, filterType]);
+
+  // Personalization Grouping: Individual Tabs (Default) vs Group by Window Session
+  const displayedItems = useMemo(() => {
+    if (groupMode === 'session') {
+      return groupTabsBySession(filteredItems);
+    }
+    return filteredItems;
+  }, [filteredItems, groupMode]);
+
+  const handleQuickAddUrl = (rawUrl: string) => {
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return;
+    const normalized = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+      ? trimmed
+      : `https://${trimmed}`;
+    const domain = extractDomainFromUrl(normalized);
+    const title = domain || 'Saved Web Tab';
+    const now = new Date().toISOString();
+    const newItem: SavedTabItem = {
+      id: 'tab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+      vaultId: 'default',
+      itemType: 'tab',
+      title: title,
+      url: normalized,
+      normalizedUrl: normalized,
+      domain: domain,
+      faviconUrl: domain ? `https://${domain}/favicon.ico` : null,
+      thumbnailUrl: null,
+      browserFamily: 'Edge',
+      profileLabel: 'Default',
+      savedAt: now,
+      notes: '',
+      isFavorite: false,
+      collectionIds: currentDestination.startsWith('col_') ? [currentDestination.replace('col_', '')] : ['inbox'],
+      tags: ['Quick Add', 'Web'],
+      tabCount: 1,
+      archiveSizeBytes: 131072,
+      availabilityStatus: 'reachable'
+    };
+    setItems(prev => [newItem, ...prev]);
+    setSelectedItemId(newItem.id);
+  };
 
   const selectedItem = useMemo(() => {
     return items.find(i => i.id === selectedItemId) || null;
@@ -897,7 +944,7 @@ export const App: React.FC = () => {
           onSortByChange={setSortBy}
           filterType={filterType}
           onFilterTypeChange={setFilterType}
-          itemCount={filteredItems.length}
+          itemCount={displayedItems.length}
           onOpenSaveModal={(scope) => {
             setSaveModalScope(scope || 'window');
             setSaveModalOpen(true);
@@ -918,6 +965,8 @@ export const App: React.FC = () => {
             setPreferences(prev => ({ ...prev, theme: nextTheme }));
           }}
           syncStatus={syncStatus}
+          groupMode={groupMode}
+          onGroupModeChange={setGroupMode}
         />
 
         {currentDestination === 'trash' && (
@@ -966,7 +1015,7 @@ export const App: React.FC = () => {
           <main style={{ flex: 1, overflowY: 'auto' }}>
             {viewMode === 'grid' && (
               <TabGrid
-                items={filteredItems}
+                items={displayedItems}
                 selectedItemId={selectedItemId}
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}
@@ -974,11 +1023,13 @@ export const App: React.FC = () => {
                 onRestoreItem={handleRestoreFromTrash}
                 onOpenLiveUrl={handleOpenLiveUrl}
                 isTrash={currentDestination === 'trash'}
+                onQuickAddUrl={handleQuickAddUrl}
+                groupMode={groupMode}
               />
             )}
             {viewMode === 'compact' && (
               <TabCompactList
-                items={filteredItems}
+                items={displayedItems}
                 selectedItemId={selectedItemId}
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}
@@ -990,7 +1041,7 @@ export const App: React.FC = () => {
             )}
             {viewMode === 'detailed' && (
               <TabDetailedList
-                items={filteredItems}
+                items={displayedItems}
                 selectedItemId={selectedItemId}
                 onSelectItem={setSelectedItemId}
                 onToggleFavorite={handleToggleFavorite}

@@ -7,10 +7,15 @@ import {
   RotateCcw,
   Layers,
   ExternalLink,
-  Copy
+  Copy,
+  Plus,
+  Link,
+  ArrowRight,
+  Clipboard
 } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartFavicon } from './BrandIcons';
+import { SmartBrandThumbnail } from './SmartBrandThumbnail';
 
 interface TabGridProps {
   items: SavedTabItem[];
@@ -21,6 +26,8 @@ interface TabGridProps {
   onOpenLiveUrl: (url: string) => void;
   onRestoreItem?: (id: string) => void;
   isTrash?: boolean;
+  onQuickAddUrl?: (url: string) => void;
+  groupMode?: 'individual' | 'session';
 }
 
 export const TabGrid: React.FC<TabGridProps> = ({
@@ -31,36 +38,36 @@ export const TabGrid: React.FC<TabGridProps> = ({
   onDeleteItem,
   onOpenLiveUrl,
   onRestoreItem,
-  isTrash
+  isTrash,
+  onQuickAddUrl,
+  groupMode = 'individual'
 }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-  if (items.length === 0) {
-    return (
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '80px 20px',
-        color: 'var(--text-secondary)',
-        textAlign: 'center'
-      }}>
-        {isTrash ? (
-          <Trash2 size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
-        ) : (
-          <Globe size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
-        )}
-        <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
-          {isTrash ? 'Trash is empty' : 'No saved tabs in this view'}
-        </h3>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '420px', lineHeight: 1.5 }}>
-          {isTrash
-            ? 'Tabs moved to trash will appear here until permanently deleted.'
-            : 'Tabs saved from Microsoft Edge, Google Chrome, or imported manually will appear here with rich previews, favicons, and session groups.'}
-        </p>
-      </div>
-    );
-  }
+  const [quickInput, setQuickInput] = useState('');
+  const [quickError, setQuickError] = useState(false);
+
+  const handleQuickSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickInput.trim()) {
+      setQuickError(true);
+      return;
+    }
+    setQuickError(false);
+    if (onQuickAddUrl) {
+      onQuickAddUrl(quickInput.trim());
+      setQuickInput('');
+    }
+  };
+
+  const handlePasteClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text && text.trim()) {
+        setQuickInput(text.trim());
+        setQuickError(false);
+      }
+    } catch {}
+  };
 
   const formatSize = (bytes?: number | null) => {
     if (!bytes) return '128 KB';
@@ -84,28 +91,50 @@ export const TabGrid: React.FC<TabGridProps> = ({
   const getTagColors = (tag: string) => {
     const t = tag.toLowerCase();
     if (t.includes('plan') || t.includes('work') || t.includes('dev')) {
-      return { bg: 'rgba(37, 99, 235, 0.14)', text: '#2563eb' };
+      return { bg: 'rgba(37, 99, 235, 0.16)', text: '#3b82f6' };
     }
     if (t.includes('game') || t.includes('engine')) {
-      return { bg: 'rgba(124, 58, 237, 0.14)', text: '#7c3aed' };
+      return { bg: 'rgba(124, 58, 237, 0.16)', text: '#8b5cf6' };
     }
     if (t.includes('note') || t.includes('writ')) {
-      return { bg: 'rgba(244, 63, 94, 0.14)', text: '#e11d48' };
+      return { bg: 'rgba(244, 63, 94, 0.16)', text: '#f43f5e' };
     }
     if (t.includes('ai') || t.includes('learn')) {
-      return { bg: 'rgba(14, 165, 233, 0.14)', text: '#0284c7' };
+      return { bg: 'rgba(14, 165, 233, 0.16)', text: '#38bdf8' };
     }
     if (t.includes('design') || t.includes('creative') || t.includes('insp')) {
-      return { bg: 'rgba(79, 70, 229, 0.14)', text: '#4f46e5' };
+      return { bg: 'rgba(79, 70, 229, 0.16)', text: '#818cf8' };
     }
     if (t.includes('music') || t.includes('entertain') || t.includes('video')) {
-      return { bg: 'rgba(245, 158, 11, 0.16)', text: '#d97706' };
+      return { bg: 'rgba(245, 158, 11, 0.16)', text: '#fbbf24' };
     }
     if (t.includes('shop') || t.includes('hard') || t.includes('tool')) {
-      return { bg: 'rgba(16, 185, 129, 0.14)', text: '#059669' };
+      return { bg: 'rgba(16, 185, 129, 0.16)', text: '#34d399' };
     }
     return { bg: 'rgba(148, 163, 184, 0.16)', text: 'var(--text-secondary)' };
   };
+
+  if (items.length === 0 && isTrash) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '80px 20px',
+        color: 'var(--text-secondary)',
+        textAlign: 'center'
+      }}>
+        <Trash2 size={48} strokeWidth={1.5} color="var(--text-muted)" style={{ marginBottom: '16px' }} />
+        <h3 style={{ fontSize: '17px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '8px' }}>
+          Trash is empty
+        </h3>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '420px', lineHeight: 1.5 }}>
+          Tabs moved to trash will appear here until permanently deleted.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div style={{
@@ -114,8 +143,160 @@ export const TabGrid: React.FC<TabGridProps> = ({
       gap: '20px',
       padding: '24px'
     }}>
+      {/* Umark-Style Inline Quick Add Card (Top of Grid, active view only) */}
+      {!isTrash && onQuickAddUrl && (
+        <div
+          style={{
+            backgroundColor: 'var(--bg-card)',
+            backdropFilter: 'var(--backdrop-filter)',
+            border: '1px dashed var(--border-subtle)',
+            borderRadius: 'var(--radius-lg)',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: 'var(--shadow-sm), var(--card-highlight)',
+            transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+            minHeight: '260px'
+          }}
+        >
+          {/* Quick Add Header */}
+          <div style={{
+            padding: '12px 16px',
+            borderBottom: '1px solid var(--border-subtle)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            backgroundColor: 'rgba(255, 255, 255, 0.02)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--accent-light)',
+                color: 'var(--accent-color)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Plus size={14} strokeWidth={2.5} />
+              </div>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)' }}>
+                Quick Add
+              </span>
+            </div>
+            <span style={{
+              fontSize: '11px',
+              fontWeight: 500,
+              padding: '2px 8px',
+              borderRadius: 'var(--radius-pill)',
+              backgroundColor: 'rgba(255, 255, 255, 0.06)',
+              color: 'var(--text-muted)'
+            }}>
+              Web Tab
+            </span>
+          </div>
+
+          {/* Quick Add Form Body */}
+          <form
+            onSubmit={handleQuickSubmit}
+            style={{
+              padding: '16px',
+              display: 'flex',
+              flexDirection: 'column',
+              flex: 1,
+              gap: '12px',
+              justifyContent: 'space-between'
+            }}
+          >
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', flex: 1 }}>
+              <textarea
+                value={quickInput}
+                onChange={(e) => {
+                  setQuickInput(e.target.value);
+                  setQuickError(false);
+                }}
+                placeholder="Paste link or type URL to save as individual card..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  height: '100px',
+                  backgroundColor: 'var(--bg-input)',
+                  border: quickError ? '1px solid var(--danger-color)' : '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '10px 12px',
+                  fontSize: '13px',
+                  color: 'var(--text-primary)',
+                  resize: 'none',
+                  outline: 'none',
+                  boxShadow: 'inset 0 1px 2px rgba(0, 0, 0, 0.1)'
+                }}
+              />
+              {quickError && (
+                <span style={{ fontSize: '11px', color: 'var(--danger-color)' }}>
+                  Please enter a valid URL.
+                </span>
+              )}
+            </div>
+
+            {/* Quick Add Form Footer */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingTop: '8px'
+            }}>
+              <button
+                type="button"
+                onClick={handlePasteClipboard}
+                title="Paste from clipboard"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'transparent',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px 10px',
+                  fontSize: '12px',
+                  color: 'var(--text-muted)',
+                  cursor: 'pointer',
+                  transition: 'color 0.15s ease'
+                }}
+              >
+                <Clipboard size={13} />
+                <span>Paste</span>
+              </button>
+
+              <button
+                type="submit"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--accent-color)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
+                }}
+              >
+                <span>Save</span>
+                <ArrowRight size={13} />
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Item Cards in Grid */}
       {items.map(item => {
         const isSelected = item.id === selectedItemId;
+        const isSession = item.itemType === 'session' && (item.tabCount ? item.tabCount > 1 : false);
         const tabCount = item.tabCount || (item.sessionTabs ? item.sessionTabs.length : 1);
 
         return (
@@ -124,6 +305,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
             onClick={() => onSelectItem(item.id)}
             style={{
               backgroundColor: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
+              backdropFilter: 'var(--backdrop-filter)',
               border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-card)'}`,
               borderRadius: 'var(--radius-lg)',
               overflow: 'hidden',
@@ -132,12 +314,12 @@ export const TabGrid: React.FC<TabGridProps> = ({
               cursor: 'pointer',
               transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
               boxShadow: isSelected
-                ? 'var(--shadow-md), var(--card-highlight)'
+                ? 'var(--shadow-md), var(--card-highlight), 0 0 0 1px var(--accent-color)'
                 : 'var(--shadow-sm), var(--card-highlight)',
               position: 'relative'
             }}
           >
-            {/* Top Thumbnail Section (aligned to mockup) */}
+            {/* Top Thumbnail Section with SmartBrandThumbnail fallback */}
             <div style={{
               height: '154px',
               backgroundColor: 'var(--bg-app)',
@@ -148,26 +330,15 @@ export const TabGrid: React.FC<TabGridProps> = ({
               justifyContent: 'center',
               borderBottom: '1px solid var(--border-subtle)'
             }}>
-              {item.thumbnailUrl ? (
-                <img
-                  src={item.thumbnailUrl}
-                  alt={item.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '6px',
-                  color: 'var(--text-muted)'
-                }}>
-                  <Globe size={32} strokeWidth={1.5} />
-                  <span style={{ fontSize: '11px', fontWeight: 500 }}>Preview snapshot</span>
-                </div>
-              )}
+              <SmartBrandThumbnail
+                domain={item.domain}
+                url={item.url}
+                title={item.title}
+                faviconUrl={item.faviconUrl}
+                thumbnailUrl={item.thumbnailUrl}
+              />
 
-              {/* Favicon Overlay Badge (Top Left - exact white pill matching mockup) */}
+              {/* Favicon Overlay Badge (Top Left - frosted glass pill) */}
               <div style={{
                 position: 'absolute',
                 top: '10px',
@@ -175,9 +346,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 width: '28px',
                 height: '28px',
                 borderRadius: '7px',
-                backgroundColor: '#ffffff',
-                border: '1px solid rgba(0, 0, 0, 0.1)',
-                boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(0, 0, 0, 0.12)',
+                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.25)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -206,7 +377,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                   border: 'none',
                   backgroundColor: 'rgba(255, 255, 255, 0.92)',
                   backdropFilter: 'blur(8px)',
-                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.15)',
+                  boxShadow: '0 2px 6px rgba(0, 0, 0, 0.2)',
                   borderRadius: '50%',
                   width: '28px',
                   height: '28px',
@@ -251,7 +422,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 whiteSpace: 'nowrap'
               }}>
                 <Globe size={13} style={{ flexShrink: 0 }} />
-                <span>{item.domain}</span>
+                <span>{item.domain || 'web'}</span>
               </div>
 
               {/* Tag Chips Row */}
@@ -289,7 +460,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
               </div>
             </div>
 
-            {/* Card Footer (Cleanly aligned to exact mockup layout) */}
+            {/* Card Footer */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
@@ -298,10 +469,10 @@ export const TabGrid: React.FC<TabGridProps> = ({
               borderTop: '1px solid var(--border-subtle)',
               fontSize: '12px',
               color: 'var(--text-muted)',
-              backgroundColor: 'rgba(0, 0, 0, 0.01)'
+              backgroundColor: 'rgba(0, 0, 0, 0.02)'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {/* Avatar Icon */}
+                {/* Type Badge */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <div style={{
                     width: '20px',
@@ -315,19 +486,18 @@ export const TabGrid: React.FC<TabGridProps> = ({
                     overflow: 'hidden',
                     flexShrink: 0
                   }}>
-                    <Layers size={11} />
+                    {isSession ? <Layers size={11} /> : <Globe size={11} />}
                   </div>
                   <span style={{ fontWeight: 500, color: 'var(--text-secondary)' }}>
-                    {tabCount} tabs
+                    {isSession ? `${tabCount} tabs` : 'Tab'}
                   </span>
                 </div>
 
                 <span style={{ color: 'var(--text-muted)' }}>{formatSize(item.archiveSizeBytes)}</span>
-
                 <span style={{ color: 'var(--text-muted)' }}>{formatRelativeDate(item.savedAt)}</span>
               </div>
 
-              {/* Action Menu button (Matches mockup right menu) */}
+              {/* Action Icons */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 {isTrash ? (
                   <>
@@ -476,28 +646,30 @@ export const TabGrid: React.FC<TabGridProps> = ({
                             <Copy size={13} color="var(--accent-color)" />
                             <span>Copy Link</span>
                           </button>
-                          <button
-                            onClick={() => {
-                              setActiveMenuId(null);
-                              onSelectItem(item.id);
-                            }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '7px 10px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-primary)',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
-                          >
-                            <Layers size={13} color="var(--accent-color)" />
-                            <span>View All Tabs</span>
-                          </button>
+                          {isSession && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onSelectItem(item.id);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '7px 10px',
+                                borderRadius: 'var(--radius-sm)',
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--text-primary)',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                              }}
+                            >
+                              <Layers size={13} color="var(--accent-color)" />
+                              <span>View All Tabs</span>
+                            </button>
+                          )}
                           <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '2px 0' }} />
                           <button
                             onClick={() => {

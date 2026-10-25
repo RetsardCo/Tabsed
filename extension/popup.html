@@ -8,63 +8,166 @@
 </head>
 <body>
   <div class="popup-container">
+    <!-- Brand Header -->
     <header class="header">
       <div class="brand">
-        <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
-          <line x1="3" y1="9" x2="21" y2="9"/>
-          <line x1="9" y1="21" x2="9" y2="9"/>
-        </svg>
-        <span class="brand-title">Tabsed</span>
+        <div class="brand-icon-wrap">
+          <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="4" ry="4"/>
+            <line x1="3" y1="9" x2="21" y2="9"/>
+            <line x1="9" y1="21" x2="9" y2="9"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <span class="brand-title">Tabsed</span>
+          <span class="brand-subtitle">Visual Tab Vault</span>
+        </div>
       </div>
-      <div id="status-badge" class="badge badge-connected" title="Desktop bridge active">
-        Connected
+      <div id="status-badge" class="badge badge-connected" title="Native messaging bridge ready">
+        <span class="badge-dot"></span>
+        <span id="status-text">Connected</span>
       </div>
     </header>
 
-    <div class="tab-summary">
-      <div class="summary-label">Current Window:</div>
-      <div id="tab-count" class="summary-count">Analyzing tabs...</div>
-    </div>
-
-    <div class="form-group">
-      <label for="collection-select">Target Collection:</label>
-      <select id="collection-select">
-        <option value="inbox">Inbox</option>
-        <option value="research">Research</option>
-        <option value="development">Development</option>
-        <option value="reading">Reading List</option>
-      </select>
-    </div>
-
-    <div class="options-group">
-      <label class="checkbox-label">
-        <input type="checkbox" id="capture-thumbnails" checked>
-        <span>Capture thumbnails (where permitted)</span>
-      </label>
-      <label class="checkbox-label">
-        <input type="checkbox" id="exclude-pinned" checked>
-        <span>Exclude pinned tabs</span>
-      </label>
-    </div>
-
-    <div class="actions">
-      <button id="save-current-tab" class="btn btn-secondary">
-        Save Active Tab
-      </button>
-      <button id="save-window" class="btn btn-primary">
-        Save Current Window
-      </button>
-      <button id="save-and-close-window" class="btn btn-danger">
-        Save &amp; Close Window
+    <!-- Prominent Active Tab Hero Card -->
+    <div class="active-tab-card" id="active-tab-card">
+      <div class="active-tab-meta">
+        <div class="active-tab-fav-wrap" id="active-fav-wrap">
+          <img id="active-tab-favicon" class="active-tab-favicon" src="" alt="" style="display: none;">
+          <svg id="active-tab-globe" class="active-tab-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <div class="active-tab-info">
+          <div class="active-tab-label">ACTIVE TAB</div>
+          <div id="active-tab-title" class="active-tab-title">Loading active tab...</div>
+          <div id="active-tab-domain" class="active-tab-domain">---</div>
+        </div>
+      </div>
+      <button id="quick-save-active-btn" class="btn btn-hero">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span>Save Active Tab</span>
       </button>
     </div>
 
+    <!-- Mode Selector Segmented Tabs -->
+    <div class="segmented-control" role="tablist">
+      <button id="mode-tab-active" class="segment-btn active" role="tab" aria-selected="true">
+        <span>Active Tab</span>
+      </button>
+      <button id="mode-tab-select" class="segment-btn" role="tab" aria-selected="false">
+        <span>Select Tabs</span>
+        <span id="select-mode-count-pill" class="pill-badge">0</span>
+      </button>
+      <button id="mode-tab-all" class="segment-btn" role="tab" aria-selected="false">
+        <span>All Open Tabs</span>
+        <span id="all-mode-count-pill" class="pill-badge">0</span>
+      </button>
+    </div>
+
+    <!-- Mode 1: Active Tab View -->
+    <div id="view-active-mode" class="mode-view">
+      <div class="mode-description">
+        Save only this current webpage into your Tabsed visual library.
+      </div>
+      <div class="actions">
+        <button id="save-current-tab" class="btn btn-primary">
+          Save This Tab
+        </button>
+        <button id="save-and-close-current-tab" class="btn btn-outline-danger">
+          Save &amp; Close This Tab
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode 2: Select Tabs View -->
+    <div id="view-select-mode" class="mode-view hidden">
+      <div class="tab-list-controls">
+        <input type="text" id="tab-search-input" class="search-input" placeholder="Filter open tabs...">
+        <div class="list-toggle-btns">
+          <button id="select-all-btn" class="btn-text">Select All</button>
+          <span class="divider">|</span>
+          <button id="deselect-all-btn" class="btn-text">Deselect All</button>
+        </div>
+      </div>
+      <div id="tab-checklist" class="tab-checklist">
+        <!-- Interactive checkboxes injected via JS -->
+      </div>
+      <div class="actions">
+        <button id="save-selected-tabs-btn" class="btn btn-primary">
+          Save Selected Tabs
+        </button>
+        <button id="save-and-close-selected-btn" class="btn btn-outline-danger">
+          Save &amp; Close Selected
+        </button>
+      </div>
+    </div>
+
+    <!-- Mode 3: All Open Tabs View -->
+    <div id="view-all-mode" class="mode-view hidden">
+      <div class="all-tabs-summary-banner">
+        <div class="summary-highlight">
+          <span id="all-tabs-large-count">0</span> tabs open in this window
+        </div>
+        <p class="summary-subtext">
+          Every tab will be saved as its <strong>own individual card</strong> with rich previews, favicons, and metadata in your Tabsed library.
+        </p>
+      </div>
+
+      <div class="actions">
+        <button id="save-window" class="btn btn-primary">
+          Save All Tabs as Individual Cards
+        </button>
+        <button id="save-and-close-window" class="btn btn-danger">
+          Save All &amp; Close Window
+        </button>
+      </div>
+    </div>
+
+    <!-- Global Preferences Section -->
+    <div class="settings-card">
+      <div class="form-group">
+        <label for="collection-select" class="form-label">Save To Collection:</label>
+        <select id="collection-select" class="form-select">
+          <option value="inbox">Inbox</option>
+          <option value="research">Deep Research</option>
+          <option value="dev">Web Dev &amp; Tauri</option>
+          <option value="design">Design Inspiration</option>
+        </select>
+      </div>
+
+      <div class="options-group">
+        <label class="checkbox-label">
+          <input type="checkbox" id="capture-thumbnails" checked>
+          <span>Capture screenshots where permitted</span>
+        </label>
+        <label class="checkbox-label" id="exclude-pinned-wrap">
+          <input type="checkbox" id="exclude-pinned" checked>
+          <span id="exclude-pinned-text">Exclude pinned tabs</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Result / Status Toast -->
     <div id="result-message" class="result-message hidden"></div>
 
+    <!-- Footer -->
     <footer class="footer">
-      <a href="#" id="open-desktop" class="footer-link">Open Tabsed Desktop App</a>
-      <span class="version">v1.0.0</span>
+      <a href="#" id="open-desktop" class="footer-link">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="link-svg">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        <span>Open Tabsed Desktop App</span>
+      </a>
+      <span class="version">v1.1.0</span>
     </footer>
   </div>
   <script src="popup.js"></script>

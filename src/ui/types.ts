@@ -32,6 +32,8 @@ export interface SavedTabItem {
   tags: string[];
   tabCount?: number;
   sessionTabs?: SessionTab[];
+  windowSessionId?: string | null;
+  sessionTitle?: string | null;
   authorAvatarUrl?: string | null;
   archiveSizeBytes?: number | null;
   archiveContent?: string | null;
@@ -41,6 +43,8 @@ export interface SavedTabItem {
   deletedAt?: string | null;
   isPrivate?: boolean;
 }
+
+export type GroupMode = 'individual' | 'session';
 
 export interface Collection {
   id: string;

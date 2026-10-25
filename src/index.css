@@ -43,20 +43,23 @@
   --density-multiplier: 1;
 }
 
-/* Dark Theme - High Contrast Crisp Glass (User Reference Image 3) */
+/* Dark Theme - High Contrast Crisp Glass (Modern Laptop Acrylic) */
 [data-theme='dark'] {
-  --bg-app: rgba(11, 15, 25, 0.70);
-  --bg-app-ambient: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.15), transparent 45%), radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.12), transparent 45%), rgba(11, 15, 25, 0.68);
-  --bg-sidebar: rgba(15, 22, 38, 0.72);
-  --bg-card: rgba(22, 28, 45, 0.74);
-  --bg-card-hover: rgba(30, 38, 61, 0.85);
-  --bg-card-selected: rgba(30, 46, 78, 0.85);
-  --bg-surface: rgba(20, 26, 43, 0.75);
-  --bg-surface-elevated: rgba(26, 35, 56, 0.85);
-  --bg-input: rgba(16, 22, 38, 0.70);
+  --bg-app: rgba(10, 14, 23, 0.72);
+  --bg-app-ambient: radial-gradient(circle at 15% 15%, rgba(37, 99, 235, 0.18), transparent 45%),
+                    radial-gradient(circle at 85% 85%, rgba(124, 58, 237, 0.15), transparent 45%),
+                    radial-gradient(circle at 50% 30%, rgba(14, 165, 233, 0.08), transparent 55%),
+                    rgba(10, 14, 23, 0.70);
+  --bg-sidebar: rgba(15, 22, 38, 0.75);
+  --bg-card: rgba(22, 30, 48, 0.72);
+  --bg-card-hover: rgba(30, 42, 68, 0.84);
+  --bg-card-selected: rgba(28, 46, 80, 0.88);
+  --bg-surface: rgba(18, 26, 44, 0.78);
+  --bg-surface-elevated: rgba(26, 36, 60, 0.88);
+  --bg-input: rgba(14, 20, 36, 0.75);
   
-  --border-subtle: rgba(255, 255, 255, 0.12);
-  --border-card: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.09);
+  --border-card: rgba(255, 255, 255, 0.11);
   --border-focus: #3b82f6;
   
   --text-primary: #ffffff;
@@ -65,13 +68,14 @@
   
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
-  --accent-light: rgba(59, 130, 246, 0.2);
+  --accent-light: rgba(59, 130, 246, 0.18);
   
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.45);
   --shadow-md: 0 4px 16px -1px rgba(0, 0, 0, 0.55);
   --shadow-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.65);
   
   --card-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --backdrop-filter: blur(28px) saturate(180%);
 }
 
 /* Solid / Reduced Transparency Fallback (PRD FR-133) */

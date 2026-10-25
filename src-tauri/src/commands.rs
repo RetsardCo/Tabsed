@@ -174,62 +174,110 @@ pub fn format_incoming_tabs(tabs: &[serde_json::Value]) -> (Vec<serde_json::Valu
         });
         new_items.push(item);
     } else {
-        let first_tab = &tabs[0];
-        let first_url = first_tab.get("url").and_then(|v| v.as_str()).unwrap_or("about:blank");
-        let first_domain = extract_domain(first_url);
-        let first_title = first_tab.get("title").and_then(|v| v.as_str()).unwrap_or(&first_domain);
-        let browser = first_tab.get("browserFamily").and_then(|v| v.as_str()).unwrap_or("Edge");
-        let collection = first_tab.get("collectionId").and_then(|v| v.as_str()).unwrap_or("inbox");
-        let favicon = first_tab.get("favIconUrl").and_then(|v| v.as_str())
-            .map(|s| s.to_string())
-            .unwrap_or_else(|| format!("https://{}/favicon.ico", first_domain));
-        let thumbnail = first_tab.get("thumbnail").and_then(|v| v.as_str());
+        let save_as_individual = tabs.first()
+            .and_then(|t| t.get("saveAsIndividual"))
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false);
 
-        let session_title = format!("{} and {} more tabs", first_title, tabs.len() - 1);
+        let session_batch_id = format!("session_{}", now_ms);
 
-        let mut session_tabs: Vec<serde_json::Value> = Vec::new();
-        for (i, t) in tabs.iter().enumerate() {
-            let t_url = t.get("url").and_then(|v| v.as_str()).unwrap_or("");
-            let t_dom = extract_domain(t_url);
-            let t_title = t.get("title").and_then(|v| v.as_str()).unwrap_or(&t_dom);
-            let t_fav = t.get("favIconUrl").and_then(|v| v.as_str())
+        if save_as_individual {
+            for (i, t) in tabs.iter().enumerate() {
+                let url = t.get("url").and_then(|v| v.as_str()).unwrap_or("about:blank");
+                let domain = extract_domain(url);
+                let title = t.get("title").and_then(|v| v.as_str()).unwrap_or(&domain);
+                let browser = t.get("browserFamily").and_then(|v| v.as_str()).unwrap_or("Edge");
+                let collection = t.get("collectionId").and_then(|v| v.as_str()).unwrap_or("inbox");
+                let favicon = t.get("favIconUrl").and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("https://{}/favicon.ico", domain));
+                let thumbnail = t.get("thumbnail").and_then(|v| v.as_str());
+
+                let item = serde_json::json!({
+                    "id": format!("tab_{}_{}_{}", now_ms, i, &uuid::Uuid::new_v4().to_string()[..5]),
+                    "vaultId": "default",
+                    "itemType": "tab",
+                    "title": title,
+                    "url": url,
+                    "normalizedUrl": url,
+                    "domain": domain,
+                    "faviconUrl": favicon,
+                    "thumbnailUrl": thumbnail,
+                    "browserFamily": browser,
+                    "profileLabel": "Default",
+                    "savedAt": now_str,
+                    "notes": "",
+                    "isFavorite": false,
+                    "collectionIds": [collection],
+                    "tags": ["Extension", browser, "Saved Window"],
+                    "windowSessionId": session_batch_id,
+                    "sessionTitle": format!("Saved Window Session ({} tabs)", tabs.len()),
+                    "tabCount": 1,
+                    "archiveSizeBytes": 131072,
+                    "availabilityStatus": "reachable"
+                });
+                new_items.push(item);
+            }
+        } else {
+            let first_tab = &tabs[0];
+            let first_url = first_tab.get("url").and_then(|v| v.as_str()).unwrap_or("about:blank");
+            let first_domain = extract_domain(first_url);
+            let first_title = first_tab.get("title").and_then(|v| v.as_str()).unwrap_or(&first_domain);
+            let browser = first_tab.get("browserFamily").and_then(|v| v.as_str()).unwrap_or("Edge");
+            let collection = first_tab.get("collectionId").and_then(|v| v.as_str()).unwrap_or("inbox");
+            let favicon = first_tab.get("favIconUrl").and_then(|v| v.as_str())
                 .map(|s| s.to_string())
-                .unwrap_or_else(|| format!("https://{}/favicon.ico", t_dom));
-            let t_pinned = t.get("pinned").and_then(|v| v.as_bool()).unwrap_or(false);
+                .unwrap_or_else(|| format!("https://{}/favicon.ico", first_domain));
+            let thumbnail = first_tab.get("thumbnail").and_then(|v| v.as_str());
 
-            session_tabs.push(serde_json::json!({
-                "id": format!("sub_{}_{}", now_ms, i),
-                "title": t_title,
-                "url": t_url,
-                "domain": t_dom,
-                "faviconUrl": t_fav,
-                "pinned": t_pinned
-            }));
+            let session_title = format!("{} and {} more tabs", first_title, tabs.len() - 1);
+
+            let mut session_tabs: Vec<serde_json::Value> = Vec::new();
+            for (i, t) in tabs.iter().enumerate() {
+                let t_url = t.get("url").and_then(|v| v.as_str()).unwrap_or("");
+                let t_dom = extract_domain(t_url);
+                let t_title = t.get("title").and_then(|v| v.as_str()).unwrap_or(&t_dom);
+                let t_fav = t.get("favIconUrl").and_then(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .unwrap_or_else(|| format!("https://{}/favicon.ico", t_dom));
+                let t_pinned = t.get("pinned").and_then(|v| v.as_bool()).unwrap_or(false);
+
+                session_tabs.push(serde_json::json!({
+                    "id": format!("sub_{}_{}", now_ms, i),
+                    "title": t_title,
+                    "url": t_url,
+                    "domain": t_dom,
+                    "faviconUrl": t_fav,
+                    "pinned": t_pinned
+                }));
+            }
+
+            let item = serde_json::json!({
+                "id": format!("session_{}_{}", now_ms, &uuid::Uuid::new_v4().to_string()[..6]),
+                "vaultId": "default",
+                "itemType": "session",
+                "title": session_title,
+                "url": first_url,
+                "normalizedUrl": first_url,
+                "domain": first_domain,
+                "faviconUrl": favicon,
+                "thumbnailUrl": thumbnail,
+                "browserFamily": browser,
+                "profileLabel": "Default",
+                "savedAt": now_str,
+                "notes": format!("Saved window session with {} tabs from {}.", tabs.len(), browser),
+                "isFavorite": false,
+                "collectionIds": [collection],
+                "tags": ["Extension", "Saved Window", browser],
+                "windowSessionId": session_batch_id,
+                "sessionTitle": session_title,
+                "tabCount": tabs.len(),
+                "sessionTabs": session_tabs,
+                "archiveSizeBytes": tabs.len() * 131072,
+                "availabilityStatus": "reachable"
+            });
+            new_items.push(item);
         }
-
-        let item = serde_json::json!({
-            "id": format!("session_{}_{}", now_ms, &uuid::Uuid::new_v4().to_string()[..6]),
-            "vaultId": "default",
-            "itemType": "session",
-            "title": session_title,
-            "url": first_url,
-            "normalizedUrl": first_url,
-            "domain": first_domain,
-            "faviconUrl": favicon,
-            "thumbnailUrl": thumbnail,
-            "browserFamily": browser,
-            "profileLabel": "Default",
-            "savedAt": now_str,
-            "notes": format!("Saved window session with {} tabs from {}.", tabs.len(), browser),
-            "isFavorite": false,
-            "collectionIds": [collection],
-            "tags": ["Extension", "Saved Window", browser],
-            "tabCount": tabs.len(),
-            "sessionTabs": session_tabs,
-            "archiveSizeBytes": tabs.len() * 131072,
-            "availabilityStatus": "reachable"
-        });
-        new_items.push(item);
     }
 
     (committed_ids, new_items)

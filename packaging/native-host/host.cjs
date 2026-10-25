@@ -189,46 +189,83 @@ function handleMessage(message) {
             availabilityStatus: 'reachable'
           });
         } else if (tabs.length > 1) {
-          const firstTab = tabs[0];
-          const firstDomain = extractDomain(firstTab.url);
-          const firstTitle = firstTab.title || firstDomain || 'Saved Window';
-          const browserFamily = firstTab.browserFamily || (process.platform === 'win32' ? 'Edge' : 'Chrome');
-          const sessionTitle = `${firstTitle} and ${tabs.length - 1} more tabs`;
+          const saveAsIndividual = message.payload?.saveAsIndividual || message.saveAsIndividual || false;
 
-          const sessionTabs = tabs.map((t, idx) => {
-            const dom = extractDomain(t.url);
-            return {
-              id: `sub_${Date.now()}_${idx}`,
-              title: t.title || dom || 'Untitled',
-              url: t.url,
-              domain: dom,
-              faviconUrl: t.favIconUrl || (dom ? `https://${dom}/favicon.ico` : null),
-              pinned: !!t.pinned
-            };
-          });
+          if (saveAsIndividual) {
+            for (let idx = 0; idx < tabs.length; idx++) {
+              const t = tabs[idx];
+              const domain = extractDomain(t.url);
+              const title = t.title || domain || 'Saved Tab';
+              const browserFamily = t.browserFamily || (process.platform === 'win32' ? 'Edge' : 'Chrome');
 
-          newItems.push({
-            id: 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
-            vaultId: 'default',
-            itemType: 'session',
-            title: sessionTitle,
-            url: firstTab.url,
-            normalizedUrl: firstTab.url,
-            domain: firstDomain,
-            faviconUrl: firstTab.favIconUrl || (firstDomain ? `https://${firstDomain}/favicon.ico` : null),
-            thumbnailUrl: firstTab.thumbnail || null,
-            browserFamily: browserFamily,
-            profileLabel: 'Default',
-            savedAt: now,
-            notes: `Saved window session with ${tabs.length} tabs from ${browserFamily}.`,
-            isFavorite: false,
-            collectionIds: [firstTab.collectionId || 'inbox'],
-            tags: ['Extension', 'Saved Window', browserFamily],
-            tabCount: tabs.length,
-            sessionTabs: sessionTabs,
-            archiveSizeBytes: tabs.length * 131072,
-            availabilityStatus: 'reachable'
-          });
+              newItems.push({
+                id: 'tab_' + Date.now() + '_' + idx + '_' + Math.random().toString(36).substring(2, 7),
+                vaultId: 'default',
+                itemType: 'tab',
+                title: title,
+                url: t.url,
+                normalizedUrl: t.url,
+                domain: domain,
+                faviconUrl: t.favIconUrl || (domain ? `https://${domain}/favicon.ico` : null),
+                thumbnailUrl: t.thumbnail || null,
+                browserFamily: browserFamily,
+                profileLabel: 'Default',
+                savedAt: now,
+                notes: '',
+                isFavorite: false,
+                collectionIds: [t.collectionId || 'inbox'],
+                tags: ['Extension', browserFamily, 'Saved Window'],
+                windowSessionId: 'session_' + batchId,
+                sessionTitle: `${tabs[0]?.title || 'Saved Window'} and ${tabs.length - 1} more tabs`,
+                tabCount: 1,
+                archiveSizeBytes: 131072,
+                availabilityStatus: 'reachable'
+              });
+            }
+          } else {
+            const firstTab = tabs[0];
+            const firstDomain = extractDomain(firstTab.url);
+            const firstTitle = firstTab.title || firstDomain || 'Saved Window';
+            const browserFamily = firstTab.browserFamily || (process.platform === 'win32' ? 'Edge' : 'Chrome');
+            const sessionTitle = `${firstTitle} and ${tabs.length - 1} more tabs`;
+
+            const sessionTabs = tabs.map((t, idx) => {
+              const dom = extractDomain(t.url);
+              return {
+                id: `sub_${Date.now()}_${idx}`,
+                title: t.title || dom || 'Untitled',
+                url: t.url,
+                domain: dom,
+                faviconUrl: t.favIconUrl || (dom ? `https://${dom}/favicon.ico` : null),
+                pinned: !!t.pinned
+              };
+            });
+
+            newItems.push({
+              id: 'session_' + Date.now() + '_' + Math.random().toString(36).substring(2, 8),
+              vaultId: 'default',
+              itemType: 'session',
+              title: sessionTitle,
+              url: firstTab.url,
+              normalizedUrl: firstTab.url,
+              domain: firstDomain,
+              faviconUrl: firstTab.favIconUrl || (firstDomain ? `https://${firstDomain}/favicon.ico` : null),
+              thumbnailUrl: firstTab.thumbnail || null,
+              browserFamily: browserFamily,
+              profileLabel: 'Default',
+              savedAt: now,
+              notes: `Saved window session with ${tabs.length} tabs from ${browserFamily}.`,
+              isFavorite: false,
+              collectionIds: [firstTab.collectionId || 'inbox'],
+              tags: ['Extension', 'Saved Window', browserFamily],
+              tabCount: tabs.length,
+              sessionTabs: sessionTabs,
+              windowSessionId: 'session_' + batchId,
+              sessionTitle: sessionTitle,
+              archiveSizeBytes: tabs.length * 131072,
+              availabilityStatus: 'reachable'
+            });
+          }
         }
 
         // 3. Atomically update items.json in standardized vault
