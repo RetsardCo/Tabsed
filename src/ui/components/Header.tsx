@@ -38,6 +38,7 @@ interface HeaderProps {
   onSelectTagFilter?: (tag: string) => void;
   currentTheme?: 'light' | 'dark' | 'system';
   onToggleTheme?: () => void;
+  syncStatus?: 'ready' | 'synced' | 'syncing';
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -60,7 +61,8 @@ export const Header: React.FC<HeaderProps> = ({
   activeTagFilter = 'All',
   onSelectTagFilter,
   currentTheme = 'light',
-  onToggleTheme
+  onToggleTheme,
+  syncStatus = 'ready'
 }) => {
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -120,8 +122,18 @@ export const Header: React.FC<HeaderProps> = ({
           }}>
             {title}
           </h1>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
-            {itemCount} {itemCount === 1 ? 'item' : 'items'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
+            <span>{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: syncStatus === 'synced' ? '#10b981' : 'var(--text-muted)' }}>
+              <span style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: syncStatus === 'synced' ? '#10b981' : '#3b82f6',
+                display: 'inline-block'
+              }} />
+              {syncStatus === 'synced' ? 'Synced with extension' : 'Live Vault'}
+            </span>
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Trash2 } from 'lucide-react';
+import { Trash2, CheckCircle2 } from 'lucide-react';
 import { Header } from './ui/components/Header';
+import { VaultSyncService } from './core/vault/vault-sync';
 import { Sidebar } from './ui/components/Sidebar';
 import { TabGrid } from './ui/components/TabGrid';
 import { TabCompactList } from './ui/components/TabCompactList';
@@ -401,10 +402,57 @@ export const App: React.FC = () => {
     onConfirm: () => void;
   } | null>(null);
 
-  // Sync to local storage
+  const [syncToast, setSyncToast] = useState<{ message: string; timestamp: number } | null>(null);
+  const [syncStatus, setSyncStatus] = useState<'ready' | 'synced' | 'syncing'>('ready');
+
+  // Load from disk vault on mount
+  useEffect(() => {
+    let isMounted = true;
+    VaultSyncService.loadInitialVaultItems().then(diskItems => {
+      if (!isMounted) return;
+      if (diskItems && diskItems.length > 0) {
+        setItems(diskItems);
+      } else {
+        VaultSyncService.persistVaultItems(items);
+      }
+    });
+    return () => { isMounted = false; };
+  }, []);
+
+  // Sync to local storage & disk vault
   useEffect(() => {
     localStorage.setItem('tabsed_items', JSON.stringify(items));
+    VaultSyncService.persistVaultItems(items);
   }, [items]);
+
+  // Live real-time synchronization listener for incoming extension saves
+  useEffect(() => {
+    const unsubscribe = VaultSyncService.startLiveSync((updatedItems) => {
+      setItems(prevItems => {
+        const prevIds = new Set(prevItems.map(i => i.id));
+        const newIncoming = updatedItems.filter(i => !prevIds.has(i.id));
+
+        if (newIncoming.length > 0) {
+          setSyncStatus('synced');
+          const first = newIncoming[0];
+          const msg = newIncoming.length === 1
+            ? `📥 Synced "${first.title || 'Tab'}" from ${first.browserFamily || 'Browser'}`
+            : `📥 Synced ${newIncoming.length} tabs from ${first.browserFamily || 'Browser'}`;
+
+          setSyncToast({ message: msg, timestamp: Date.now() });
+          setTimeout(() => {
+            setSyncToast(null);
+            setSyncStatus('ready');
+          }, 4500);
+
+          return updatedItems;
+        }
+        return prevItems;
+      });
+    }, 1200);
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     localStorage.setItem('tabsed_collections', JSON.stringify(collections));
@@ -856,6 +904,7 @@ export const App: React.FC = () => {
             const nextTheme = preferences.theme === 'dark' ? 'light' : 'dark';
             setPreferences(prev => ({ ...prev, theme: nextTheme }));
           }}
+          syncStatus={syncStatus}
         />
 
         {currentDestination === 'trash' && (
@@ -962,6 +1011,34 @@ export const App: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Real-time Vault Sync Toast Notification */}
+      {syncToast && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: '24px',
+            right: '24px',
+            backgroundColor: '#059669',
+            color: '#ffffff',
+            padding: '12px 20px',
+            borderRadius: '10px',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            fontSize: '14px',
+            fontWeight: 600,
+            zIndex: 99999,
+            pointerEvents: 'none'
+          }}
+        >
+          <CheckCircle2 size={18} />
+          <span>{syncToast.message}</span>
+        </div>
+      )}
 
       {/* Modals & Dialogs */}
       <SaveTabsModal

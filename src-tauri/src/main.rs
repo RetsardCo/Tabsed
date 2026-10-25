@@ -6,6 +6,12 @@ mod commands;
 use tauri::Manager;
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if args.iter().any(|arg| arg == "--native-host") {
+        commands::run_native_host();
+        return;
+    }
+
     tauri::Builder::default()
         .plugin(tauri_plugin_window_state::Builder::default().build())
         .setup(|app| {
@@ -21,6 +27,8 @@ fn main() {
             commands::get_system_info,
             commands::save_tabs_transaction,
             commands::list_vault_items,
+            commands::save_vault_items,
+            commands::check_vault_updates,
             commands::query_vault_storage,
             commands::restore_tab_session,
             commands::check_url_availability,

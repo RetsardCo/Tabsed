@@ -19,6 +19,29 @@ if (-not (Test-Path $HostBatPath)) {
     Write-Warning "host.bat not found at $HostBatPath!"
 }
 
+# Ensure host manifest points to host.bat absolute path
+if (Test-Path $ChromiumManifestPath) {
+    try {
+        $chromiumJson = Get-Content -Raw -Path $ChromiumManifestPath | ConvertFrom-Json
+        $chromiumJson.path = $HostBatPath
+        $chromiumJson | ConvertTo-Json -Depth 5 | Set-Content -Path $ChromiumManifestPath -Encoding UTF8
+        Write-Host "[OK] Configured Chromium host path: $HostBatPath" -ForegroundColor Green
+    } catch {
+        Write-Warning "Could not update Chromium manifest path: $_"
+    }
+}
+
+if (Test-Path $FirefoxManifestPath) {
+    try {
+        $firefoxJson = Get-Content -Raw -Path $FirefoxManifestPath | ConvertFrom-Json
+        $firefoxJson.path = $HostBatPath
+        $firefoxJson | ConvertTo-Json -Depth 5 | Set-Content -Path $FirefoxManifestPath -Encoding UTF8
+        Write-Host "[OK] Configured Firefox host path: $HostBatPath" -ForegroundColor Green
+    } catch {
+        Write-Warning "Could not update Firefox manifest path: $_"
+    }
+}
+
 # Optional custom extension ID registration
 if ($CustomExtensionId -and (Test-Path $ChromiumManifestPath)) {
     $cleanId = $CustomExtensionId.Trim().ToLower()
