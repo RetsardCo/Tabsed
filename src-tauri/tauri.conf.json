@@ -34,6 +34,8 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "shortDescription": "Your tabs, thoughtfully put away.",
+    "copyright": "Copyright © 2026 Tabsed Contributors",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

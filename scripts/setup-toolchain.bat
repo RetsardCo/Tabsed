@@ -6,7 +6,7 @@ echo           Tabsed - Environment & Desktop Toolchain Diagnostics
 echo ======================================================================
 echo.
 
-echo [1/4] Checking Node.js and npm...
+echo [1/5] Checking Node.js and npm...
 where node >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     for /f "tokens=*" %%v in ('node --version') do echo   Node.js: %%v [INSTALLED]
@@ -22,12 +22,17 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 echo.
-echo [2/4] Checking Rust Toolchain (Required for native desktop .exe)...
+echo [2/5] Checking Rust Toolchain (Required for native desktop .exe)...
+set CARGO_BIN=%USERPROFILE%\.cargo\bin
+if exist "%CARGO_BIN%\rustc.exe" (
+    set "PATH=%CARGO_BIN%;%PATH%"
+)
+
 where rustc >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     for /f "tokens=*" %%v in ('rustc --version') do echo   rustc: %%v [INSTALLED]
 ) else (
-    echo   rustc: NOT FOUND.
+    echo   rustc: NOT FOUND. Install via: winget install Rustlang.Rustup
 )
 
 where cargo >nul 2>&1
@@ -38,7 +43,21 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 echo.
-echo [3/4] Checking Windows Package Manager (winget)...
+echo [3/5] Checking C++ Build Tools & Linker (link.exe)...
+set SCOPE_VC=C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15\VC\bin\link.exe
+if exist "%SCOPE_VC%" (
+    echo   MSVC Linker: %SCOPE_VC% [CONFIGURED]
+) else (
+    where link.exe >nul 2>&1
+    if !ERRORLEVEL! EQU 0 (
+        for /f "tokens=*" %%v in ('where link.exe') do echo   MSVC Linker: %%v [INSTALLED]
+    ) else (
+        echo   MSVC Linker: NOT FOUND. Install via: winget install Microsoft.VisualStudio.2022.BuildTools
+    )
+)
+
+echo.
+echo [4/5] Checking Windows Package Manager (winget)...
 where winget >nul 2>&1
 if %ERRORLEVEL% EQU 0 (
     for /f "tokens=*" %%v in ('winget --version') do echo   winget: %%v [AVAILABLE]
@@ -47,23 +66,20 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 echo.
-echo [4/4] Recommendations:
+echo [5/5] Recommendations:
 where cargo >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo   To compile native Windows .exe with Tauri and Mica transparency:
-    echo     1. Install Rust via winget:
-    echo          winget install Rustlang.Rustup
-    echo     2. Or download installer: https://rustup.rs
-    echo     3. Install Visual Studio 2022 C++ Build Tools:
-    echo          winget install Microsoft.VisualStudio.2022.BuildTools
-    echo.
-    echo   Note: Tabsed works right now in your browser without Rust:
-    echo     Double-click "launch-app.bat" or run "npm run dev"
+if %ERRORLEVEL% EQU 0 (
+    echo   All desktop toolchain components are verified!
+    echo   To compile native Windows .exe and .msi installers:
+    echo     scripts\build-windows.bat
+    echo   To launch development desktop shell:
+    echo     npm run tauri:dev
 ) else (
-    echo   All desktop toolchain components are installed!
-    echo   You can build the native desktop app with:
-    echo     npm run tauri dev
-    echo     npm run tauri build
+    echo   Install required toolchain packages via:
+    echo     winget install Rustlang.Rustup
+    echo     winget install Microsoft.VisualStudio.2022.BuildTools
+    echo   Or explore Tabsed directly in the browser via:
+    echo     launch-app.bat
 )
 
 echo.

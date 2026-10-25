@@ -745,6 +745,11 @@ referenced in CI must exist and perform a real check.
     deletion.
 -   [x] Changelog and known limitations published.
 -   [x] Production artifacts are identified and signed where supported.
+-   [x] Native Windows standalone binary compilation (`src-tauri/target/release/tabsed.exe`).
+-   [x] Native Windows NSIS setup bundle packaging (`Tabsed_1.0.0_x64-setup.exe`).
+-   [x] Native Windows WiX MSI installer packaging (`Tabsed_1.0.0_x64_en-US.msi`).
+-   [x] Desktop build automation scripts (`scripts/build-windows.bat`, `scripts/build-windows.ps1`).
+
 
 ## Definition of Done for Every Task
 

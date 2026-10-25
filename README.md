@@ -121,17 +121,29 @@ To enable communication between browser extensions and Tabsed:
 
 ---
 
-### Native Desktop Window (.exe via Tauri)
-To run Tabsed as a standalone native Windows desktop application with Mica transparency:
-1. Run `scripts/setup-toolchain.bat` to check if Rust and Visual Studio C++ Build Tools are installed.
+### Native Desktop Window & Binary Compilation (.exe / .msi)
+To run Tabsed as a standalone native Windows desktop application with Mica transparency, or to compile release distribution packages:
+1. Verify prerequisites with `scripts/setup-toolchain.bat` (checks Rust and MSVC C++ build tools).
 2. If needed, install via winget:
    ```cmd
    winget install Rustlang.Rustup
    winget install Microsoft.VisualStudio.2022.BuildTools
    ```
-3. Launch native desktop shell:
+3. **Compile Native Windows Installers (.exe & .msi)**:
+   Double-click `scripts\build-windows.bat` or run:
+   ```powershell
+   .\scripts\build-windows.ps1
+   # Or via npm
+   npm run tauri:build
+   ```
+   **Generated Release Artifacts:**
+   - Standalone Binary: `src-tauri/target/release/tabsed.exe`
+   - NSIS Installer (.exe): `src-tauri/target/release/bundle/nsis/Tabsed_1.0.0_x64-setup.exe`
+   - WiX Installer (.msi): `src-tauri/target/release/bundle/msi/Tabsed_1.0.0_x64_en-US.msi`
+
+4. **Launch Native Desktop Development Shell**:
    ```bash
-   npm run tauri dev
+   npm run tauri:dev
    ```
 
 ---

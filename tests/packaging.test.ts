@@ -147,4 +147,64 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       expect(ffManifest.browser_specific_settings.gecko.id).toBe('tabsed@tabsed.com');
     });
   });
+
+  describe('Native Windows Desktop Packaging & Installer Bundle Suite (PRD Section 15 & Epic 0.2)', () => {
+    const tauriDir = path.join(rootDir, 'src-tauri');
+
+    it('verifies tauri.conf.json configuration and bundle properties', () => {
+      const confPath = path.join(tauriDir, 'tauri.conf.json');
+      expect(fs.existsSync(confPath)).toBe(true);
+
+      const conf = JSON.parse(fs.readFileSync(confPath, 'utf8'));
+      expect(conf.productName).toBe('Tabsed');
+      expect(conf.version).toBe('1.0.0');
+      expect(conf.identifier).toBe('com.tabsed.app');
+      expect(conf.bundle.active).toBe(true);
+      expect(conf.bundle.targets).toBe('all');
+      expect(conf.bundle.shortDescription).toBeDefined();
+      expect(conf.bundle.copyright).toBeDefined();
+    });
+
+    it('verifies build.rs and all bundle icon files exist in src-tauri', () => {
+      const buildRsPath = path.join(tauriDir, 'build.rs');
+      expect(fs.existsSync(buildRsPath)).toBe(true);
+
+      const conf = JSON.parse(fs.readFileSync(path.join(tauriDir, 'tauri.conf.json'), 'utf8'));
+      for (const iconRelPath of conf.bundle.icon) {
+        const fullIconPath = path.join(tauriDir, iconRelPath);
+        expect(fs.existsSync(fullIconPath), `Missing icon: ${iconRelPath}`).toBe(true);
+      }
+    });
+
+    it('verifies automated Windows compilation scripts exist and are executable', () => {
+      expect(fs.existsSync(path.join(scriptsDir, 'build-windows.ps1'))).toBe(true);
+      expect(fs.existsSync(path.join(scriptsDir, 'build-windows.bat'))).toBe(true);
+      expect(fs.existsSync(path.join(scriptsDir, 'setup-toolchain.ps1'))).toBe(true);
+      expect(fs.existsSync(path.join(scriptsDir, 'setup-toolchain.bat'))).toBe(true);
+    });
+
+    it('validates compiled native release artifacts if target/release exists', () => {
+      const releaseDir = path.join(tauriDir, 'target', 'release');
+      const exePath = path.join(releaseDir, 'tabsed.exe');
+      if (fs.existsSync(exePath)) {
+        const stats = fs.statSync(exePath);
+        expect(stats.size).toBeGreaterThan(1_000_000); // Binary should be multi-megabyte native PE executable
+
+        const nsisBundleDir = path.join(releaseDir, 'bundle', 'nsis');
+        if (fs.existsSync(nsisBundleDir)) {
+          const files = fs.readdirSync(nsisBundleDir).filter(f => f.endsWith('.exe'));
+          expect(files.length).toBeGreaterThan(0);
+          expect(files.some(f => f.includes('Tabsed') && f.includes('setup'))).toBe(true);
+        }
+
+        const msiBundleDir = path.join(releaseDir, 'bundle', 'msi');
+        if (fs.existsSync(msiBundleDir)) {
+          const files = fs.readdirSync(msiBundleDir).filter(f => f.endsWith('.msi'));
+          expect(files.length).toBeGreaterThan(0);
+          expect(files.some(f => f.includes('Tabsed') && f.endsWith('.msi'))).toBe(true);
+        }
+      }
+    });
+  });
 });
+
