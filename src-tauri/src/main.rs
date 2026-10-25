@@ -7,7 +7,13 @@ use tauri::Manager;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    if args.iter().any(|arg| arg == "--native-host") {
+    let is_native_host = args.iter().any(|arg| {
+        arg == "--native-host"
+            || arg.starts_with("chrome-extension://")
+            || arg == "tabsed@tabsed.com"
+            || arg.ends_with(".json")
+    });
+    if is_native_host {
         commands::run_native_host();
         return;
     }

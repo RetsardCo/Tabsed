@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Trash2, CheckCircle2 } from 'lucide-react';
 import { Header } from './ui/components/Header';
 import { VaultSyncService } from './core/vault/vault-sync';
@@ -404,14 +404,20 @@ export const App: React.FC = () => {
 
   const [syncToast, setSyncToast] = useState<{ message: string; timestamp: number } | null>(null);
   const [syncStatus, setSyncStatus] = useState<'ready' | 'synced' | 'syncing'>('ready');
+  const isInitialVaultLoaded = useRef(false);
 
   // Load from disk vault on mount
   useEffect(() => {
     let isMounted = true;
     VaultSyncService.loadInitialVaultItems().then(diskItems => {
       if (!isMounted) return;
+      isInitialVaultLoaded.current = true;
       if (diskItems && diskItems.length > 0) {
-        setItems(diskItems);
+        setItems(prevItems => {
+          const diskIds = new Set(diskItems.map(i => i.id));
+          const merged = [...diskItems, ...prevItems.filter(p => !diskIds.has(p.id))];
+          return merged;
+        });
       } else {
         VaultSyncService.persistVaultItems(items);
       }
@@ -419,10 +425,12 @@ export const App: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // Sync to local storage & disk vault
+  // Sync to local storage & disk vault (only after initial vault load has completed)
   useEffect(() => {
     localStorage.setItem('tabsed_items', JSON.stringify(items));
-    VaultSyncService.persistVaultItems(items);
+    if (isInitialVaultLoaded.current) {
+      VaultSyncService.persistVaultItems(items);
+    }
   }, [items]);
 
   // Live real-time synchronization listener for incoming extension saves
@@ -445,7 +453,12 @@ export const App: React.FC = () => {
             setSyncStatus('ready');
           }, 4500);
 
-          return updatedItems;
+          const diskMap = new Map(updatedItems.map(i => [i.id, i]));
+          const merged = [
+            ...newIncoming,
+            ...prevItems.map(p => diskMap.get(p.id) || p)
+          ];
+          return merged;
         }
         return prevItems;
       });

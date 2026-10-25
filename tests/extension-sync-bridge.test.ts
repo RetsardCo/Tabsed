@@ -291,4 +291,115 @@ describe('Extension to Desktop Vault Bridge & Real-Time Sync Suite', () => {
       expect(items.some((i: any) => i.url === 'https://news.ycombinator.com')).toBe(true);
     });
   });
+
+  describe('Compiled Native Binary Bridge (tabsed.exe)', () => {
+    function sendNativeMessageToBinary(args: string[], message: any): Promise<any> {
+      return new Promise((resolve, reject) => {
+        const exePath = path.resolve(__dirname, '..', 'src-tauri', 'target', 'release', 'tabsed.exe');
+        if (!fs.existsSync(exePath)) {
+          return resolve({ skipped: true });
+        }
+        const child = spawn(exePath, args, {
+          env: {
+            ...process.env,
+            APPDATA: tempAppData
+          },
+          stdio: ['pipe', 'pipe', 'pipe']
+        });
+
+        let stdoutBuffer = Buffer.alloc(0);
+        let stderrOutput = '';
+
+        child.stderr.on('data', chunk => {
+          stderrOutput += chunk.toString();
+        });
+
+        child.stdout.on('data', chunk => {
+          stdoutBuffer = Buffer.concat([stdoutBuffer, chunk]);
+
+          if (stdoutBuffer.length >= 4) {
+            const msgLen = stdoutBuffer.readUInt32LE(0);
+            if (stdoutBuffer.length >= 4 + msgLen) {
+              const rawMsg = stdoutBuffer.slice(4, 4 + msgLen).toString('utf8');
+              try {
+                const parsed = JSON.parse(rawMsg);
+                child.kill();
+                resolve(parsed);
+              } catch (err) {
+                child.kill();
+                reject(err);
+              }
+            }
+          }
+        });
+
+        child.on('error', err => reject(err));
+        child.on('close', code => {
+          if (stdoutBuffer.length < 4) {
+            reject(new Error(`Native binary closed with code ${code}. Stderr: ${stderrOutput}`));
+          }
+        });
+
+        const jsonStr = JSON.stringify(message);
+        const jsonBuf = Buffer.from(jsonStr, 'utf8');
+        const header = Buffer.alloc(4);
+        header.writeUInt32LE(jsonBuf.length, 0);
+
+        child.stdin.write(header);
+        child.stdin.write(jsonBuf);
+      });
+    }
+
+    it('responds to Chrome/Edge extension invocation arguments without hanging or GUI spinup', async () => {
+      const response = await sendNativeMessageToBinary(
+        ['chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/'],
+        { type: 'ping' }
+      );
+      if (response.skipped) return;
+      expect(response.type).toBe('pong');
+      expect(response.status).toBe('ready');
+      expect(response.host).toBe('Tabsed Native Messaging Host');
+    });
+
+    it('responds to Firefox native messaging invocation arguments', async () => {
+      const response = await sendNativeMessageToBinary(
+        ['C:\\dummy\\com.tabsed.app-firefox.json', 'tabsed@tabsed.com'],
+        { type: 'ping' }
+      );
+      if (response.skipped) return;
+      expect(response.type).toBe('pong');
+      expect(response.status).toBe('ready');
+    });
+
+    it('persists tabs and preserves numeric tabId when invoked directly via tabsed.exe', async () => {
+      const savePayload = {
+        type: 'saveTabs',
+        payload: {
+          tabs: [
+            {
+              tabId: 999,
+              url: 'https://vite.dev/guide',
+              title: 'Vite Guide',
+              browserFamily: 'Chrome',
+              collectionId: 'dev'
+            }
+          ]
+        }
+      };
+
+      const response = await sendNativeMessageToBinary(
+        ['chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/'],
+        savePayload
+      );
+      if (response.skipped) return;
+      expect(response.success).toBe(true);
+      expect(response.committedTabIds).toEqual([999]);
+
+      // Check on disk
+      const items = JSON.parse(fs.readFileSync(itemsFile, 'utf8'));
+      expect(items.length).toBeGreaterThanOrEqual(1);
+      expect(items[0].title).toBe('Vite Guide');
+      expect(items[0].url).toBe('https://vite.dev/guide');
+    });
+  });
 });

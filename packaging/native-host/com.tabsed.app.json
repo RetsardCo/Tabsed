@@ -1,11 +1,11 @@
 {
-  "name": "com.tabsed.app",
-  "description": "Tabsed Native Messaging Host for Chromium browsers (Microsoft Edge & Google Chrome)",
-  "path": "host.bat",
-  "type": "stdio",
-  "allowed_origins": [
-    "chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/",
-    "chrome-extension://kldpkehlfggflahcefgmhnohkndidmho/",
-    "chrome-extension://ibjflamlnbfeodfbfbbgofhkplkgnkbi/"
-  ]
+    "name":  "com.tabsed.app",
+    "description":  "Tabsed Native Messaging Host for Chromium browsers (Microsoft Edge \u0026 Google Chrome)",
+    "path":  "C:\\Users\\Kurados\\.gemini\\antigravity\\scratch\\Tabsed\\src-tauri\\target\\release\\tabsed.exe",
+    "type":  "stdio",
+    "allowed_origins":  [
+                            "chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/",
+                            "chrome-extension://kldpkehlfggflahcefgmhnohkndidmho/",
+                            "chrome-extension://ibjflamlnbfeodfbfbbgofhkplkgnkbi/"
+                        ]
 }

@@ -25,6 +25,14 @@ export class VaultSyncService {
   private static lastMtime = 0;
   private static isPersisting = false;
 
+  public static getLastMtime(): number {
+    return this.lastMtime;
+  }
+
+  public static setLastMtime(mtime: number): void {
+    this.lastMtime = mtime;
+  }
+
   /**
    * Load initial saved items from disk vault.
    * Priority: Tauri native invoke -> Web Dev server API -> null
@@ -34,6 +42,11 @@ export class VaultSyncService {
       try {
         const { invoke } = await import('@tauri-apps/api/core');
         const items = await invoke<SavedTabItem[]>('list_vault_items');
+        // Synchronize initial baseline mtime
+        const check = await invoke<{ mtime_ms: number }>('check_vault_updates', { lastKnownMtimeMs: 0 });
+        if (check && typeof check.mtime_ms === 'number') {
+          this.lastMtime = check.mtime_ms;
+        }
         if (Array.isArray(items) && items.length > 0) {
           return items;
         }
@@ -45,6 +58,14 @@ export class VaultSyncService {
         const res = await fetch('/api/vault/items');
         if (res.ok) {
           const items = await res.json();
+          // Synchronize initial baseline mtime in web mode
+          const pollRes = await fetch('/api/vault/poll?since=0');
+          if (pollRes.ok) {
+            const pollData = await pollRes.json();
+            if (pollData && typeof pollData.mtime === 'number') {
+              this.lastMtime = pollData.mtime;
+            }
+          }
           if (Array.isArray(items) && items.length > 0) {
             return items;
           }
@@ -66,8 +87,12 @@ export class VaultSyncService {
     try {
       if (isTauriEnvironment()) {
         const { invoke } = await import('@tauri-apps/api/core');
-        await invoke('save_vault_items', { items });
-        this.lastMtime = Date.now();
+        const writtenMtime = await invoke<number>('save_vault_items', { items });
+        if (typeof writtenMtime === 'number' && writtenMtime > 0) {
+          this.lastMtime = writtenMtime;
+        } else {
+          this.lastMtime = Date.now();
+        }
         return true;
       } else {
         const res = await fetch('/api/vault/items', {
@@ -76,7 +101,16 @@ export class VaultSyncService {
           body: JSON.stringify(items)
         });
         if (res.ok) {
-          this.lastMtime = Date.now();
+          try {
+            const data = await res.json();
+            if (data && typeof data.mtime === 'number') {
+              this.lastMtime = data.mtime;
+            } else {
+              this.lastMtime = Date.now();
+            }
+          } catch {
+            this.lastMtime = Date.now();
+          }
           return true;
         }
       }

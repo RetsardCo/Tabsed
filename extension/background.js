@@ -96,12 +96,15 @@ async function handleSaveTabs(request) {
   let closedCount = 0;
   if (closeAfterSave && commitResult && commitResult.success) {
     const committedIds = commitResult.committedTabIds || [];
-    for (const tabId of committedIds) {
-      try {
-        await chrome.tabs.remove(tabId);
-        closedCount++;
-      } catch (removeErr) {
-        console.error(`Failed to close committed tab ${tabId}:`, removeErr);
+    for (const rawId of committedIds) {
+      const tabId = typeof rawId === 'string' ? parseInt(rawId, 10) : rawId;
+      if (!Number.isNaN(tabId)) {
+        try {
+          await chrome.tabs.remove(tabId);
+          closedCount++;
+        } catch (removeErr) {
+          console.error(`Failed to close committed tab ${tabId}:`, removeErr);
+        }
       }
     }
   }

@@ -67,13 +67,6 @@ pub fn atomic_write_json(path: &Path, value: &serde_json::Value) -> Result<(), S
     let json_bytes = serde_json::to_vec_pretty(value).map_err(|e| e.to_string())?;
     std::fs::write(&temp_path, json_bytes).map_err(|e| e.to_string())?;
 
-    #[cfg(target_os = "windows")]
-    {
-        if path.exists() {
-            let _ = std::fs::remove_file(path);
-        }
-    }
-
     if let Err(e) = std::fs::rename(&temp_path, path) {
         if let Err(copy_err) = std::fs::copy(&temp_path, path) {
             let _ = std::fs::remove_file(&temp_path);
@@ -126,17 +119,17 @@ fn extract_domain(url: &str) -> String {
     "localhost".to_string()
 }
 
-pub fn format_incoming_tabs(tabs: &[serde_json::Value]) -> (Vec<String>, Vec<serde_json::Value>) {
+pub fn format_incoming_tabs(tabs: &[serde_json::Value]) -> (Vec<serde_json::Value>, Vec<serde_json::Value>) {
     let now_ms = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis();
     let now_str = format_now_iso();
 
-    let mut committed_ids: Vec<String> = Vec::new();
+    let mut committed_ids: Vec<serde_json::Value> = Vec::new();
     for t in tabs {
         if let Some(id) = t.get("tabId").or_else(|| t.get("id")) {
-            committed_ids.push(id.to_string());
+            committed_ids.push(id.clone());
         }
     }
 
@@ -309,11 +302,17 @@ pub fn save_tabs_transaction(tabs: Vec<serde_json::Value>) -> SaveResult {
     let success = res.get("success").and_then(|v| v.as_bool()).unwrap_or(false);
     let committed_ids: Vec<String> = res.get("committedTabIds")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .map(|arr| arr.iter().map(|x| match x {
+            serde_json::Value::String(s) => s.clone(),
+            _ => x.to_string(),
+        }).collect())
         .unwrap_or_default();
     let failed_ids: Vec<String> = res.get("failedTabIds")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|x| x.as_str().map(String::from)).collect())
+        .map(|arr| arr.iter().map(|x| match x {
+            serde_json::Value::String(s) => s.clone(),
+            _ => x.to_string(),
+        }).collect())
         .unwrap_or_default();
     let msg = res.get("message")
         .and_then(|v| v.as_str())
@@ -342,8 +341,9 @@ pub fn list_vault_items() -> Vec<serde_json::Value> {
 }
 
 #[tauri::command]
-pub fn save_vault_items(items: Vec<serde_json::Value>) -> Result<bool, String> {
+pub fn save_vault_items(items: Vec<serde_json::Value>) -> Result<u64, String> {
     let items_path = get_vault_items_file();
+    let sync_path = get_sync_event_file();
     let val = serde_json::Value::Array(items);
     atomic_write_json(&items_path, &val)?;
 
@@ -356,9 +356,27 @@ pub fn save_vault_items(items: Vec<serde_json::Value>) -> Result<bool, String> {
         "type": "vault_updated",
         "timestamp_ms": now_ms
     });
-    let _ = atomic_write_json(&get_sync_event_file(), &sync_event);
+    let _ = atomic_write_json(&sync_path, &sync_event);
 
-    Ok(true)
+    let mut highest = now_ms;
+    if let Ok(meta) = std::fs::metadata(&items_path) {
+        if let Ok(mtime) = meta.modified() {
+            let ms = mtime.duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
+            if ms > highest {
+                highest = ms;
+            }
+        }
+    }
+    if let Ok(meta) = std::fs::metadata(&sync_path) {
+        if let Ok(mtime) = meta.modified() {
+            let ms = mtime.duration_since(UNIX_EPOCH).unwrap_or_default().as_millis() as u64;
+            if ms > highest {
+                highest = ms;
+            }
+        }
+    }
+
+    Ok(highest)
 }
 
 #[tauri::command]

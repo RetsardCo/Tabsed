@@ -13,24 +13,61 @@ Write-Host "============================================================" -Foreg
 Write-Host " Tabsed Native Messaging Host Registration for Windows" -ForegroundColor Cyan
 Write-Host "============================================================" -ForegroundColor Cyan
 Write-Host "Host Directory: $ScriptDir"
-Write-Host "Host Executable: $HostBatPath"
 
-if (-not (Test-Path $HostBatPath)) {
-    Write-Warning "host.bat not found at $HostBatPath!"
+# Discover compiled or installed tabsed.exe binary
+$CandidateExePaths = @(
+    (Join-Path $ScriptDir "tabsed.exe"),
+    (Join-Path $ScriptDir "..\..\src-tauri\target\release\tabsed.exe"),
+    (Join-Path $env:LOCALAPPDATA "Programs\Tabsed\tabsed.exe"),
+    (Join-Path $env:ProgramFiles "Tabsed\tabsed.exe")
+)
+
+$DiscoveredExe = $null
+foreach ($cand in $CandidateExePaths) {
+    if (Test-Path $cand) {
+        $DiscoveredExe = (Resolve-Path $cand).Path
+        break
+    }
 }
 
-# Optional custom extension ID registration (writes UTF-8 without BOM)
-if ($CustomExtensionId -and (Test-Path $ChromiumManifestPath)) {
-    $cleanId = $CustomExtensionId.Trim().ToLower()
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+
+# Configure Chromium manifest
+if (Test-Path $ChromiumManifestPath) {
     $chromiumJson = Get-Content -Raw -Path $ChromiumManifestPath | ConvertFrom-Json
-    $origin = "chrome-extension://$cleanId/"
-    if ($chromiumJson.allowed_origins -notcontains $origin) {
-        $chromiumJson.allowed_origins += $origin
-        $jsonContent = $chromiumJson | ConvertTo-Json -Depth 5
-        $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
-        [System.IO.File]::WriteAllText($ChromiumManifestPath, $jsonContent, $utf8NoBom)
-        Write-Host "[OK] Added custom extension origin: $origin" -ForegroundColor Green
+    if ($DiscoveredExe) {
+        $chromiumJson.path = $DiscoveredExe
+        Write-Host "Pointed Chromium manifest to: $DiscoveredExe" -ForegroundColor Green
+    } else {
+        $chromiumJson.path = "host.bat"
+        Write-Host "Using host.bat wrapper: $HostBatPath" -ForegroundColor Yellow
     }
+
+    # Optional custom extension ID registration
+    if ($CustomExtensionId) {
+        $cleanId = $CustomExtensionId.Trim().ToLower()
+        $origin = "chrome-extension://$cleanId/"
+        if ($chromiumJson.allowed_origins -notcontains $origin) {
+            $chromiumJson.allowed_origins += $origin
+            Write-Host "[OK] Added custom extension origin: $origin" -ForegroundColor Green
+        }
+    }
+
+    $jsonContent = $chromiumJson | ConvertTo-Json -Depth 5
+    [System.IO.File]::WriteAllText($ChromiumManifestPath, $jsonContent, $utf8NoBom)
+}
+
+# Configure Firefox manifest
+if (Test-Path $FirefoxManifestPath) {
+    $firefoxJson = Get-Content -Raw -Path $FirefoxManifestPath | ConvertFrom-Json
+    if ($DiscoveredExe) {
+        $firefoxJson.path = $DiscoveredExe
+        Write-Host "Pointed Firefox manifest to: $DiscoveredExe" -ForegroundColor Green
+    } else {
+        $firefoxJson.path = "host.bat"
+    }
+    $jsonContent = $firefoxJson | ConvertTo-Json -Depth 5
+    [System.IO.File]::WriteAllText($FirefoxManifestPath, $jsonContent, $utf8NoBom)
 }
 
 # Registry locations (User-level registration, does not require Admin privileges)

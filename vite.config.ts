@@ -39,9 +39,12 @@ function vaultSyncMiddlewarePlugin() {
             try {
               if (!fs.existsSync(vaultDir)) fs.mkdirSync(vaultDir, { recursive: true });
               fs.writeFileSync(itemsFile, body, 'utf8');
-              fs.writeFileSync(syncFile, JSON.stringify({ type: 'vault_updated', timestamp: Date.now() }), 'utf8');
+              const now = Date.now();
+              fs.writeFileSync(syncFile, JSON.stringify({ type: 'vault_updated', timestamp: now }), 'utf8');
+              let mtime = now;
+              try { mtime = Math.max(mtime, fs.statSync(itemsFile).mtimeMs, fs.statSync(syncFile).mtimeMs); } catch {}
               res.setHeader('Content-Type', 'application/json');
-              res.end(JSON.stringify({ success: true }));
+              res.end(JSON.stringify({ success: true, mtime }));
             } catch (err: any) {
               res.statusCode = 500;
               res.end(JSON.stringify({ error: err.message }));

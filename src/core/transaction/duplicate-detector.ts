@@ -96,10 +96,12 @@ export class UrlNormalizer {
 
     for (const item of items) {
       const norm = (item as any).normalizedUrl || this.normalize(item.url, options);
-      if (!map.has(norm)) {
-        map.set(norm, []);
+      let group = map.get(norm);
+      if (!group) {
+        group = [];
+        map.set(norm, group);
       }
-      map.get(norm)!.push(item);
+      group.push(item);
     }
 
     const groups: DuplicateGroup<T>[] = [];
