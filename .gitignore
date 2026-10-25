@@ -1,6 +1,9 @@
 # Node
 node_modules/
-dist/
+dist/*
+!dist/extensions/
+dist/extensions/*
+!dist/extensions/*.zip
 dist-ssr/
 *.local
 npm-debug.log*

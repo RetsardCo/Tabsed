@@ -116,6 +116,26 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       expect(psContent).toContain('HKCU:\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.tabsed.app');
       expect(psContent).toContain('HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.tabsed.app');
     });
+
+    it('allows registering Microsoft Edge Add-ons store ID via install_host.ps1', () => {
+      const psInstaller = path.join(packagingDir, 'install_host.ps1');
+      const manifestPath = path.join(packagingDir, 'com.tabsed.app.json');
+      const originalContent = fs.readFileSync(manifestPath, 'utf8');
+
+      try {
+        const testStoreId = 'pabcdefghijklmnopqrstuvwxyzabcdef';
+        execSync(`powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${psInstaller}" -EdgeStoreId "${testStoreId}"`, {
+          cwd: packagingDir,
+          stdio: 'pipe',
+        });
+
+        const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+        expect(manifest.allowed_origins).toContain(`chrome-extension://${testStoreId}/`);
+        expect(manifest.allowed_origins).toContain('chrome-extension://jmghbppchdmgjiaikmngccdddfmbghgj/');
+      } finally {
+        fs.writeFileSync(manifestPath, originalContent, 'utf8');
+      }
+    });
   });
 
   describe('Packaging Script Execution & Release Outputs', () => {
@@ -130,14 +150,16 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       const unpackedChromium = path.join(distExt, 'unpacked-chromium');
       const unpackedFirefox = path.join(distExt, 'unpacked-firefox');
       const chromiumZip = path.join(distExt, 'tabsed-chromium-v1.0.0.zip');
+      const edgeZip = path.join(distExt, 'tabsed-edge-v1.0.0.zip');
       const firefoxZip = path.join(distExt, 'tabsed-firefox-v1.0.0.zip');
 
       expect(fs.existsSync(unpackedChromium)).toBe(true);
       expect(fs.existsSync(unpackedFirefox)).toBe(true);
       expect(fs.existsSync(chromiumZip)).toBe(true);
+      expect(fs.existsSync(edgeZip)).toBe(true);
       expect(fs.existsSync(firefoxZip)).toBe(true);
 
-      // Verify manifest in unpacked chromium
+      // Verify manifest in unpacked chromium has key for deterministic local development
       const chromManifest = JSON.parse(fs.readFileSync(path.join(unpackedChromium, 'manifest.json'), 'utf8'));
       expect(chromManifest.manifest_version).toBe(3);
       expect(chromManifest.key).toBeDefined();
@@ -145,6 +167,26 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       // Verify manifest in unpacked firefox
       const ffManifest = JSON.parse(fs.readFileSync(path.join(unpackedFirefox, 'manifest.json'), 'utf8'));
       expect(ffManifest.browser_specific_settings.gecko.id).toBe('tabsed@tabsed.com');
+
+      // Verify manifest inside Chromium store release zip does NOT contain "key" (Microsoft Partner Center & Chrome Web Store compliance)
+      const verifyChromDir = path.join(distExt, 'temp-verify-chrom');
+      if (fs.existsSync(verifyChromDir)) fs.rmSync(verifyChromDir, { recursive: true, force: true });
+      execSync(`powershell.exe -NoProfile -Command "Expand-Archive -Path '${chromiumZip}' -DestinationPath '${verifyChromDir}' -Force"`);
+      const storeChromManifest = JSON.parse(fs.readFileSync(path.join(verifyChromDir, 'manifest.json'), 'utf8'));
+      expect(storeChromManifest.manifest_version).toBe(3);
+      expect(storeChromManifest.name).toContain('Tabsed');
+      expect(storeChromManifest.key).toBeUndefined();
+      fs.rmSync(verifyChromDir, { recursive: true, force: true });
+
+      // Verify manifest inside Edge store release zip does NOT contain "key"
+      const verifyEdgeDir = path.join(distExt, 'temp-verify-edge');
+      if (fs.existsSync(verifyEdgeDir)) fs.rmSync(verifyEdgeDir, { recursive: true, force: true });
+      execSync(`powershell.exe -NoProfile -Command "Expand-Archive -Path '${edgeZip}' -DestinationPath '${verifyEdgeDir}' -Force"`);
+      const storeEdgeManifest = JSON.parse(fs.readFileSync(path.join(verifyEdgeDir, 'manifest.json'), 'utf8'));
+      expect(storeEdgeManifest.manifest_version).toBe(3);
+      expect(storeEdgeManifest.name).toContain('Tabsed');
+      expect(storeEdgeManifest.key).toBeUndefined();
+      fs.rmSync(verifyEdgeDir, { recursive: true, force: true });
     });
   });
 

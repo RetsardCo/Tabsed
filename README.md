@@ -101,7 +101,8 @@ npm run package:extensions
 Generated artifacts:
 - `dist/extensions/unpacked-chromium/` (Manifest V3 for Microsoft Edge, Google Chrome, Brave)
 - `dist/extensions/unpacked-firefox/` (Manifest V3 for Mozilla Firefox with Gecko ID)
-- `dist/extensions/tabsed-chromium-v1.0.0.zip`
+- `dist/extensions/tabsed-chromium-v1.0.0.zip` (Chrome Web Store release package, `"key"` stripped)
+- `dist/extensions/tabsed-edge-v1.0.0.zip` (Microsoft Edge Add-ons release package, `"key"` stripped)
 - `dist/extensions/tabsed-firefox-v1.0.0.zip`
 
 #### 2. Installing the Windows Native Messaging Host

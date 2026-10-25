@@ -54,24 +54,52 @@ if (fs.existsSync(ffManifestSource)) {
   fs.unlinkSync(path.join(UNPACKED_FIREFOX, 'manifest.firefox.json'));
 }
 
+// 3. Stage Store Release (Strip 'key' property required by Microsoft Partner Center & Chrome Web Store)
+console.log('Staging Store Release package (stripping development key)...');
+const STAGING_STORE = path.join(DIST_EXT, 'staging-store-chromium');
+if (fs.existsSync(STAGING_STORE)) {
+  fs.rmSync(STAGING_STORE, { recursive: true, force: true });
+}
+fs.mkdirSync(STAGING_STORE, { recursive: true });
+copyRecursive(UNPACKED_CHROMIUM, STAGING_STORE);
+
+const storeManifestPath = path.join(STAGING_STORE, 'manifest.json');
+if (fs.existsSync(storeManifestPath)) {
+  const storeManifest = JSON.parse(fs.readFileSync(storeManifestPath, 'utf8'));
+  // Microsoft Partner Center & Chrome Web Store reject any package containing a 'key' field
+  delete storeManifest.key;
+  fs.writeFileSync(storeManifestPath, JSON.stringify(storeManifest, null, 2) + '\n', 'utf8');
+}
+
 // Create ZIP archives
 const chromiumZip = path.join(DIST_EXT, 'tabsed-chromium-v1.0.0.zip');
+const edgeZip = path.join(DIST_EXT, 'tabsed-edge-v1.0.0.zip');
 const firefoxZip = path.join(DIST_EXT, 'tabsed-firefox-v1.0.0.zip');
 
 try {
-  console.log('Compressing Chromium release zip...');
-  execSync(`powershell.exe -NoProfile -Command "Compress-Archive -Path '${UNPACKED_CHROMIUM}\\*' -DestinationPath '${chromiumZip}' -Force"`);
+  console.log('Compressing Chromium store release zip...');
+  execSync(`powershell.exe -NoProfile -Command "Compress-Archive -Path '${STAGING_STORE}\\*' -DestinationPath '${chromiumZip}' -Force"`);
   console.log('✓ Created:', chromiumZip);
+
+  console.log('Compressing Microsoft Edge store release zip...');
+  execSync(`powershell.exe -NoProfile -Command "Compress-Archive -Path '${STAGING_STORE}\\*' -DestinationPath '${edgeZip}' -Force"`);
+  console.log('✓ Created:', edgeZip);
 
   console.log('Compressing Firefox release zip...');
   execSync(`powershell.exe -NoProfile -Command "Compress-Archive -Path '${UNPACKED_FIREFOX}\\*' -DestinationPath '${firefoxZip}' -Force"`);
   console.log('✓ Created:', firefoxZip);
 } catch (e) {
   console.warn('Zip creation via PowerShell had a non-fatal note:', e.message);
+} finally {
+  // Clean up temporary store staging directory
+  if (fs.existsSync(STAGING_STORE)) {
+    fs.rmSync(STAGING_STORE, { recursive: true, force: true });
+  }
 }
 
 console.log('\nExtension packaging completed successfully:');
-console.log('- Unpacked Chromium:', UNPACKED_CHROMIUM);
-console.log('- Unpacked Firefox:', UNPACKED_FIREFOX);
-if (fs.existsSync(chromiumZip)) console.log('- Archive Chromium:', chromiumZip, `(${fs.statSync(chromiumZip).size} bytes)`);
+console.log('- Unpacked Chromium (local dev):', UNPACKED_CHROMIUM);
+console.log('- Unpacked Firefox (local dev):', UNPACKED_FIREFOX);
+if (fs.existsSync(chromiumZip)) console.log('- Archive Chromium (Store):', chromiumZip, `(${fs.statSync(chromiumZip).size} bytes)`);
+if (fs.existsSync(edgeZip)) console.log('- Archive Microsoft Edge (Store):', edgeZip, `(${fs.statSync(edgeZip).size} bytes)`);
 if (fs.existsSync(firefoxZip)) console.log('- Archive Firefox:', firefoxZip, `(${fs.statSync(firefoxZip).size} bytes)`);

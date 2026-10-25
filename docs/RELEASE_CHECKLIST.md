@@ -27,7 +27,7 @@ All 22 test suites (170+ tests) must pass with zero errors.
 ## 2. Artifact Verification
 
 - [x] **Web Bundle:** `dist/index.html` and bundled assets generated cleanly.
-- [x] **Chromium Extension Package:** `dist/extensions/tabsed-chromium-v1.0.0.zip` contains valid `manifest.json`, `background.js`, `popup.html`, `popup.js`, `styles.css`, and icon sizes (16, 48, 128).
+- [x] **Chromium & Edge Extension Packages:** `dist/extensions/tabsed-chromium-v1.0.0.zip` and `dist/extensions/tabsed-edge-v1.0.0.zip` contain valid `manifest.json` (with `"key"` stripped for Edge Partner Center & Chrome Web Store compliance), `background.js`, `popup.html`, `popup.js`, `styles.css`, and icon sizes (16, 32, 48, 128).
 - [x] **Firefox Extension Package:** `dist/extensions/tabsed-firefox-v1.0.0.zip` contains valid gecko ID `tabsed@tabsed.com` and background scripts.
 - [x] **Native Messaging Registration:**
   - `packaging/native-host/install_host.bat` registers in `HKCU\Software\Google\Chrome\NativeMessagingHosts\com.tabsed.app` and `HKCU\Software\Microsoft\Edge\NativeMessagingHosts\com.tabsed.app`.

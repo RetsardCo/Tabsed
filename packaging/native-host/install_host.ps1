@@ -1,5 +1,16 @@
 param(
-    [string]$CustomExtensionId
+    [Parameter(Position = 0)]
+    [Alias("ExtensionId", "Id")]
+    [string]$CustomExtensionId,
+
+    [Alias("EdgeExtensionId", "StoreExtensionId", "StoreId")]
+    [string]$EdgeStoreId,
+
+    [Alias("ChromeExtensionId")]
+    [string]$ChromeStoreId,
+
+    [Parameter(ValueFromRemainingArguments = $true)]
+    [string[]]$AdditionalExtensionIds
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +43,16 @@ foreach ($cand in $CandidateExePaths) {
 
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
+function Normalize-ExtensionId {
+    param([string]$RawId)
+    if ([string]::IsNullOrWhiteSpace($RawId)) { return $null }
+    $id = $RawId.Trim().ToLower()
+    $id = $id -replace '^chrome-extension://', ''
+    $id = $id.Trim('/')
+    $id = $id -replace '[^a-z0-9]', ''
+    return $id
+}
+
 # Configure Chromium manifest
 if (Test-Path $ChromiumManifestPath) {
     $chromiumJson = Get-Content -Raw -Path $ChromiumManifestPath | ConvertFrom-Json
@@ -43,18 +64,33 @@ if (Test-Path $ChromiumManifestPath) {
         Write-Host "Using host.bat wrapper: $HostBatPath" -ForegroundColor Yellow
     }
 
-    # Optional custom extension ID registration
-    if ($CustomExtensionId) {
-        $cleanId = $CustomExtensionId.Trim().ToLower()
-        $origin = "chrome-extension://$cleanId/"
-        if ($chromiumJson.allowed_origins -notcontains $origin) {
-            $chromiumJson.allowed_origins += $origin
-            Write-Host "[OK] Added custom extension origin: $origin" -ForegroundColor Green
+    # Gather any requested extension IDs to register (custom, Edge Store, Chrome Store, additional)
+    $idsToRegister = @()
+    if ($CustomExtensionId) { $idsToRegister += $CustomExtensionId }
+    if ($EdgeStoreId) { $idsToRegister += $EdgeStoreId }
+    if ($ChromeStoreId) { $idsToRegister += $ChromeStoreId }
+    if ($AdditionalExtensionIds) { $idsToRegister += $AdditionalExtensionIds }
+
+    foreach ($rawId in $idsToRegister) {
+        $cleanId = Normalize-ExtensionId $rawId
+        if ($cleanId) {
+            $origin = "chrome-extension://$cleanId/"
+            if ($chromiumJson.allowed_origins -notcontains $origin) {
+                $chromiumJson.allowed_origins += $origin
+                Write-Host "[OK] Added extension origin: $origin" -ForegroundColor Green
+            } else {
+                Write-Host "[INFO] Extension origin already registered: $origin" -ForegroundColor Gray
+            }
         }
     }
 
     $jsonContent = $chromiumJson | ConvertTo-Json -Depth 5
     [System.IO.File]::WriteAllText($ChromiumManifestPath, $jsonContent, $utf8NoBom)
+
+    Write-Host "`nRegistered Chromium Allowed Origins (Edge & Chrome):" -ForegroundColor Cyan
+    foreach ($orig in $chromiumJson.allowed_origins) {
+        Write-Host "  - $orig" -ForegroundColor Gray
+    }
 }
 
 # Configure Firefox manifest
@@ -104,3 +140,7 @@ foreach ($target in $RegistryTargets) {
 Write-Host ""
 Write-Host "Registration completed successfully!" -ForegroundColor Cyan
 Write-Host "Restart your browser(s) and open the Tabsed extension." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Tip: When your extension is published to Microsoft Edge Add-ons, register the store ID by running:" -ForegroundColor Yellow
+Write-Host "     powershell -File .\install_host.ps1 -EdgeStoreId <PUBLISHED_STORE_ID>" -ForegroundColor Yellow
+Write-Host "     or: .\install_host.bat <PUBLISHED_STORE_ID>" -ForegroundColor Yellow

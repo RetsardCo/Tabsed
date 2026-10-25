@@ -69,12 +69,17 @@ An end-to-end security audit was conducted covering the extension and IPC bridge
    ```bash
    npm run package:extensions
    ```
-   This generates the verified production zip at:
-   `dist/extensions/tabsed-chromium-v1.0.0.zip` (and unpacked directory at `dist/extensions/unpacked-chromium`).
+   This generates the store-compliant production zips at:
+   - `dist/extensions/tabsed-edge-v1.0.0.zip` (Microsoft Edge Add-ons release package)
+   - `dist/extensions/tabsed-chromium-v1.0.0.zip` (Chrome Web Store release package)
+   - `dist/extensions/unpacked-chromium` (local unpacked development directory with deterministic key)
+
+   > **Note on Store Validation (`"key"` field):**  
+   > Microsoft Edge Partner Center rejects any package whose `manifest.json` contains a `"key"` field (error: *"The manifest shouldn't contain the key field"*), because Microsoft signs published extensions with store keys. The packaging script automatically strips the `"key"` property from the store `.zip` releases while preserving it in `unpacked-chromium` for local development.
 
 2. **Log into the Microsoft Edge Partner Center:**
    - Navigate to [Microsoft Edge Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview).
-   - Click **Create new extension** and upload `dist/extensions/tabsed-chromium-v1.0.0.zip`.
+   - Click **Create new extension** and upload `dist/extensions/tabsed-edge-v1.0.0.zip` (or `dist/extensions/tabsed-chromium-v1.0.0.zip`).
 
 3. **Complete the Store Listing:**
    - **Name:** Tabsed - Tab Saver & Restorer
@@ -85,3 +90,14 @@ An end-to-end security audit was conducted covering the extension and IPC bridge
 
 4. **Submit for Certification:**
    - The review typically takes 24–48 hours for extensions with clean Manifest V3 declarations and no external telemetry.
+
+5. **Post-Publication Native Host Registration:**
+   - Once your extension is published and assigned an Edge Add-ons Store ID, register it with the desktop native messaging host by running:
+     ```powershell
+     powershell -ExecutionPolicy Bypass -File packaging\native-host\install_host.ps1 -EdgeStoreId <YOUR_EDGE_STORE_ID>
+     ```
+     or via command prompt:
+     ```cmd
+     packaging\native-host\install_host.bat <YOUR_EDGE_STORE_ID>
+     ```
+
