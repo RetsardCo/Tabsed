@@ -1,4 +1,4 @@
-// Tabsed Extension Popup Controller - Professional UI/UX Redesign
+// Tabsed Extension Popup Controller - Elite UI/UX Architecture
 
 let allWindowTabs = [];
 let activeTab = null;
@@ -6,58 +6,72 @@ let selectedTabIds = new Set();
 let currentMode = 'active'; // 'active' | 'select' | 'all'
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // Elements
+  // Brand / Header Elements
   const statusBadge = document.getElementById('status-badge');
   const statusText = document.getElementById('status-text');
-  
-  // Hero Active Card
-  const activeFavicon = document.getElementById('active-tab-favicon');
-  const activeGlobe = document.getElementById('active-tab-globe');
-  const activeTitle = document.getElementById('active-tab-title');
-  const activeDomain = document.getElementById('active-tab-domain');
-  const quickSaveActiveBtn = document.getElementById('quick-save-active-btn');
-  
+
   // Segment Buttons
   const modeTabActive = document.getElementById('mode-tab-active');
   const modeTabSelect = document.getElementById('mode-tab-select');
   const modeTabAll = document.getElementById('mode-tab-all');
   const selectModeCountPill = document.getElementById('select-mode-count-pill');
   const allModeCountPill = document.getElementById('all-mode-count-pill');
-  
+
   // Mode Views
   const viewActiveMode = document.getElementById('view-active-mode');
   const viewSelectMode = document.getElementById('view-select-mode');
   const viewAllMode = document.getElementById('view-all-mode');
-  
-  // Mode 1: Active Tab Buttons
-  const saveCurrentTabBtn = document.getElementById('save-current-tab');
-  const saveAndCloseCurrentTabBtn = document.getElementById('save-and-close-current-tab');
-  
-  // Mode 2: Select Tabs
+
+  // Mode 1: Active Tab Elements
+  const activeFavicon = document.getElementById('active-tab-favicon');
+  const activeGlobe = document.getElementById('active-tab-globe');
+  const activeTitle = document.getElementById('active-tab-title');
+  const activeDomain = document.getElementById('active-tab-domain');
+  const collectionSelectActive = document.getElementById('collection-select-active');
+  const captureThumbnailsActive = document.getElementById('capture-thumbnails-active');
+  const closeAfterSaveActive = document.getElementById('close-after-save-active');
+  const saveActiveTabBtn = document.getElementById('save-active-tab-btn');
+  const saveActiveText = document.getElementById('save-active-text');
+
+  // Mode 2: Select Tabs Elements
   const tabSearchInput = document.getElementById('tab-search-input');
   const selectAllBtn = document.getElementById('select-all-btn');
   const deselectAllBtn = document.getElementById('deselect-all-btn');
+  const selectedCounterText = document.getElementById('selected-counter-text');
   const tabChecklist = document.getElementById('tab-checklist');
+  const collectionSelectSelect = document.getElementById('collection-select-select');
+  const captureThumbnailsSelect = document.getElementById('capture-thumbnails-select');
+  const closeAfterSaveSelect = document.getElementById('close-after-save-select');
   const saveSelectedTabsBtn = document.getElementById('save-selected-tabs-btn');
-  const saveAndCloseSelectedBtn = document.getElementById('save-and-close-selected-btn');
-  
-  // Mode 3: All Tabs
+  const saveSelectedText = document.getElementById('save-selected-text');
+
+  // Mode 3: All Tabs Elements
   const allTabsLargeCount = document.getElementById('all-tabs-large-count');
-  const saveWindowBtn = document.getElementById('save-window');
-  const saveAndCloseWindowBtn = document.getElementById('save-and-close-window');
-  
-  // Settings & Status
-  const collectionSelect = document.getElementById('collection-select');
-  const captureThumbnailsEl = document.getElementById('capture-thumbnails');
+  const collectionSelectAll = document.getElementById('collection-select-all');
   const excludePinnedEl = document.getElementById('exclude-pinned');
   const excludePinnedText = document.getElementById('exclude-pinned-text');
+  const captureThumbnailsAll = document.getElementById('capture-thumbnails-all');
+  const closeAfterSaveAll = document.getElementById('close-after-save-all');
+  const saveAllTabsBtn = document.getElementById('save-all-tabs-btn');
+  const saveAllText = document.getElementById('save-all-text');
+
+  // Global / Shared Elements
   const resultMessageEl = document.getElementById('result-message');
   const openDesktopLink = document.getElementById('open-desktop');
+
+  // Keep collection selections in sync across modes
+  const collectionDropdowns = [collectionSelectActive, collectionSelectSelect, collectionSelectAll];
+  collectionDropdowns.forEach(dropdown => {
+    dropdown?.addEventListener('change', (e) => {
+      const val = e.target.value;
+      collectionDropdowns.forEach(d => { if (d && d !== e.target) d.value = val; });
+    });
+  });
 
   // Query window tabs
   try {
     const rawTabs = await chrome.tabs.query({ currentWindow: true });
-    allWindowTabs = rawTabs.filter(t => !t.incognito);
+    allWindowTabs = (rawTabs || []).filter(t => !t.incognito);
     activeTab = allWindowTabs.find(t => t.active) || allWindowTabs[0] || null;
 
     // Default select all tabs for the checklist
@@ -75,9 +89,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         : 'Exclude pinned tabs';
     }
 
-    // Populate Active Tab Hero Card
+    // Populate Active Tab Preview
     if (activeTab) {
       activeTitle.textContent = activeTab.title || 'Active Tab';
+      activeTitle.title = activeTab.title || 'Active Tab';
       try {
         const u = new URL(activeTab.url);
         activeDomain.textContent = u.hostname.replace(/^www\./, '');
@@ -98,11 +113,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeGlobe.style.display = 'block';
       }
     } else {
-      activeTitle.textContent = 'No tab active';
+      activeTitle.textContent = 'No active tab detected';
       activeDomain.textContent = '';
+      saveActiveTabBtn.disabled = true;
     }
 
     renderChecklist();
+    updateModeButtonLabels();
   } catch (err) {
     activeTitle.textContent = 'Error loading tabs';
     activeDomain.textContent = err.message;
@@ -112,17 +129,67 @@ document.addEventListener('DOMContentLoaded', async () => {
   function switchMode(newMode) {
     currentMode = newMode;
     modeTabActive.classList.toggle('active', newMode === 'active');
+    modeTabActive.setAttribute('aria-selected', newMode === 'active' ? 'true' : 'false');
+
     modeTabSelect.classList.toggle('active', newMode === 'select');
+    modeTabSelect.setAttribute('aria-selected', newMode === 'select' ? 'true' : 'false');
+
     modeTabAll.classList.toggle('active', newMode === 'all');
+    modeTabAll.setAttribute('aria-selected', newMode === 'all' ? 'true' : 'false');
 
     viewActiveMode.classList.toggle('hidden', newMode !== 'active');
     viewSelectMode.classList.toggle('hidden', newMode !== 'select');
     viewAllMode.classList.toggle('hidden', newMode !== 'all');
+
+    updateModeButtonLabels();
   }
 
   modeTabActive.addEventListener('click', () => switchMode('active'));
   modeTabSelect.addEventListener('click', () => switchMode('select'));
   modeTabAll.addEventListener('click', () => switchMode('all'));
+
+  // Update Dynamic Button Labels based on options
+  function updateModeButtonLabels() {
+    // Mode 1: Active
+    if (closeAfterSaveActive.checked) {
+      saveActiveText.textContent = 'Save & Close Current Tab';
+    } else {
+      saveActiveText.textContent = 'Save Current Tab';
+    }
+
+    // Mode 2: Select
+    const count = selectedTabIds.size;
+    selectModeCountPill.textContent = count;
+    selectedCounterText.textContent = `${count} of ${allWindowTabs.length} selected`;
+    if (closeAfterSaveSelect.checked) {
+      saveSelectedText.textContent = count === 1
+        ? 'Save & Close 1 Tab'
+        : `Save & Close ${count} Selected Tabs`;
+    } else {
+      saveSelectedText.textContent = count === 1
+        ? 'Save 1 Selected Tab'
+        : `Save ${count} Selected Tabs`;
+    }
+    saveSelectedTabsBtn.disabled = count === 0;
+
+    // Mode 3: All
+    let allCount = allWindowTabs.length;
+    if (excludePinnedEl.checked) {
+      allCount = allWindowTabs.filter(t => !t.pinned).length;
+    }
+    allTabsLargeCount.textContent = allCount;
+    if (closeAfterSaveAll.checked) {
+      saveAllText.textContent = `Save All ${allCount} Tabs & Close Window`;
+    } else {
+      saveAllText.textContent = `Save All ${allCount} Tabs as Individual Cards`;
+    }
+    saveAllTabsBtn.disabled = allCount === 0;
+  }
+
+  closeAfterSaveActive.addEventListener('change', updateModeButtonLabels);
+  closeAfterSaveSelect.addEventListener('change', updateModeButtonLabels);
+  closeAfterSaveAll.addEventListener('change', updateModeButtonLabels);
+  excludePinnedEl.addEventListener('change', updateModeButtonLabels);
 
   // Render Checkbox list for Mode 2
   function renderChecklist(filterText = '') {
@@ -137,10 +204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     if (filtered.length === 0) {
       const empty = document.createElement('div');
-      empty.style.padding = '12px';
-      empty.style.textAlign = 'center';
-      empty.style.color = 'var(--text-muted)';
-      empty.style.fontSize = '12px';
+      empty.className = 'empty-checklist-message';
       empty.textContent = 'No matching open tabs.';
       tabChecklist.appendChild(empty);
       return;
@@ -159,7 +223,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
           selectedTabIds.delete(tab.id);
         }
-        updateSelectModeUI();
+        updateModeButtonLabels();
       });
 
       const fav = document.createElement('img');
@@ -172,7 +236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const titleSpan = document.createElement('span');
       titleSpan.className = 'tab-check-text';
       titleSpan.textContent = tab.title || tab.url || 'Untitled Tab';
-      titleSpan.title = `${tab.title}\n${tab.url}`;
+      titleSpan.title = `${tab.title || 'Untitled'}\n${tab.url || ''}`;
 
       item.appendChild(checkbox);
       item.appendChild(fav);
@@ -180,14 +244,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       tabChecklist.appendChild(item);
     }
 
-    updateSelectModeUI();
-  }
-
-  function updateSelectModeUI() {
-    selectModeCountPill.textContent = selectedTabIds.size;
-    saveSelectedTabsBtn.textContent = `Save ${selectedTabIds.size} Selected Tab${selectedTabIds.size === 1 ? '' : 's'}`;
-    saveSelectedTabsBtn.disabled = selectedTabIds.size === 0;
-    saveAndCloseSelectedBtn.disabled = selectedTabIds.size === 0;
+    updateModeButtonLabels();
   }
 
   // Search filter
@@ -216,24 +273,28 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   // Save Execution Handler
-  async function executeSave(tabsToSave, closeAfterSave, btnElement) {
+  async function executeSave(tabsToSave, closeAfterSave, captureThumbnails, collectionId, btnElement) {
     if (!tabsToSave || tabsToSave.length === 0) {
       showMessage('No tabs selected to save.', true);
       return;
     }
 
-    const originalText = btnElement ? btnElement.textContent : 'Saving...';
-    if (btnElement) {
-      btnElement.disabled = true;
-      btnElement.textContent = 'Saving individual cards...';
-    }
+    const originalContent = btnElement.innerHTML;
+    btnElement.disabled = true;
+    btnElement.innerHTML = `
+      <svg class="spinner-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"/>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"/>
+      </svg>
+      <span>Saving individual cards...</span>
+    `;
 
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'saveTabs',
         tabs: tabsToSave,
-        collectionId: collectionSelect.value,
-        captureThumbnails: captureThumbnailsEl.checked,
+        collectionId: collectionId || 'inbox',
+        captureThumbnails: captureThumbnails,
         closeAfterSave: closeAfterSave,
         saveAsIndividual: true
       });
@@ -241,12 +302,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (response && response.success) {
         const count = response.savedCount || tabsToSave.length;
         const msg = count === 1
-          ? `✓ Saved 1 tab to ${collectionSelect.options[collectionSelect.selectedIndex].text}!`
-          : `✓ Saved ${count} individual tab cards to ${collectionSelect.options[collectionSelect.selectedIndex].text}!`;
+          ? `✓ Saved 1 tab as an individual card!`
+          : `✓ Saved ${count} individual tab cards to your library!`;
         showMessage(msg);
 
         if (closeAfterSave) {
-          setTimeout(() => window.close(), 1200);
+          setTimeout(() => window.close(), 1000);
         }
       } else {
         showMessage(response?.error || 'Save failed. Tabs were kept open.', true);
@@ -254,63 +315,53 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
       showMessage('Error: ' + err.message, true);
     } finally {
-      if (btnElement) {
-        btnElement.disabled = false;
-        btnElement.textContent = originalText;
-      }
+      btnElement.disabled = false;
+      btnElement.innerHTML = originalContent;
+      updateModeButtonLabels();
     }
   }
 
-  // 1. Quick Save Active Tab
-  quickSaveActiveBtn.addEventListener('click', () => {
-    if (activeTab) executeSave([activeTab], false, quickSaveActiveBtn);
-  });
-
-  // 2. Mode 1 Buttons
-  saveCurrentTabBtn.addEventListener('click', () => {
-    if (activeTab) executeSave([activeTab], false, saveCurrentTabBtn);
-  });
-
-  saveAndCloseCurrentTabBtn.addEventListener('click', () => {
+  // 1. Save Mode 1: Active Tab
+  saveActiveTabBtn.addEventListener('click', () => {
     if (activeTab) {
-      if (confirm(`Save and close "${activeTab.title || 'this tab'}"?`)) {
-        executeSave([activeTab], true, saveAndCloseCurrentTabBtn);
-      }
+      executeSave(
+        [activeTab],
+        closeAfterSaveActive.checked,
+        captureThumbnailsActive.checked,
+        collectionSelectActive.value,
+        saveActiveTabBtn
+      );
     }
   });
 
-  // 3. Mode 2 Buttons (Selected Tabs)
+  // 2. Save Mode 2: Selected Tabs
   saveSelectedTabsBtn.addEventListener('click', () => {
     const tabsToSave = allWindowTabs.filter(t => selectedTabIds.has(t.id));
-    executeSave(tabsToSave, false, saveSelectedTabsBtn);
+    executeSave(
+      tabsToSave,
+      closeAfterSaveSelect.checked,
+      captureThumbnailsSelect.checked,
+      collectionSelectSelect.value,
+      saveSelectedTabsBtn
+    );
   });
 
-  saveAndCloseSelectedBtn.addEventListener('click', () => {
-    const tabsToSave = allWindowTabs.filter(t => selectedTabIds.has(t.id));
-    if (confirm(`Tabsed will save ${tabsToSave.length} selected tabs before closing them. Proceed?`)) {
-      executeSave(tabsToSave, true, saveAndCloseSelectedBtn);
-    }
-  });
-
-  // 4. Mode 3 Buttons (All Open Tabs)
-  saveWindowBtn.addEventListener('click', () => {
+  // 3. Save Mode 3: All Tabs
+  saveAllTabsBtn.addEventListener('click', () => {
     let tabsToSave = allWindowTabs;
     if (excludePinnedEl.checked) {
       tabsToSave = tabsToSave.filter(t => !t.pinned);
     }
-    executeSave(tabsToSave, false, saveWindowBtn);
+    executeSave(
+      tabsToSave,
+      closeAfterSaveAll.checked,
+      captureThumbnailsAll.checked,
+      collectionSelectAll.value,
+      saveAllTabsBtn
+    );
   });
 
-  saveAndCloseWindowBtn.addEventListener('click', () => {
-    let tabsToSave = allWindowTabs;
-    if (excludePinnedEl.checked) {
-      tabsToSave = tabsToSave.filter(t => !t.pinned);
-    }
-    if (confirm(`Tabsed will save all ${tabsToSave.length} tabs as individual cards before closing the window. Any tab that fails to save stays open. Proceed?`)) {
-      executeSave(tabsToSave, true, saveAndCloseWindowBtn);
-    }
-  });
-
+  // Desktop App Link
   openDesktopLink.addEventListener('click', (e) => {
     e.preventDefault();
     chrome.tabs.create({ url: 'http://localhost:3000' });

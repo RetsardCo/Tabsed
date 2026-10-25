@@ -25,12 +25,13 @@ async function handleSaveTabs(request) {
 
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
+    const url = tab.url || '';
     
     // Skip internal browser schemes where scripting/capture is forbidden
-    const isRestricted = tab.url.startsWith('chrome://') || 
-                         tab.url.startsWith('edge://') || 
-                         tab.url.startsWith('about:') ||
-                         tab.url.startsWith('chrome-extension://');
+    const isRestricted = url.startsWith('chrome://') || 
+                         url.startsWith('edge://') || 
+                         url.startsWith('about:') ||
+                         url.startsWith('chrome-extension://');
 
     let thumbnailDataUrl = null;
     if (captureThumbnails && !isRestricted && tab.active) {
@@ -47,7 +48,7 @@ async function handleSaveTabs(request) {
     stagedTabs.push({
       tabId: tab.id,
       windowId: tab.windowId,
-      url: tab.url,
+      url: url,
       title: tab.title || 'Untitled',
       favIconUrl: tab.favIconUrl || null,
       pinned: tab.pinned || false,

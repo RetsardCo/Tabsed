@@ -216,6 +216,12 @@ export const TabGrid: React.FC<TabGridProps> = ({
                   setQuickInput(e.target.value);
                   setQuickError(false);
                 }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleQuickSubmit(e);
+                  }
+                }}
                 placeholder="Paste link or type URL to save as individual card..."
                 rows={3}
                 style={{

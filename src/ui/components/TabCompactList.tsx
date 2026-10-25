@@ -1,6 +1,7 @@
 import React from 'react';
 import { ExternalLink, Star, Trash2, Globe, RotateCcw } from 'lucide-react';
 import { SavedTabItem } from '../types';
+import { SmartFavicon } from './BrandIcons';
 
 interface TabCompactListProps {
   items: SavedTabItem[];
@@ -99,11 +100,7 @@ export const TabCompactList: React.FC<TabCompactListProps> = ({
                 </td>
                 <td style={{ padding: '8px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {item.faviconUrl ? (
-                      <img src={item.faviconUrl} alt="" style={{ width: '14px', height: '14px', borderRadius: '2px' }} />
-                    ) : (
-                      <Globe size={14} color="var(--text-muted)" />
-                    )}
+                    <SmartFavicon domain={item.domain} url={item.url} faviconUrl={item.faviconUrl} size={15} />
                     <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{item.title}</span>
                   </div>
                 </td>

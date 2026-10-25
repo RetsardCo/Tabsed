@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { SavedTabItem, SessionTab, Collection } from '../types';
 import { SmartFavicon, EdgeIcon, ChromeIcon, FirefoxIcon } from './BrandIcons';
+import { SmartBrandThumbnail } from './SmartBrandThumbnail';
 
 interface DetailInspectorProps {
   item: SavedTabItem | null;
@@ -229,17 +230,13 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
-            color: 'var(--text-muted)'
-          }}>
-            <Globe size={40} strokeWidth={1.5} />
-            <span style={{ fontSize: '12px', marginTop: '8px' }}>Thumbnail snapshot</span>
-          </div>
+          <SmartBrandThumbnail
+            domain={item.domain}
+            url={item.url}
+            title={item.title}
+            faviconUrl={item.faviconUrl}
+            thumbnailUrl={item.thumbnailUrl}
+          />
         )}
 
         {/* Top Controls Overlay */}
@@ -786,6 +783,15 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                 {item.profileLabel || 'Default'}
               </span>
             </div>
+            {item.sessionTitle && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'var(--text-muted)' }}>Session</span>
+                <span style={{ fontWeight: 600, color: 'var(--accent-color)', display: 'flex', alignItems: 'center', gap: '5px', maxWidth: '210px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={item.sessionTitle}>
+                  <Layers size={12} color="var(--accent-color)" />
+                  {item.sessionTitle}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

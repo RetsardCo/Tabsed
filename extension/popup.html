@@ -29,129 +29,185 @@
       </div>
     </header>
 
-    <!-- Prominent Active Tab Hero Card -->
-    <div class="active-tab-card" id="active-tab-card">
-      <div class="active-tab-meta">
-        <div class="active-tab-fav-wrap" id="active-fav-wrap">
-          <img id="active-tab-favicon" class="active-tab-favicon" src="" alt="" style="display: none;">
-          <svg id="active-tab-globe" class="active-tab-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="2" y1="12" x2="22" y2="12"/>
-            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-          </svg>
-        </div>
-        <div class="active-tab-info">
-          <div class="active-tab-label">ACTIVE TAB</div>
-          <div id="active-tab-title" class="active-tab-title">Loading active tab...</div>
-          <div id="active-tab-domain" class="active-tab-domain">---</div>
+    <!-- Mode Selector Segmented Tabs -->
+    <nav class="segmented-control" role="tablist" aria-label="Tab Save Mode">
+      <button id="mode-tab-active" class="segment-btn active" role="tab" aria-selected="true" aria-controls="view-active-mode">
+        <span>Current Tab</span>
+      </button>
+      <button id="mode-tab-select" class="segment-btn" role="tab" aria-selected="false" aria-controls="view-select-mode">
+        <span>Select Tabs</span>
+        <span id="select-mode-count-pill" class="pill-badge">0</span>
+      </button>
+      <button id="mode-tab-all" class="segment-btn" role="tab" aria-selected="false" aria-controls="view-all-mode">
+        <span>All Open Tabs</span>
+        <span id="all-mode-count-pill" class="pill-badge">0</span>
+      </button>
+    </nav>
+
+    <!-- Mode 1: Current Tab View -->
+    <div id="view-active-mode" class="mode-view" role="tabpanel">
+      <!-- Active Tab Preview Card -->
+      <div class="active-tab-card" id="active-tab-card">
+        <div class="active-tab-meta">
+          <div class="active-tab-fav-wrap" id="active-fav-wrap">
+            <img id="active-tab-favicon" class="active-tab-favicon" src="" alt="" style="display: none;">
+            <svg id="active-tab-globe" class="active-tab-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </div>
+          <div class="active-tab-info">
+            <div class="active-tab-label">ACTIVE WEBPAGE</div>
+            <div id="active-tab-title" class="active-tab-title" title="Current tab title">Loading active tab...</div>
+            <div id="active-tab-domain" class="active-tab-domain">---</div>
+          </div>
         </div>
       </div>
-      <button id="quick-save-active-btn" class="btn btn-hero">
+
+      <!-- Settings & Options for Active Tab -->
+      <div class="mode-options-card">
+        <div class="form-group">
+          <label for="collection-select-active" class="form-label">Save To Collection:</label>
+          <select id="collection-select-active" class="form-select collection-dropdown">
+            <option value="inbox">Inbox</option>
+            <option value="research">Deep Research</option>
+            <option value="dev">Web Dev &amp; Tauri</option>
+            <option value="design">Design Inspiration</option>
+          </select>
+        </div>
+        <div class="options-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="capture-thumbnails-active" checked>
+            <span>Capture screenshot preview</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="close-after-save-active">
+            <span>Close tab after saving</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Button -->
+      <button id="save-active-tab-btn" class="btn btn-primary btn-large">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg">
           <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
           <polyline points="17 21 17 13 7 13 7 21"/>
           <polyline points="7 3 7 8 15 8"/>
         </svg>
-        <span>Save Active Tab</span>
+        <span id="save-active-text">Save Current Tab</span>
       </button>
-    </div>
-
-    <!-- Mode Selector Segmented Tabs -->
-    <div class="segmented-control" role="tablist">
-      <button id="mode-tab-active" class="segment-btn active" role="tab" aria-selected="true">
-        <span>Active Tab</span>
-      </button>
-      <button id="mode-tab-select" class="segment-btn" role="tab" aria-selected="false">
-        <span>Select Tabs</span>
-        <span id="select-mode-count-pill" class="pill-badge">0</span>
-      </button>
-      <button id="mode-tab-all" class="segment-btn" role="tab" aria-selected="false">
-        <span>All Open Tabs</span>
-        <span id="all-mode-count-pill" class="pill-badge">0</span>
-      </button>
-    </div>
-
-    <!-- Mode 1: Active Tab View -->
-    <div id="view-active-mode" class="mode-view">
-      <div class="mode-description">
-        Save only this current webpage into your Tabsed visual library.
-      </div>
-      <div class="actions">
-        <button id="save-current-tab" class="btn btn-primary">
-          Save This Tab
-        </button>
-        <button id="save-and-close-current-tab" class="btn btn-outline-danger">
-          Save &amp; Close This Tab
-        </button>
-      </div>
     </div>
 
     <!-- Mode 2: Select Tabs View -->
-    <div id="view-select-mode" class="mode-view hidden">
+    <div id="view-select-mode" class="mode-view hidden" role="tabpanel">
       <div class="tab-list-controls">
-        <input type="text" id="tab-search-input" class="search-input" placeholder="Filter open tabs...">
+        <input type="text" id="tab-search-input" class="search-input" placeholder="Filter open tabs by title or URL...">
         <div class="list-toggle-btns">
-          <button id="select-all-btn" class="btn-text">Select All</button>
+          <button id="select-all-btn" class="btn-text" type="button">Select All</button>
           <span class="divider">|</span>
-          <button id="deselect-all-btn" class="btn-text">Deselect All</button>
+          <button id="deselect-all-btn" class="btn-text" type="button">Deselect All</button>
         </div>
       </div>
+
+      <div class="checklist-header">
+        <span id="selected-counter-text" class="counter-text">0 selected</span>
+        <span class="hint-text">Check the tabs you want to save</span>
+      </div>
+
       <div id="tab-checklist" class="tab-checklist">
-        <!-- Interactive checkboxes injected via JS -->
+        <!-- Injected via JavaScript -->
       </div>
-      <div class="actions">
-        <button id="save-selected-tabs-btn" class="btn btn-primary">
-          Save Selected Tabs
-        </button>
-        <button id="save-and-close-selected-btn" class="btn btn-outline-danger">
-          Save &amp; Close Selected
-        </button>
+
+      <!-- Settings & Options for Selected Tabs -->
+      <div class="mode-options-card">
+        <div class="form-group">
+          <label for="collection-select-select" class="form-label">Save To Collection:</label>
+          <select id="collection-select-select" class="form-select collection-dropdown">
+            <option value="inbox">Inbox</option>
+            <option value="research">Deep Research</option>
+            <option value="dev">Web Dev &amp; Tauri</option>
+            <option value="design">Design Inspiration</option>
+          </select>
+        </div>
+        <div class="options-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="capture-thumbnails-select" checked>
+            <span>Capture screenshot preview (active tab)</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="close-after-save-select">
+            <span>Close selected tabs after saving</span>
+          </label>
+        </div>
       </div>
+
+      <!-- Action Button -->
+      <button id="save-selected-tabs-btn" class="btn btn-primary btn-large">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span id="save-selected-text">Save Selected Tabs</span>
+      </button>
     </div>
 
     <!-- Mode 3: All Open Tabs View -->
-    <div id="view-all-mode" class="mode-view hidden">
+    <div id="view-all-mode" class="mode-view hidden" role="tabpanel">
       <div class="all-tabs-summary-banner">
-        <div class="summary-highlight">
-          <span id="all-tabs-large-count">0</span> tabs open in this window
+        <div class="summary-top-row">
+          <div class="window-badge-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="2" y1="20" x2="22" y2="20"/>
+            </svg>
+          </div>
+          <div class="summary-highlight">
+            <span id="all-tabs-large-count">0</span> Open Tabs
+          </div>
         </div>
         <p class="summary-subtext">
-          Every tab will be saved as its <strong>own individual card</strong> with rich previews, favicons, and metadata in your Tabsed library.
+          Every tab will be saved and displayed as its <strong>own individual card</strong> with rich previews, favicons, domain branding, and tags in your Tabsed library.
         </p>
       </div>
 
-      <div class="actions">
-        <button id="save-window" class="btn btn-primary">
-          Save All Tabs as Individual Cards
-        </button>
-        <button id="save-and-close-window" class="btn btn-danger">
-          Save All &amp; Close Window
-        </button>
+      <!-- Settings & Options for All Tabs -->
+      <div class="mode-options-card">
+        <div class="form-group">
+          <label for="collection-select-all" class="form-label">Save To Collection:</label>
+          <select id="collection-select-all" class="form-select collection-dropdown">
+            <option value="inbox">Inbox</option>
+            <option value="research">Deep Research</option>
+            <option value="dev">Web Dev &amp; Tauri</option>
+            <option value="design">Design Inspiration</option>
+          </select>
+        </div>
+        <div class="options-group">
+          <label class="checkbox-label" id="exclude-pinned-wrap">
+            <input type="checkbox" id="exclude-pinned" checked>
+            <span id="exclude-pinned-text">Exclude pinned tabs</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="capture-thumbnails-all" checked>
+            <span>Capture screenshot preview (active tab)</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="close-after-save-all">
+            <span>Close window after saving</span>
+          </label>
+        </div>
       </div>
-    </div>
 
-    <!-- Global Preferences Section -->
-    <div class="settings-card">
-      <div class="form-group">
-        <label for="collection-select" class="form-label">Save To Collection:</label>
-        <select id="collection-select" class="form-select">
-          <option value="inbox">Inbox</option>
-          <option value="research">Deep Research</option>
-          <option value="dev">Web Dev &amp; Tauri</option>
-          <option value="design">Design Inspiration</option>
-        </select>
-      </div>
-
-      <div class="options-group">
-        <label class="checkbox-label">
-          <input type="checkbox" id="capture-thumbnails" checked>
-          <span>Capture screenshots where permitted</span>
-        </label>
-        <label class="checkbox-label" id="exclude-pinned-wrap">
-          <input type="checkbox" id="exclude-pinned" checked>
-          <span id="exclude-pinned-text">Exclude pinned tabs</span>
-        </label>
-      </div>
+      <!-- Action Button -->
+      <button id="save-all-tabs-btn" class="btn btn-primary btn-large">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="btn-svg">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span id="save-all-text">Save All Tabs as Individual Cards</span>
+      </button>
     </div>
 
     <!-- Result / Status Toast -->

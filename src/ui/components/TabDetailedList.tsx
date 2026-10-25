@@ -1,6 +1,8 @@
 import React from 'react';
 import { ExternalLink, Star, Trash2, Globe, Clock, Tag, RotateCcw } from 'lucide-react';
 import { SavedTabItem } from '../types';
+import { SmartBrandThumbnail } from './SmartBrandThumbnail';
+import { SmartFavicon } from './BrandIcons';
 
 interface TabDetailedListProps {
   items: SavedTabItem[];
@@ -74,27 +76,31 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
           >
             {/* Thumbnail preview */}
             <div style={{
-              width: '100px',
-              height: '65px',
-              minWidth: '100px',
+              width: '108px',
+              height: '70px',
+              minWidth: '108px',
               backgroundColor: 'var(--bg-app)',
               borderRadius: 'var(--radius-sm)',
               overflow: 'hidden',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '1px solid var(--border-subtle)'
+              border: '1px solid var(--border-subtle)',
+              position: 'relative'
             }}>
-              {item.thumbnailUrl ? (
-                <img src={item.thumbnailUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              ) : (
-                <Globe size={20} color="var(--text-muted)" />
-              )}
+              <SmartBrandThumbnail
+                domain={item.domain}
+                url={item.url}
+                title={item.title}
+                faviconUrl={item.faviconUrl}
+                thumbnailUrl={item.thumbnailUrl}
+              />
             </div>
 
             {/* Content Details */}
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SmartFavicon domain={item.domain} url={item.url} faviconUrl={item.faviconUrl} size={15} />
                 <span style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>
                   {item.title}
                 </span>

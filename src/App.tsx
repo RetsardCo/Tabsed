@@ -638,43 +638,59 @@ export const App: React.FC = () => {
     return filteredItems;
   }, [filteredItems, groupMode]);
 
-  const handleQuickAddUrl = (rawUrl: string) => {
-    const trimmed = rawUrl.trim();
+  const handleQuickAddUrl = (rawText: string) => {
+    const trimmed = rawText.trim();
     if (!trimmed) return;
-    const normalized = trimmed.startsWith('http://') || trimmed.startsWith('https://')
-      ? trimmed
-      : `https://${trimmed}`;
-    const domain = extractDomainFromUrl(normalized);
-    const title = domain || 'Saved Web Tab';
+
+    // Split text into individual lines or whitespace-separated URL candidates
+    const lines = trimmed.split(/[\r\n]+/).map(l => l.trim()).filter(Boolean);
+    const newItems: SavedTabItem[] = [];
     const now = new Date().toISOString();
-    const newItem: SavedTabItem = {
-      id: 'tab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
-      vaultId: 'default',
-      itemType: 'tab',
-      title: title,
-      url: normalized,
-      normalizedUrl: normalized,
-      domain: domain,
-      faviconUrl: domain ? `https://${domain}/favicon.ico` : null,
-      thumbnailUrl: null,
-      browserFamily: 'Edge',
-      profileLabel: 'Default',
-      savedAt: now,
-      notes: '',
-      isFavorite: false,
-      collectionIds: currentDestination.startsWith('col_') ? [currentDestination.replace('col_', '')] : ['inbox'],
-      tags: ['Quick Add', 'Web'],
-      tabCount: 1,
-      archiveSizeBytes: 131072,
-      availabilityStatus: 'reachable'
-    };
-    setItems(prev => [newItem, ...prev]);
-    setSelectedItemId(newItem.id);
+
+    for (const line of lines) {
+      const parts = line.split(/\s+/).filter(p => p.startsWith('http://') || p.startsWith('https://') || p.includes('.'));
+      const urlsToProcess = parts.length > 0 ? parts : [line];
+
+      for (const raw of urlsToProcess) {
+        const normalized = raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('file://')
+          ? raw
+          : `https://${raw}`;
+        const domain = extractDomainFromUrl(normalized);
+        const title = domain || 'Saved Web Tab';
+        const newItem: SavedTabItem = {
+          id: 'tab_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+          vaultId: 'default',
+          itemType: 'tab',
+          title: title,
+          url: normalized,
+          normalizedUrl: normalized,
+          domain: domain,
+          faviconUrl: domain ? `https://${domain}/favicon.ico` : null,
+          thumbnailUrl: null,
+          browserFamily: 'Edge',
+          profileLabel: 'Default',
+          savedAt: now,
+          notes: '',
+          isFavorite: false,
+          collectionIds: currentDestination.startsWith('col_') ? [currentDestination.replace('col_', '')] : ['inbox'],
+          tags: ['Quick Add', 'Web'],
+          tabCount: 1,
+          archiveSizeBytes: 131072,
+          availabilityStatus: 'reachable'
+        };
+        newItems.push(newItem);
+      }
+    }
+
+    if (newItems.length > 0) {
+      setItems(prev => [...newItems, ...prev]);
+      setSelectedItemId(newItems[0].id);
+    }
   };
 
   const selectedItem = useMemo(() => {
-    return items.find(i => i.id === selectedItemId) || null;
-  }, [items, selectedItemId]);
+    return displayedItems.find(i => i.id === selectedItemId) || items.find(i => i.id === selectedItemId) || null;
+  }, [displayedItems, items, selectedItemId]);
 
   const trashCount = useMemo(() => {
     return items.filter(i => Boolean(i.deletedAt)).length;
@@ -730,9 +746,6 @@ export const App: React.FC = () => {
   }, [items]);
 
   // Actions
-  const handleUpdateTitle = (id: string, title: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, title } : item));
-  };
 
   const handleDeleteSubTab = (parentId: string, subTabId: string) => {
     setItems(prev => prev.map(item => {
@@ -751,7 +764,7 @@ export const App: React.FC = () => {
 
   const handleMoveItemToCollection = (itemId: string, collectionId: string) => {
     setItems(prev => prev.map(item => {
-      if (item.id === itemId) {
+      if (item.id === itemId || item.windowSessionId === itemId) {
         const currentCols = item.collectionIds || [];
         const newCols = currentCols.includes(collectionId)
           ? currentCols
@@ -761,34 +774,77 @@ export const App: React.FC = () => {
       return item;
     }));
   };
+
   const handleToggleFavorite = (id: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, isFavorite: !item.isFavorite } : item));
+    setItems(prev => {
+      const targetItem = prev.find(i => i.id === id);
+      if (targetItem) {
+        return prev.map(item => item.id === id ? { ...item, isFavorite: !item.isFavorite } : item);
+      }
+      // Target is a windowSessionId
+      const sessionTabs = prev.filter(i => i.windowSessionId === id);
+      if (sessionTabs.length > 0) {
+        const anyFavorite = sessionTabs.some(i => i.isFavorite);
+        return prev.map(item => item.windowSessionId === id ? { ...item, isFavorite: !anyFavorite } : item);
+      }
+      return prev;
+    });
   };
 
   const handleDeleteItem = (id: string) => {
     const item = items.find(i => i.id === id);
-    if (!item) return;
+    if (item) {
+      if (item.deletedAt) {
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Permanently Delete Tab?',
+          message: `Are you sure you want to permanently delete "${item.title}"? This action cannot be undone and will permanently remove this record from your vault.`,
+          confirmLabel: 'Permanently Delete',
+          onConfirm: () => {
+            setItems(prev => TrashManager.permanentDelete(prev, id));
+            if (selectedItemId === id) setSelectedItemId(null);
+            setConfirmDialog(null);
+          }
+        });
+      } else {
+        setItems(prev => TrashManager.softDelete(prev, id));
+        if (selectedItemId === id) setSelectedItemId(null);
+      }
+      return;
+    }
 
-    if (item.deletedAt) {
-      setConfirmDialog({
-        isOpen: true,
-        title: 'Permanently Delete Tab?',
-        message: `Are you sure you want to permanently delete "${item.title}"? This action cannot be undone and will permanently remove this record from your vault.`,
-        confirmLabel: 'Permanently Delete',
-        onConfirm: () => {
-          setItems(prev => TrashManager.permanentDelete(prev, id));
-          if (selectedItemId === id) setSelectedItemId(null);
-          setConfirmDialog(null);
-        }
-      });
-    } else {
-      setItems(prev => TrashManager.softDelete(prev, id));
-      if (selectedItemId === id) setSelectedItemId(null);
+    // Check if it's a windowSessionId
+    const sessionTabs = items.filter(i => i.windowSessionId === id);
+    if (sessionTabs.length > 0) {
+      const anyDeleted = sessionTabs.some(i => i.deletedAt);
+      if (anyDeleted) {
+        setConfirmDialog({
+          isOpen: true,
+          title: 'Permanently Delete Session?',
+          message: `Are you sure you want to permanently delete all ${sessionTabs.length} tabs in this session? This action cannot be undone.`,
+          confirmLabel: 'Permanently Delete All',
+          onConfirm: () => {
+            setItems(prev => prev.filter(i => i.windowSessionId !== id));
+            if (selectedItemId === id) setSelectedItemId(null);
+            setConfirmDialog(null);
+          }
+        });
+      } else {
+        const now = new Date().toISOString();
+        setItems(prev => prev.map(i => i.windowSessionId === id ? { ...i, deletedAt: now } : i));
+        if (selectedItemId === id) setSelectedItemId(null);
+      }
     }
   };
 
   const handleRestoreFromTrash = (id: string) => {
-    setItems(prev => TrashManager.restoreFromTrash(prev, id));
+    setItems(prev => {
+      const item = prev.find(i => i.id === id);
+      if (item) {
+        return TrashManager.restoreFromTrash(prev, id);
+      }
+      return prev.map(i => i.windowSessionId === id ? { ...i, deletedAt: null } : i);
+    });
     if (currentDestination === 'trash' && selectedItemId === id) {
       setSelectedItemId(null);
     }
@@ -814,15 +870,19 @@ export const App: React.FC = () => {
   };
 
   const handleUpdateNotes = (id: string, notes: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, notes } : item));
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) ? { ...item, notes } : item));
+  };
+
+  const handleUpdateTitle = (id: string, title: string) => {
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) ? { ...item, title } : item));
   };
 
   const handleAddTag = (id: string, tag: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, tags: [...item.tags, tag] } : item));
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) && !item.tags.includes(tag) ? { ...item, tags: [...item.tags, tag] } : item));
   };
 
   const handleRemoveTag = (id: string, tag: string) => {
-    setItems(prev => prev.map(item => item.id === id ? { ...item, tags: item.tags.filter(t => t !== tag) } : item));
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) ? { ...item, tags: item.tags.filter(t => t !== tag) } : item));
   };
 
   const handleOpenLiveUrl = (url: string) => {

@@ -150,4 +150,40 @@ describe('Individual Tabs First Architecture (PRD Visual Tab Grid & Personalizat
     expect(html).toContain('title="Move to Trash"');
     expect(html).toContain('aria-label="Move to Trash"');
   });
+
+  it('validates extension popup HTML and JS contract: 3 modes, options toggles, no blocking confirms', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const htmlContent = fs.readFileSync(path.resolve(__dirname, '../extension/popup.html'), 'utf8');
+    const jsContent = fs.readFileSync(path.resolve(__dirname, '../extension/popup.js'), 'utf8');
+
+    // 1. Verify 3 segmented tabs exist
+    expect(htmlContent).toContain('id="mode-tab-active"');
+    expect(htmlContent).toContain('id="mode-tab-select"');
+    expect(htmlContent).toContain('id="mode-tab-all"');
+
+    // 2. Verify all 3 mode views exist
+    expect(htmlContent).toContain('id="view-active-mode"');
+    expect(htmlContent).toContain('id="view-select-mode"');
+    expect(htmlContent).toContain('id="view-all-mode"');
+
+    // 3. Verify Active Tab preview is present
+    expect(htmlContent).toContain('id="active-tab-card"');
+    expect(htmlContent).toContain('id="active-tab-title"');
+    expect(htmlContent).toContain('id="active-tab-domain"');
+
+    // 4. Verify single primary action button per mode
+    expect(htmlContent).toContain('id="save-active-tab-btn"');
+    expect(htmlContent).toContain('id="save-selected-tabs-btn"');
+    expect(htmlContent).toContain('id="save-all-tabs-btn"');
+
+    // 5. Verify Close tabs after saving options exist
+    expect(htmlContent).toContain('id="close-after-save-active"');
+    expect(htmlContent).toContain('id="close-after-save-select"');
+    expect(htmlContent).toContain('id="close-after-save-all"');
+
+    // 6. Verify NO window.confirm or alert calls in popup.js
+    expect(jsContent).not.toContain('confirm(');
+    expect(jsContent).not.toContain('alert(');
+  });
 });
