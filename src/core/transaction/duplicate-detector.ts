@@ -35,33 +35,36 @@ export class UrlNormalizer {
    */
   public static normalize(rawUrl: string, options: NormalizationOptions = {}): string {
     if (!rawUrl || typeof rawUrl !== 'string') return '';
+    const trimmed = rawUrl.trim();
+    if (!trimmed) return '';
 
     try {
-      const parsed = new URL(rawUrl.trim());
+      const parsed = new URL(trimmed);
 
-      // 1. Lowercase scheme and hostname
-      parsed.protocol = parsed.protocol.toLowerCase();
-      parsed.hostname = parsed.hostname.toLowerCase();
-
-      // 2. Remove default ports (80 for http, 443 for https)
-      if ((parsed.protocol === 'http:' && parsed.port === '80') ||
-          (parsed.protocol === 'https:' && parsed.port === '443')) {
-        parsed.port = '';
-      }
+      // WHATWG URL parser automatically:
+      // 1. Lowercases scheme (protocol) and host
+      // 2. Removes default ports (80 for http, 443 for https)
 
       // 3. Strip tracking parameters ONLY when explicitly enabled (FR-061)
-      if (options.stripTrackingParams) {
+      if (options.stripTrackingParams && parsed.search) {
+        let hasTracking = false;
         const keysToDelete: string[] = [];
         parsed.searchParams.forEach((_, key) => {
-          if (this.TRACKING_PARAMS.has(key.toLowerCase()) || key.toLowerCase().startsWith('utm_')) {
+          const lower = key.toLowerCase();
+          if (this.TRACKING_PARAMS.has(lower) || lower.startsWith('utm_')) {
             keysToDelete.push(key);
+            hasTracking = true;
           }
         });
-        keysToDelete.forEach(k => parsed.searchParams.delete(k));
+        if (hasTracking) {
+          for (let i = 0; i < keysToDelete.length; i++) {
+            parsed.searchParams.delete(keysToDelete[i]);
+          }
+        }
       }
 
       // 4. Fragment handling: preserved by default unless options specify otherwise (FR-062)
-      if (options.preserveFragment === false) {
+      if (options.preserveFragment === false && parsed.hash) {
         parsed.hash = '';
       }
 
@@ -72,7 +75,7 @@ export class UrlNormalizer {
         }
       }
 
-      let result = parsed.toString();
+      let result = parsed.href;
 
       if (options.trimTrailingSlash && parsed.pathname === '/' && !parsed.search && !parsed.hash) {
         result = result.slice(0, -1);
@@ -81,7 +84,7 @@ export class UrlNormalizer {
       return result;
     } catch {
       // Return trimmed raw URL if parsing fails
-      return rawUrl.trim().toLowerCase();
+      return trimmed.toLowerCase();
     }
   }
 
@@ -92,17 +95,33 @@ export class UrlNormalizer {
     items: T[],
     options: NormalizationOptions = {}
   ): DuplicateGroup<T>[] {
-    const map = new Map<string, T[]>();
+    const hasCustomOptions = !!(
+      options.stripTrackingParams ||
+      options.preserveFragment === false ||
+      options.trimTrailingSlash
+    );
 
-    for (const item of items) {
-      const norm = (item as any).normalizedUrl || this.normalize(item.url, options);
-      let group = map.get(norm);
-      if (!group) {
-        group = [];
-        map.set(norm, group);
+    const map = new Map<string, T[]>();
+    const len = items.length;
+
+    for (let i = 0; i < len; i++) {
+      const item = items[i];
+      // Fast path: reuse pre-normalized URL if available and standard conservative normalization is used
+      const norm = (!hasCustomOptions && (item as any).normalizedUrl)
+        ? (item as any).normalizedUrl
+        : this.normalize(item.url, options);
+
+      const group = map.get(norm);
+      if (group) {
+        group.push(item);
+      } else {
+        map.set(norm, [item]);
       }
-      group.push(item);
     }
+
+    const matchingRule = options.stripTrackingParams
+      ? 'Scheme/host lowercase + default port removal + tracking query stripped'
+      : 'Conservative scheme/host lowercase + default port removal (query & fragment preserved)';
 
     const groups: DuplicateGroup<T>[] = [];
     for (const [norm, groupItems] of map.entries()) {
@@ -110,9 +129,7 @@ export class UrlNormalizer {
         groups.push({
           normalizedUrl: norm,
           count: groupItems.length,
-          matchingRule: options.stripTrackingParams
-            ? 'Scheme/host lowercase + default port removal + tracking query stripped'
-            : 'Conservative scheme/host lowercase + default port removal (query & fragment preserved)',
+          matchingRule,
           items: groupItems
         });
       }
