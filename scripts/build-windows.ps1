@@ -16,7 +16,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 Set-Location $repoRoot
 
 # 1. Locate Rust & Cargo
-Write-Host "[1/4] Configuring Rust toolchain..." -ForegroundColor Yellow
+Write-Host "[1/3] Configuring Rust toolchain..." -ForegroundColor Yellow
 $cargoBin = "$env:USERPROFILE\.cargo\bin"
 if (Test-Path $cargoBin) {
     if ($env:Path -notlike "*$cargoBin*") {
@@ -32,7 +32,7 @@ try {
 }
 
 # 2. Locate MSVC / Windows SDK tools and libraries
-Write-Host "[2/4] Configuring C++ / MSVC toolchain & Windows SDK..." -ForegroundColor Yellow
+Write-Host "[2/3] Configuring C++ / MSVC toolchain & Windows SDK..." -ForegroundColor Yellow
 $scopeVcBase = "C:\Program Files\Microsoft Visual Studio\2022\Community\SDK\ScopeCppSDK\vc15"
 if (Test-Path "$scopeVcBase\VC\bin\link.exe") {
     $vcBin = "$scopeVcBase\VC\bin"
@@ -57,16 +57,8 @@ if (Test-Path "$scopeVcBase\VC\bin\link.exe") {
     Write-Host "  Standard MSVC detection active" -ForegroundColor Gray
 }
 
-# 3. Build frontend
-Write-Host "[3/4] Building frontend assets (tsc & vite)..." -ForegroundColor Yellow
-& cmd.exe /c "npm run build"
-if ($LASTEXITCODE -ne 0) {
-    Write-Error "Frontend compilation failed with exit code $LASTEXITCODE"
-}
-Write-Host "  Frontend build complete." -ForegroundColor Green
-
-# 4. Compile native desktop binary and installer bundles
-Write-Host "[4/4] Compiling native Windows binary and installer bundles ($Bundles)..." -ForegroundColor Yellow
+# 3. Compile native desktop binary and installer bundles (Tauri executes beforeBuildCommand: npm run build)
+Write-Host "[3/3] Compiling native Windows binary and installer bundles ($Bundles)..." -ForegroundColor Yellow
 $buildArgs = @("run", "tauri:build", "--", "--bundles", $Bundles)
 if ($DebugBuild) {
     $buildArgs += "--debug"

@@ -181,6 +181,7 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
       expect(fs.existsSync(path.join(scriptsDir, 'build-windows.bat'))).toBe(true);
       expect(fs.existsSync(path.join(scriptsDir, 'setup-toolchain.ps1'))).toBe(true);
       expect(fs.existsSync(path.join(scriptsDir, 'setup-toolchain.bat'))).toBe(true);
+      expect(fs.existsSync(path.join(scriptsDir, 'tauri-runner.cjs'))).toBe(true);
     });
 
     it('validates compiled native release artifacts if target/release exists', () => {
@@ -191,18 +192,16 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
         expect(stats.size).toBeGreaterThan(1_000_000); // Binary should be multi-megabyte native PE executable
 
         const nsisBundleDir = path.join(releaseDir, 'bundle', 'nsis');
-        if (fs.existsSync(nsisBundleDir)) {
-          const files = fs.readdirSync(nsisBundleDir).filter(f => f.endsWith('.exe'));
-          expect(files.length).toBeGreaterThan(0);
-          expect(files.some(f => f.includes('Tabsed') && f.includes('setup'))).toBe(true);
-        }
+        expect(fs.existsSync(nsisBundleDir), 'NSIS bundle directory must exist when release target is built').toBe(true);
+        const nsisFiles = fs.readdirSync(nsisBundleDir).filter(f => f.endsWith('.exe'));
+        expect(nsisFiles.length).toBeGreaterThan(0);
+        expect(nsisFiles.some(f => f.includes('Tabsed') && f.includes('setup'))).toBe(true);
 
         const msiBundleDir = path.join(releaseDir, 'bundle', 'msi');
-        if (fs.existsSync(msiBundleDir)) {
-          const files = fs.readdirSync(msiBundleDir).filter(f => f.endsWith('.msi'));
-          expect(files.length).toBeGreaterThan(0);
-          expect(files.some(f => f.includes('Tabsed') && f.endsWith('.msi'))).toBe(true);
-        }
+        expect(fs.existsSync(msiBundleDir), 'WiX MSI bundle directory must exist when release target is built').toBe(true);
+        const msiFiles = fs.readdirSync(msiBundleDir).filter(f => f.endsWith('.msi'));
+        expect(msiFiles.length).toBeGreaterThan(0);
+        expect(msiFiles.some(f => f.includes('Tabsed') && f.endsWith('.msi'))).toBe(true);
       }
     });
   });

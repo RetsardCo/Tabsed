@@ -134,7 +134,8 @@ To run Tabsed as a standalone native Windows desktop application with Mica trans
    ```powershell
    .\scripts\build-windows.ps1
    # Or via npm
-   npm run tauri:build
+   npm run tauri build
+   # (or npm run tauri:build)
    ```
    **Generated Release Artifacts:**
    - Standalone Binary: `src-tauri/target/release/tabsed.exe`
