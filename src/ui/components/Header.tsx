@@ -116,28 +116,49 @@ export const Header: React.FC<HeaderProps> = ({
         gap: '20px'
       }}>
         {/* Left: Destination Title & Count */}
-        <div style={{ minWidth: '130px' }}>
-          <h1 style={{
-            fontSize: '20px',
-            fontWeight: 700,
-            color: 'var(--text-primary)',
-            letterSpacing: '-0.3px',
-            lineHeight: 1.2
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '140px' }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            filter: 'drop-shadow(0 2px 6px rgba(37, 99, 235, 0.3))',
+            flexShrink: 0
           }}>
-            {title}
-          </h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
-            <span>{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
-            <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: syncStatus === 'synced' ? '#10b981' : 'var(--text-muted)' }}>
-              <span style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                backgroundColor: syncStatus === 'synced' ? '#10b981' : '#3b82f6',
-                display: 'inline-block'
-              }} />
-              {syncStatus === 'synced' ? 'Synced with extension' : 'Live Vault'}
-            </span>
+            <img
+              src="/logo.png"
+              alt="Tabsed"
+              style={{
+                width: '32px',
+                height: '32px',
+                objectFit: 'contain'
+              }}
+            />
+          </div>
+          <div>
+            <h1 style={{
+              fontSize: '20px',
+              fontWeight: 700,
+              color: 'var(--text-primary)',
+              letterSpacing: '-0.3px',
+              lineHeight: 1.2
+            }}>
+              {title}
+            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--text-muted)', fontWeight: 500, marginTop: '2px' }}>
+              <span>{itemCount} {itemCount === 1 ? 'item' : 'items'}</span>
+              <span style={{ fontSize: '11px', display: 'flex', alignItems: 'center', gap: '5px', color: syncStatus === 'synced' ? '#10b981' : 'var(--text-muted)' }}>
+                <span style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: syncStatus === 'synced' ? '#10b981' : '#3b82f6',
+                  display: 'inline-block'
+                }} />
+                {syncStatus === 'synced' ? 'Synced with extension' : 'Live Vault'}
+              </span>
+            </div>
           </div>
         </div>
 

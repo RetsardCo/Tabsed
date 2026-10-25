@@ -149,16 +149,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div style={{
               width: '32px',
               height: '32px',
-              borderRadius: '9px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff',
-              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)',
+              filter: 'drop-shadow(0 2px 8px rgba(37, 99, 235, 0.35))',
               flexShrink: 0
             }}>
-              <Layers size={18} strokeWidth={2.2} />
+              <img
+                src="/logo.png"
+                alt="Tabsed"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  objectFit: 'contain'
+                }}
+              />
             </div>
             <div>
               <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px', lineHeight: 1.2 }}>
@@ -173,14 +178,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <div style={{
             width: '30px',
             height: '30px',
-            borderRadius: '8px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            color: '#ffffff'
+            filter: 'drop-shadow(0 2px 6px rgba(37, 99, 235, 0.35))'
           }}>
-            <Layers size={16} />
+            <img
+              src="/logo.png"
+              alt="Tabsed"
+              style={{
+                width: '30px',
+                height: '30px',
+                objectFit: 'contain'
+              }}
+            />
           </div>
         )}
 

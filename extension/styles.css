@@ -10,6 +10,14 @@
   --accent-color: #3b82f6;
   --accent-hover: #2563eb;
   --accent-glow: rgba(59, 130, 246, 0.35);
+
+  /* Liquid glass brand palette tokens matching master squircle icon */
+  --brand-cyan: #38bdf8;
+  --brand-blue: #3b82f6;
+  --brand-violet: #a78bfa;
+  --brand-gradient: linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #a78bfa 100%);
+  --brand-glow: 0 4px 16px -2px rgba(59, 130, 246, 0.45), 0 0 10px rgba(56, 189, 248, 0.25);
+
   --text-primary: #ffffff;
   --text-secondary: #cbd5e1;
   --text-muted: #94a3b8;
@@ -42,8 +50,9 @@ body {
 
 .popup-container {
   padding: 16px;
-  background: radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.15), transparent 45%),
-              radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.10), transparent 45%),
+  background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.16), transparent 45%),
+              radial-gradient(circle at 90% 90%, rgba(167, 139, 250, 0.15), transparent 45%),
+              radial-gradient(circle at 50% 30%, rgba(59, 130, 246, 0.12), transparent 45%),
               var(--bg-popup);
   backdrop-filter: blur(28px);
   display: flex;
@@ -68,11 +77,18 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px var(--accent-glow);
+  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
+  flex-shrink: 0;
+}
+
+.brand-icon-img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
 }
 
 .brand-icon {

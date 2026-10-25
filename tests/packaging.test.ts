@@ -44,7 +44,7 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
 
     it('verifies all extension icon files exist', () => {
       const manifest = JSON.parse(fs.readFileSync(path.join(extDir, 'manifest.json'), 'utf8'));
-      for (const size of ['16', '48', '128']) {
+      for (const size of ['16', '32', '48', '128']) {
         const iconPath = manifest.icons[size];
         expect(iconPath).toBeDefined();
         expect(fs.existsSync(path.join(extDir, iconPath))).toBe(true);
