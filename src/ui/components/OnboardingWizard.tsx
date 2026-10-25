@@ -37,14 +37,16 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
       onClick={(e) => {
         if (e.target === e.currentTarget) onComplete();
       }}
+      className="glass-modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
-        backdropFilter: 'blur(6px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -54,16 +56,21 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
       aria-modal="true"
       aria-labelledby="onboarding-wizard-title"
     >
-      <div style={{
-        width: '520px',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <div
+        className="glass-modal-dialog"
+        style={{
+          width: '520px',
+          backgroundColor: 'var(--bg-popover)',
+          backdropFilter: 'var(--backdrop-filter-popover)',
+          WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-popover)',
+          boxShadow: 'var(--shadow-popover), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
         {/* Step Header */}
         <div style={{
           display: 'flex',

@@ -90,11 +90,13 @@ export const ManageGroupTabsModal: React.FC<ManageGroupTabsModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
+      className="glass-modal-overlay"
       style={{
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -106,14 +108,17 @@ export const ManageGroupTabsModal: React.FC<ManageGroupTabsModalProps> = ({
       aria-labelledby="manage-group-title"
     >
       <div
+        className="glass-modal-dialog"
         style={{
           width: '100%',
           maxWidth: '580px',
           maxHeight: '88vh',
-          backgroundColor: 'var(--bg-surface)',
-          borderRadius: 'var(--radius-xl)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-xl)',
+          backgroundColor: 'var(--bg-popover)',
+          backdropFilter: 'var(--backdrop-filter-popover)',
+          WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+          borderRadius: 'var(--radius-xl, 16px)',
+          border: '1px solid var(--border-popover)',
+          boxShadow: 'var(--shadow-popover), 0 25px 50px -12px rgba(0, 0, 0, 0.5)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

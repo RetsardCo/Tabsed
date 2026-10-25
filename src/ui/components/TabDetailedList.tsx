@@ -1,5 +1,5 @@
-import React from 'react';
-import { ExternalLink, Star, Trash2, Globe, Clock, Tag, RotateCcw } from 'lucide-react';
+import React, { useState } from 'react';
+import { ExternalLink, Star, Trash2, Globe, Clock, Tag, RotateCcw, MoreHorizontal, Copy } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartBrandThumbnail } from './SmartBrandThumbnail';
 import { SmartFavicon } from './BrandIcons';
@@ -25,6 +25,8 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
   onRestoreItem,
   isTrash
 }) => {
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
   if (items.length === 0) {
     return (
       <div style={{
@@ -71,7 +73,9 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
               borderRadius: 'var(--radius-md)',
               cursor: 'pointer',
               alignItems: 'center',
-              boxShadow: isSelected ? 'var(--shadow-sm)' : 'none'
+              boxShadow: isSelected ? 'var(--shadow-sm)' : 'none',
+              position: 'relative',
+              zIndex: activeMenuId === item.id ? 45 : (isSelected ? 5 : 1)
             }}
           >
             {/* Thumbnail preview */}
@@ -217,6 +221,86 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
               >
                 <Trash2 size={16} />
               </button>
+
+              <div style={{ position: 'relative' }}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveMenuId(activeMenuId === item.id ? null : item.id);
+                  }}
+                  title="Tab actions"
+                  aria-label="Tab actions"
+                  style={{
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: activeMenuId === item.id ? 'var(--accent-color)' : 'var(--text-muted)',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <MoreHorizontal size={16} />
+                </button>
+
+                {activeMenuId === item.id && (
+                  <div
+                    className="glass-popover"
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute',
+                      bottom: '100%',
+                      right: 0,
+                      marginBottom: '6px',
+                      width: '180px',
+                      backgroundColor: 'var(--bg-popover)',
+                      backdropFilter: 'var(--backdrop-filter-popover)',
+                      WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px solid var(--border-popover)',
+                      boxShadow: 'var(--shadow-popover)',
+                      padding: '6px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '2px',
+                      zIndex: 40
+                    }}
+                  >
+                    <button
+                      onClick={() => {
+                        setActiveMenuId(null);
+                        onOpenLiveUrl(item.url);
+                      }}
+                      className="glass-menu-item"
+                    >
+                      <ExternalLink size={13} color="var(--accent-color)" />
+                      <span>Open Live Website</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setActiveMenuId(null);
+                        try { navigator.clipboard.writeText(item.url); } catch {}
+                      }}
+                      className="glass-menu-item"
+                    >
+                      <Copy size={13} color="var(--accent-color)" />
+                      <span>Copy Link</span>
+                    </button>
+                    <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '2px 0' }} />
+                    <button
+                      onClick={() => {
+                        setActiveMenuId(null);
+                        onDeleteItem(item.id);
+                      }}
+                      className="glass-menu-item glass-menu-item-danger"
+                    >
+                      <Trash2 size={13} />
+                      <span>{isTrash || Boolean(item.deletedAt) ? 'Permanently Delete' : 'Move to Trash'}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         );

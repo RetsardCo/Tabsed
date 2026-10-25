@@ -38,14 +38,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   return (
     <div
+      className="glass-modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.55)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -60,13 +62,16 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         aria-describedby="confirm-dialog-desc"
+        className="glass-modal-dialog"
         style={{
           width: '420px',
           maxWidth: '90vw',
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: 'var(--bg-popover)',
+          backdropFilter: 'var(--backdrop-filter-popover)',
+          WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
           borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-lg)',
+          border: '1px solid var(--border-popover)',
+          boxShadow: 'var(--shadow-popover)',
           padding: '24px',
           display: 'flex',
           flexDirection: 'column',

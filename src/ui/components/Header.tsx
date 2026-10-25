@@ -315,22 +315,27 @@ export const Header: React.FC<HeaderProps> = ({
               </button>
 
               {gridMenuOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '6px',
-                  width: '260px',
-                  backgroundColor: 'var(--bg-surface)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--shadow-lg), 0 10px 25px -5px rgba(0,0,0,0.25)',
-                  padding: '12px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '12px',
-                  zIndex: 50
-                }}>
+                <div
+                  className="glass-popover"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '6px',
+                    width: '260px',
+                    backgroundColor: 'var(--bg-popover)',
+                    backdropFilter: 'var(--backdrop-filter-popover)',
+                    WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-popover)',
+                    boxShadow: 'var(--shadow-popover)',
+                    padding: '12px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    zIndex: 50
+                  }}
+                >
                   {/* Columns section */}
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
@@ -435,22 +440,27 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
 
             {filterMenuOpen && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                marginTop: '6px',
-                width: '180px',
-                backgroundColor: 'var(--bg-surface)',
-                borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
-                boxShadow: 'var(--shadow-lg)',
-                padding: '6px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '2px',
-                zIndex: 50
-              }}>
+              <div
+                className="glass-popover"
+                style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  width: '185px',
+                  backgroundColor: 'var(--bg-popover)',
+                  backdropFilter: 'var(--backdrop-filter-popover)',
+                  WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-popover)',
+                  boxShadow: 'var(--shadow-popover)',
+                  padding: '6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                  zIndex: 50
+                }}
+              >
                 {[
                   { id: 'all', label: 'All Items' },
                   { id: 'favorites', label: 'Favorites Only' },
@@ -464,19 +474,12 @@ export const Header: React.FC<HeaderProps> = ({
                       onFilterTypeChange(opt.id);
                       setFilterMenuOpen(false);
                     }}
+                    className="glass-menu-item"
                     style={{
-                      display: 'flex',
-                      alignItems: 'center',
                       justifyContent: 'space-between',
-                      padding: '7px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      background: filterType === opt.id ? 'var(--accent-light)' : 'transparent',
-                      color: filterType === opt.id ? 'var(--accent-color)' : 'var(--text-primary)',
-                      fontSize: '12px',
-                      fontWeight: filterType === opt.id ? 600 : 400,
-                      cursor: 'pointer',
-                      textAlign: 'left'
+                      backgroundColor: filterType === opt.id ? 'var(--accent-light)' : undefined,
+                      color: filterType === opt.id ? 'var(--accent-color)' : undefined,
+                      fontWeight: filterType === opt.id ? 600 : 400
                     }}
                   >
                     <span>{opt.label}</span>
@@ -560,41 +563,33 @@ export const Header: React.FC<HeaderProps> = ({
 
               {/* Split Dropdown Menu */}
               {saveMenuOpen && (
-                <div style={{
-                  position: 'absolute',
-                  top: '100%',
-                  right: 0,
-                  marginTop: '6px',
-                  width: '210px',
-                  backgroundColor: 'var(--bg-surface)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--border-subtle)',
-                  boxShadow: 'var(--shadow-lg)',
-                  padding: '6px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '2px',
-                  zIndex: 50
-                }}>
+                <div
+                  className="glass-popover"
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '6px',
+                    width: '215px',
+                    backgroundColor: 'var(--bg-popover)',
+                    backdropFilter: 'var(--backdrop-filter-popover)',
+                    WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-popover)',
+                    boxShadow: 'var(--shadow-popover)',
+                    padding: '6px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '2px',
+                    zIndex: 50
+                  }}
+                >
                   <button
                     onClick={() => {
                       setSaveMenuOpen(false);
                       onOpenSaveModal('window');
                     }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
+                    className="glass-menu-item"
                   >
                     <Layers size={14} color="var(--accent-color)" />
                     <span>Save Current Window</span>
@@ -604,20 +599,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setSaveMenuOpen(false);
                       onOpenSaveModal('tab');
                     }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
+                    className="glass-menu-item"
                   >
                     <Globe size={14} color="var(--accent-color)" />
                     <span>Save Active Tab Only</span>
@@ -627,20 +609,7 @@ export const Header: React.FC<HeaderProps> = ({
                       setSaveMenuOpen(false);
                       onOpenSaveModal('manual');
                     }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      padding: '8px 10px',
-                      borderRadius: 'var(--radius-sm)',
-                      border: 'none',
-                      background: 'transparent',
-                      color: 'var(--text-primary)',
-                      fontSize: '12px',
-                      fontWeight: 500,
-                      cursor: 'pointer',
-                      textAlign: 'left'
-                    }}
+                    className="glass-menu-item"
                   >
                     <Link size={14} color="var(--accent-color)" />
                     <span>Save Manually by URL</span>

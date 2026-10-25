@@ -200,6 +200,7 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
       onClick={(e) => {
         if (e.target === e.currentTarget && !isProcessing) onClose();
       }}
+      className="glass-modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
@@ -207,7 +208,8 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(6px)',
+        backdropFilter: 'blur(14px)',
+        WebkitBackdropFilter: 'blur(14px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -219,14 +221,17 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="save-tabs-modal-title"
+        className="glass-modal-dialog"
         style={{
           width: '480px',
           maxWidth: '92vw',
           maxHeight: '88vh',
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: 'var(--bg-popover)',
+          backdropFilter: 'var(--backdrop-filter-popover)',
+          WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
           borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          border: '1px solid var(--border-popover)',
+          boxShadow: 'var(--shadow-popover), 0 20px 40px rgba(0, 0, 0, 0.4)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column'

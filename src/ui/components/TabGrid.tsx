@@ -381,7 +381,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 ? '2px solid var(--accent-color)'
                 : `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-card)'}`,
               borderRadius: 'var(--radius-lg)',
-              overflow: 'hidden',
+              overflow: activeMenuId === item.id ? 'visible' : 'hidden',
               display: 'flex',
               flexDirection: 'column',
               cursor: 'pointer',
@@ -393,7 +393,8 @@ export const TabGrid: React.FC<TabGridProps> = ({
                 : (isSelected
                   ? 'var(--shadow-md), var(--card-highlight), 0 0 0 1px var(--accent-color)'
                   : 'var(--shadow-sm), var(--card-highlight)'),
-              position: 'relative'
+              position: 'relative',
+              zIndex: activeMenuId === item.id ? 45 : (isSelected ? 5 : 1)
             }}
           >
             {/* Visual Drop to Group Glow Indicator */}
@@ -452,6 +453,8 @@ export const TabGrid: React.FC<TabGridProps> = ({
               backgroundColor: 'var(--bg-app)',
               position: 'relative',
               overflow: 'hidden',
+              borderTopLeftRadius: 'calc(var(--radius-lg) - 1px)',
+              borderTopRightRadius: 'calc(var(--radius-lg) - 1px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -766,17 +769,20 @@ export const TabGrid: React.FC<TabGridProps> = ({
 
                       {activeMenuId === item.id && (
                         <div
+                          className="glass-popover"
                           onClick={(e) => e.stopPropagation()}
                           style={{
                             position: 'absolute',
                             bottom: '100%',
                             right: 0,
                             marginBottom: '6px',
-                            width: '170px',
-                            backgroundColor: 'var(--bg-surface)',
+                            width: '180px',
+                            backgroundColor: 'var(--bg-popover)',
+                            backdropFilter: 'var(--backdrop-filter-popover)',
+                            WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
                             borderRadius: 'var(--radius-md)',
-                            border: '1px solid var(--border-subtle)',
-                            boxShadow: 'var(--shadow-lg)',
+                            border: '1px solid var(--border-popover)',
+                            boxShadow: 'var(--shadow-popover)',
                             padding: '6px',
                             display: 'flex',
                             flexDirection: 'column',
@@ -789,19 +795,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                               setActiveMenuId(null);
                               onOpenLiveUrl(item.url);
                             }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '7px 10px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-primary)',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
+                            className="glass-menu-item"
                           >
                             <ExternalLink size={13} color="var(--accent-color)" />
                             <span>Open Live Website</span>
@@ -811,19 +805,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                               setActiveMenuId(null);
                               try { navigator.clipboard.writeText(item.url); } catch {}
                             }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '7px 10px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--text-primary)',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
+                            className="glass-menu-item"
                           >
                             <Copy size={13} color="var(--accent-color)" />
                             <span>Copy Link</span>
@@ -834,19 +816,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                                 setActiveMenuId(null);
                                 onSelectItem(item.id);
                               }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '7px 10px',
-                                borderRadius: 'var(--radius-sm)',
-                                border: 'none',
-                                background: 'transparent',
-                                color: 'var(--text-primary)',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                textAlign: 'left'
-                              }}
+                              className="glass-menu-item"
                             >
                               <Layers size={13} color="var(--accent-color)" />
                               <span>View All Tabs</span>
@@ -858,19 +828,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                                 setActiveMenuId(null);
                                 onAddToGroup(item.id);
                               }}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                padding: '7px 10px',
-                                borderRadius: 'var(--radius-sm)',
-                                border: 'none',
-                                background: 'transparent',
-                                color: 'var(--text-primary)',
-                                fontSize: '12px',
-                                cursor: 'pointer',
-                                textAlign: 'left'
-                              }}
+                              className="glass-menu-item"
                             >
                               <FolderPlus size={13} color="var(--accent-color)" />
                               <span>Add to Group...</span>
@@ -882,19 +840,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
                               setActiveMenuId(null);
                               onDeleteItem(item.id);
                             }}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: '8px',
-                              padding: '7px 10px',
-                              borderRadius: 'var(--radius-sm)',
-                              border: 'none',
-                              background: 'transparent',
-                              color: 'var(--danger-color)',
-                              fontSize: '12px',
-                              cursor: 'pointer',
-                              textAlign: 'left'
-                            }}
+                            className="glass-menu-item glass-menu-item-danger"
                           >
                             <Trash2 size={13} />
                             <span>Move to Trash</span>

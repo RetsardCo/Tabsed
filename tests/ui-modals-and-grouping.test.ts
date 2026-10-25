@@ -187,4 +187,65 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
       expect(gridContent).toContain('Add to Group...');
     });
   });
+
+  describe('4. High-Opacity Frosted Glass Popovers & Modals (Zero Text Bleed-Through)', () => {
+    it('verifies index.css defines high-opacity, high-contrast glass tokens for both light and dark themes', () => {
+      const cssPath = path.join(rootDir, 'src', 'index.css');
+      const cssContent = fs.readFileSync(cssPath, 'utf8');
+
+      // Light mode popover tokens (>= 95% opacity to obscure underlying card text)
+      expect(cssContent).toContain('--bg-popover: rgba(255, 255, 255, 0.96);');
+      expect(cssContent).toContain('--bg-surface: rgba(255, 255, 255, 0.95);');
+      expect(cssContent).toContain('--backdrop-filter-popover: blur(28px) saturate(190%);');
+
+      // Dark mode popover tokens (>= 95% opacity)
+      expect(cssContent).toContain('--bg-popover: rgba(15, 23, 42, 0.96);');
+      expect(cssContent).toContain('--bg-surface: rgba(15, 23, 42, 0.95);');
+      expect(cssContent).toContain('--backdrop-filter-popover: blur(32px) saturate(200%);');
+
+      // Glass helper classes
+      expect(cssContent).toContain('.glass-popover');
+      expect(cssContent).toContain('.glass-menu-item');
+      expect(cssContent).toContain('.glass-modal-overlay');
+      expect(cssContent).toContain('.glass-modal-dialog');
+      expect(cssContent).toContain('background-color: var(--accent-light) !important;');
+    });
+
+    it('verifies TabGrid and TabDetailedList action menus use high-opacity frosted glass styling and handle clipping/hover', () => {
+      const gridContent = fs.readFileSync(path.join(componentsDir, 'TabGrid.tsx'), 'utf8');
+      expect(gridContent).toContain('className="glass-popover"');
+      expect(gridContent).toContain("backgroundColor: 'var(--bg-popover)'");
+      expect(gridContent).toContain("backdropFilter: 'var(--backdrop-filter-popover)'");
+      expect(gridContent).toContain("boxShadow: 'var(--shadow-popover)'");
+      expect(gridContent).toContain("overflow: activeMenuId === item.id ? 'visible' : 'hidden'");
+      expect(gridContent).toContain("zIndex: activeMenuId === item.id ? 45 : (isSelected ? 5 : 1)");
+      expect(gridContent).toContain('className="glass-menu-item"');
+      expect(gridContent).toContain('className="glass-menu-item glass-menu-item-danger"');
+
+      const detailContent = fs.readFileSync(path.join(componentsDir, 'TabDetailedList.tsx'), 'utf8');
+      expect(detailContent).toContain('className="glass-popover"');
+      expect(detailContent).toContain("backgroundColor: 'var(--bg-popover)'");
+      expect(detailContent).toContain("backdropFilter: 'var(--backdrop-filter-popover)'");
+      expect(detailContent).toContain("zIndex: activeMenuId === item.id ? 45 : (isSelected ? 5 : 1)");
+    });
+
+    it('verifies Header popovers use high-opacity frosted glass styling and glass-menu-item', () => {
+      const headerContent = fs.readFileSync(path.join(componentsDir, 'Header.tsx'), 'utf8');
+      expect(headerContent).toContain('className="glass-popover"');
+      expect(headerContent).toContain("backgroundColor: 'var(--bg-popover)'");
+      expect(headerContent).toContain("backdropFilter: 'var(--backdrop-filter-popover)'");
+      expect(headerContent).toContain("border: '1px solid var(--border-popover)'");
+      expect(headerContent).toContain('className="glass-menu-item"');
+    });
+
+    it('verifies DetailInspector dropdown and modals use high-opacity frosted glass styling', () => {
+      const inspectorContent = fs.readFileSync(path.join(componentsDir, 'DetailInspector.tsx'), 'utf8');
+      expect(inspectorContent).toContain('className="glass-popover"');
+      expect(inspectorContent).toContain("backgroundColor: 'var(--bg-popover)'");
+      expect(inspectorContent).toContain("backdropFilter: 'var(--backdrop-filter-popover)'");
+      expect(inspectorContent).toContain('className="glass-modal-overlay"');
+      expect(inspectorContent).toContain('className="glass-modal-dialog"');
+      expect(inspectorContent).toContain('className="glass-menu-item"');
+    });
+  });
 });

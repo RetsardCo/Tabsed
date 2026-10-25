@@ -40,15 +40,18 @@ export class ErrorBoundary extends Component<Props, State> {
       const content = (
         <div
           role="alert"
+          className={isModal ? 'glass-modal-dialog' : undefined}
           style={{
             width: isModal ? '100%' : 'auto',
             maxWidth: isModal ? '460px' : 'none',
             padding: '24px 28px',
             margin: isModal ? '0' : '16px',
-            backgroundColor: 'var(--bg-surface, #ffffff)',
-            border: '1px solid var(--border-subtle, #e2e8f0)',
+            backgroundColor: 'var(--bg-popover, #ffffff)',
+            backdropFilter: 'var(--backdrop-filter-popover)',
+            WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+            border: '1px solid var(--border-popover, #e2e8f0)',
             borderRadius: 'var(--radius-lg, 12px)',
-            boxShadow: 'var(--shadow-lg, 0 10px 15px -3px rgba(0,0,0,0.1))',
+            boxShadow: 'var(--shadow-popover, 0 10px 15px -3px rgba(0,0,0,0.1))',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -132,6 +135,7 @@ export class ErrorBoundary extends Component<Props, State> {
             onClick={(e) => {
               if (e.target === e.currentTarget) this.handleReset();
             }}
+            className="glass-modal-overlay"
             style={{
               position: 'fixed',
               top: 0,
@@ -139,8 +143,8 @@ export class ErrorBoundary extends Component<Props, State> {
               right: 0,
               bottom: 0,
               backgroundColor: 'rgba(15, 23, 42, 0.72)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

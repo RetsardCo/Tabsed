@@ -253,13 +253,14 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           handleSafeClose();
         }
       }}
+      className="glass-modal-overlay"
       style={{
         position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.72)',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         zIndex: 1000,
@@ -271,16 +272,19 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
       }}
     >
       <div
+        className="glass-modal-dialog"
         style={{
           display: 'flex',
           width: '94vw',
           maxWidth: '1240px',
           height: '88vh',
           maxHeight: '840px',
-          backgroundColor: 'var(--bg-surface)',
+          backgroundColor: 'var(--bg-popover)',
+          backdropFilter: 'var(--backdrop-filter-popover)',
+          WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
           borderRadius: '16px',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+          border: '1px solid var(--border-popover)',
+          boxShadow: 'var(--shadow-popover), 0 25px 60px -15px rgba(0, 0, 0, 0.55)',
           overflow: 'hidden'
         }}
       >
@@ -727,40 +731,33 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           </div>
 
           {isOpenMenuOpen && (
-            <div style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: '6px',
-              width: '180px',
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-lg)',
-              padding: '6px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '2px',
-              zIndex: 30
-            }}>
+            <div
+              className="glass-popover"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '6px',
+                width: '185px',
+                backgroundColor: 'var(--bg-popover)',
+                backdropFilter: 'var(--backdrop-filter-popover)',
+                WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-popover)',
+                boxShadow: 'var(--shadow-popover)',
+                padding: '6px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                zIndex: 30
+              }}
+            >
               <button
                 onClick={() => {
                   setIsOpenMenuOpen(false);
                   onOpenLiveUrl(item.url);
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '7px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'left'
-                }}
+                className="glass-menu-item"
               >
                 <ExternalLink size={14} color="var(--accent-color)" />
                 <span>Open in Browser</span>
@@ -770,19 +767,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                   setIsOpenMenuOpen(false);
                   handleCopy(item.url, 'main');
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '7px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'left'
-                }}
+                className="glass-menu-item"
               >
                 <Copy size={14} color="var(--accent-color)" />
                 <span>Copy URL</span>
@@ -793,19 +778,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                   onCheckAvailability(item.url);
                   showToast('Checking link availability...');
                 }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '7px 10px',
-                  borderRadius: 'var(--radius-sm)',
-                  border: 'none',
-                  background: 'transparent',
-                  color: 'var(--text-primary)',
-                  fontSize: '12px',
-                  cursor: 'pointer',
-                  textAlign: 'left'
-                }}
+                className="glass-menu-item"
               >
                 <Globe size={14} color="var(--accent-color)" />
                 <span>Check Link Status</span>
@@ -940,27 +913,36 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
 
         {/* Move to Collection Dialog */}
         {isMoveOpen && (
-          <div style={{
-            position: 'fixed',
-            inset: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.45)',
-            backdropFilter: 'blur(4px)',
-            zIndex: 1000,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <div style={{
-              width: '320px',
-              backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-lg)',
-              padding: '16px',
+          <div
+            className="glass-modal-overlay"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.65)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              zIndex: 1000,
               display: 'flex',
-              flexDirection: 'column',
-              gap: '12px'
-            }}>
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
+            <div
+              className="glass-modal-dialog"
+              style={{
+                width: '320px',
+                backgroundColor: 'var(--bg-popover)',
+                backdropFilter: 'var(--backdrop-filter-popover)',
+                WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
+                borderRadius: 'var(--radius-lg)',
+                border: '1px solid var(--border-popover)',
+                boxShadow: 'var(--shadow-popover)',
+                padding: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: '14px', fontWeight: 600 }}>Move to Collection</span>
                 <button
@@ -1428,27 +1410,34 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
 
       {/* Full "View All Session Tabs" Modal */}
       {isViewAllOpen && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.65)',
-          backdropFilter: 'blur(8px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
+        <div
+          className="glass-modal-overlay"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+        >
           <div
             role="dialog"
             aria-modal="true"
             aria-labelledby="session-tabs-modal-title"
+            className="glass-modal-dialog"
             style={{
               width: '640px',
               maxHeight: '85vh',
-              backgroundColor: 'var(--bg-surface)',
+              backgroundColor: 'var(--bg-popover)',
+              backdropFilter: 'var(--backdrop-filter-popover)',
+              WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
               borderRadius: 'var(--radius-lg)',
-              border: '1px solid var(--border-subtle)',
-              boxShadow: 'var(--shadow-lg)',
+              border: '1px solid var(--border-popover)',
+              boxShadow: 'var(--shadow-popover)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column'
