@@ -114,6 +114,9 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
                 <span>Saved: {new Date(item.savedAt).toLocaleDateString()}</span>
                 <span>Browser: {item.browserFamily}</span>
+                <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
+                  {item.tabCount || (item.sessionTabs ? item.sessionTabs.length : 1)} tabs
+                </span>
                 {item.tags.length > 0 && (
                   <div style={{ display: 'flex', gap: '4px' }}>
                     {item.tags.map(t => (

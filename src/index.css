@@ -105,9 +105,18 @@
   padding: 0;
 }
 
-html, body, #root {
+html, body {
   background: transparent !important;
   background-color: transparent !important;
+}
+
+#root {
+  background: var(--bg-app-ambient);
+  backdrop-filter: var(--backdrop-filter);
+  -webkit-backdrop-filter: var(--backdrop-filter);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
 }
 
 body {

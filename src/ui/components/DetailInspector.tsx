@@ -117,18 +117,32 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
     return (bytes / 1024).toFixed(0) + ' KB';
   };
 
-  const sessionTabs: SessionTab[] = item.sessionTabs && item.sessionTabs.length > 0
-    ? item.sessionTabs
-    : [
-        {
-          id: 'sub_1',
-          title: item.title,
-          url: item.url,
-          domain: item.domain,
-          faviconUrl: item.faviconUrl
-        }
-      ];
+  const sessionTabs: SessionTab[] = React.useMemo(() => {
+    if (item.sessionTabs && item.sessionTabs.length > 0) {
+      return item.sessionTabs;
+    }
+    const count = item.tabCount && item.tabCount > 1 ? item.tabCount : 1;
+    if (count > 1) {
+      return Array.from({ length: count }, (_, idx) => ({
+        id: `synth_${item.id}_${idx + 1}`,
+        title: `${item.title} — Tab ${idx + 1}`,
+        url: `${item.url}${item.url.includes('?') ? '&' : '?'}tab=${idx + 1}`,
+        domain: item.domain,
+        faviconUrl: item.faviconUrl
+      }));
+    }
+    return [
+      {
+        id: `sub_${item.id}_1`,
+        title: item.title,
+        url: item.url,
+        domain: item.domain,
+        faviconUrl: item.faviconUrl
+      }
+    ];
+  }, [item]);
 
+  const isSessionGroup = item.itemType === 'session' || (item.tabCount && item.tabCount > 1) || sessionTabs.length > 1;
   const tabCount = item.tabCount || sessionTabs.length;
 
   const handleOpenAllTabs = () => {
@@ -961,38 +975,42 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           )}
         </div>
 
-        {/* Section: Tabs in this Session (Exact mockup layout) */}
+        {/* Section: Tabs in this Session (or Single Tab Details) */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Tabs in this Session
+                {isSessionGroup ? 'Tabs in this Session' : 'Saved Tab Link'}
               </span>
-              <span style={{
-                fontSize: '11px',
-                fontWeight: 600,
-                color: 'var(--text-muted)',
-                backgroundColor: 'var(--bg-app)',
-                border: '1px solid var(--border-subtle)',
-                borderRadius: '10px',
-                padding: '1px 6px'
-              }}>
-                {sessionTabs.length}
-              </span>
+              {isSessionGroup && (
+                <span style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  color: 'var(--text-muted)',
+                  backgroundColor: 'var(--bg-app)',
+                  border: '1px solid var(--border-subtle)',
+                  borderRadius: '10px',
+                  padding: '1px 6px'
+                }}>
+                  {sessionTabs.length}
+                </span>
+              )}
             </div>
-            <button
-              onClick={() => setIsViewAllOpen(true)}
-              style={{
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-                color: 'var(--accent-color)',
-                fontSize: '12px',
-                fontWeight: 600
-              }}
-            >
-              View All ({sessionTabs.length})
-            </button>
+            {isSessionGroup && (
+              <button
+                onClick={() => setIsViewAllOpen(true)}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  cursor: 'pointer',
+                  color: 'var(--accent-color)',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
+              >
+                View All ({sessionTabs.length})
+              </button>
+            )}
           </div>
 
           <div style={{

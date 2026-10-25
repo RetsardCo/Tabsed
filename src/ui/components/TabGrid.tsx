@@ -1,11 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Star,
   Trash2,
   Globe,
   MoreHorizontal,
   RotateCcw,
-  Layers
+  Layers,
+  ExternalLink,
+  Copy
 } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartFavicon } from './BrandIcons';
@@ -31,6 +33,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
   onRestoreItem,
   isTrash
 }) => {
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   if (items.length === 0) {
     return (
       <div style={{
@@ -387,26 +390,140 @@ export const TabGrid: React.FC<TabGridProps> = ({
                     >
                       <Trash2 size={15} />
                     </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectItem(item.id);
-                      }}
-                      title="Tab actions"
-                      aria-label="Tab actions"
-                      style={{
-                        border: 'none',
-                        background: 'transparent',
-                        cursor: 'pointer',
-                        color: 'var(--text-muted)',
-                        padding: '4px',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <MoreHorizontal size={16} />
-                    </button>
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === item.id ? null : item.id);
+                        }}
+                        title="Tab actions"
+                        aria-label="Tab actions"
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          color: activeMenuId === item.id ? 'var(--accent-color)' : 'var(--text-muted)',
+                          padding: '4px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <MoreHorizontal size={16} />
+                      </button>
+
+                      {activeMenuId === item.id && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          style={{
+                            position: 'absolute',
+                            bottom: '100%',
+                            right: 0,
+                            marginBottom: '6px',
+                            width: '170px',
+                            backgroundColor: 'var(--bg-surface)',
+                            borderRadius: 'var(--radius-md)',
+                            border: '1px solid var(--border-subtle)',
+                            boxShadow: 'var(--shadow-lg)',
+                            padding: '6px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '2px',
+                            zIndex: 40
+                          }}
+                        >
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              onOpenLiveUrl(item.url);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '7px 10px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-primary)',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <ExternalLink size={13} color="var(--accent-color)" />
+                            <span>Open Live Website</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              try { navigator.clipboard.writeText(item.url); } catch {}
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '7px 10px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-primary)',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <Copy size={13} color="var(--accent-color)" />
+                            <span>Copy Link</span>
+                          </button>
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              onSelectItem(item.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '7px 10px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--text-primary)',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <Layers size={13} color="var(--accent-color)" />
+                            <span>View All Tabs</span>
+                          </button>
+                          <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '2px 0' }} />
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              onDeleteItem(item.id);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              padding: '7px 10px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--danger-color)',
+                              fontSize: '12px',
+                              cursor: 'pointer',
+                              textAlign: 'left'
+                            }}
+                          >
+                            <Trash2 size={13} />
+                            <span>Move to Trash</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </>
                 )}
               </div>

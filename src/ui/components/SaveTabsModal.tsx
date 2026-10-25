@@ -66,16 +66,21 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
     if (scope === 'tab') {
       candidateTabs = allTabs.slice(0, 1);
     } else if (scope === 'manual') {
-      if (!manualUrl) {
+      if (!manualUrl || !manualUrl.trim()) {
         setStatusMessage('Please enter a valid URL.');
         setIsProcessing(false);
         return;
       }
+      const trimmed = manualUrl.trim();
+      const normalized = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+        ? trimmed
+        : `https://${trimmed}`;
+
       candidateTabs = [{
         tabId: 'manual_' + Date.now(),
         windowId: 1,
-        url: manualUrl,
-        title: manualTitle || manualUrl,
+        url: normalized,
+        title: manualTitle.trim() || normalized,
         pinned: false,
         orderIndex: 0,
         incognito: false,

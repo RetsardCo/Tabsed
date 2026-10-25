@@ -37,6 +37,7 @@ interface SidebarProps {
   activeItemCount: number;
   favoritesCount: number;
   trashCount: number;
+  collectionsCount?: number;
   recentCount?: number;
   storageUsedBytes?: number;
   storageLimitBytes?: number;
@@ -65,6 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeItemCount,
   favoritesCount,
   trashCount,
+  collectionsCount = 0,
   recentCount = 0,
   storageUsedBytes = 0,
   storageLimitBytes = 50 * 1024 * 1024 * 1024,
@@ -248,17 +250,69 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           onClick={() => onSelectDestination('collections')}
-          style={navItemStyle(currentDestination === 'collections' || currentDestination.startsWith('col_'))}
+          style={navItemStyle(currentDestination === 'collections')}
           title="Collections"
         >
           <Folder size={17} />
           {!isCollapsed && (
             <span style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <span>Collections</span>
-              <span style={badgeStyle}>{collections.length}</span>
+              <span style={badgeStyle}>{collectionsCount}</span>
             </span>
           )}
         </button>
+
+        {/* Sub-items for each individual collection */}
+        {!isCollapsed && collections.map(col => {
+          const isSelected = currentDestination === `col_${col.id}`;
+          return (
+            <button
+              key={col.id}
+              onClick={() => onSelectDestination(`col_${col.id}`)}
+              style={{
+                ...navItemStyle(isSelected),
+                paddingLeft: '28px',
+                fontSize: '12px'
+              }}
+              title={col.name}
+            >
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: col.accentColor || 'var(--accent-color)',
+                flexShrink: 0
+              }} />
+              <span style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center', overflow: 'hidden' }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{col.name}</span>
+                <span style={badgeStyle}>{col.itemCount || 0}</span>
+              </span>
+            </button>
+          );
+        })}
+
+        {!isCollapsed && (
+          <button
+            onClick={onOpenCreateCollection}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 12px 4px 28px',
+              fontSize: '11px',
+              color: 'var(--accent-color)',
+              background: 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 600,
+              textAlign: 'left',
+              marginBottom: '2px'
+            }}
+          >
+            <Plus size={12} />
+            <span>New Collection</span>
+          </button>
+        )}
 
         <button
           onClick={() => onSelectDestination('recent')}

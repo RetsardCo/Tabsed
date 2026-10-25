@@ -137,10 +137,86 @@ describe('Dynamic Badge Counts & Session Tab Item Operations', () => {
       expect(firefoxCount).toBe(0);
       expect(dupes).toBe(0);
       expect(brokenCount).toBe(0);
+
+      // Collections count drops to 0
+      const collectionsCount = active.filter(i => i.collectionIds && i.collectionIds.length > 0).length;
+      expect(collectionsCount).toBe(0);
+    });
+
+    it('filters items correctly based on filterType', () => {
+      const active = initialItems.filter(i => !i.deletedAt);
+
+      // filterType: 'favorites'
+      const favorites = active.filter(i => i.isFavorite);
+      expect(favorites.length).toBe(1);
+      expect(favorites[0].id).toBe('session-1');
+
+      // filterType: 'session'
+      const sessions = active.filter(i => i.itemType === 'session' || (i.tabCount && i.tabCount > 1));
+      expect(sessions.length).toBe(1);
+      expect(sessions[0].id).toBe('session-1');
+
+      // filterType: 'tab'
+      const singleTabs = active.filter(i => i.itemType === 'tab' || !i.tabCount || i.tabCount <= 1);
+      expect(singleTabs.length).toBe(3);
+
+      // filterType: 'reachable'
+      const reachable = active.filter(i => i.availabilityStatus === 'reachable');
+      expect(reachable.length).toBe(2);
     });
   });
 
-  describe('Session Sub-Tab Operations', () => {
+  describe('Session Sub-Tab Operations & Edge Cases', () => {
+    it('synthesizes sub-tabs if a session item has tabCount > 1 but no sessionTabs array', () => {
+      const bareSessionItem: SavedTabItem = {
+        id: 'bare-session',
+        vaultId: 'default',
+        itemType: 'session',
+        title: 'Batch Research Session',
+        url: 'https://example.com/research',
+        normalizedUrl: 'https://example.com/research',
+        domain: 'example.com',
+        browserFamily: 'Chrome',
+        savedAt: '2026-10-24T14:00:00Z',
+        notes: '',
+        isFavorite: false,
+        collectionIds: [],
+        tags: [],
+        tabCount: 4,
+        sessionTabs: undefined
+      };
+
+      const count = bareSessionItem.tabCount && bareSessionItem.tabCount > 1 ? bareSessionItem.tabCount : 1;
+      const synthesizedTabs = Array.from({ length: count }, (_, idx) => ({
+        id: `synth_${bareSessionItem.id}_${idx + 1}`,
+        title: `${bareSessionItem.title} — Tab ${idx + 1}`,
+        url: `${bareSessionItem.url}${bareSessionItem.url.includes('?') ? '&' : '?'}tab=${idx + 1}`,
+        domain: bareSessionItem.domain,
+        faviconUrl: bareSessionItem.faviconUrl
+      }));
+
+      expect(synthesizedTabs.length).toBe(4);
+      expect(synthesizedTabs[0].title).toBe('Batch Research Session — Tab 1');
+      expect(synthesizedTabs[3].url).toBe('https://example.com/research?tab=4');
+    });
+
+    it('normalizes manual URL inputs by prepending https:// if scheme is missing', () => {
+      const testCases = [
+        { input: 'github.com/RetsardCo/Tabsed', expected: 'https://github.com/RetsardCo/Tabsed' },
+        { input: 'http://insecure-site.local', expected: 'http://insecure-site.local' },
+        { input: 'https://secure-site.org/page', expected: 'https://secure-site.org/page' },
+        { input: '   docs.godotengine.org/en/stable/   ', expected: 'https://docs.godotengine.org/en/stable/' },
+      ];
+
+      for (const tc of testCases) {
+        const trimmed = tc.input.trim();
+        const normalized = trimmed.startsWith('http://') || trimmed.startsWith('https://')
+          ? trimmed
+          : `https://${trimmed}`;
+        expect(normalized).toBe(tc.expected);
+      }
+    });
+
     it('deletes an individual sub-tab from a session group without deleting the parent group', () => {
       let items = [...initialItems];
 

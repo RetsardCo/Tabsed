@@ -99,7 +99,7 @@ const INITIAL_ITEMS: SavedTabItem[] = [
   {
     id: 'mock_3',
     vaultId: 'default',
-    itemType: 'tab',
+    itemType: 'session',
     title: 'Relaxing Music Playlist',
     url: 'https://www.youtube.com/watch?v=ambient-nature',
     normalizedUrl: 'https://www.youtube.com/watch?v=ambient-nature',
@@ -113,9 +113,17 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['inbox'],
     tags: ['Entertainment', 'Music'],
-    tabCount: 15,
+    tabCount: 6,
     archiveSizeBytes: 210 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_3_1', title: 'Ambient Nature Soundscapes (10h Focus Audio)', url: 'https://www.youtube.com/watch?v=ambient-nature', domain: 'youtube.com', faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico' },
+      { id: 'sub_3_2', title: 'Lofi Hip Hop Radio — Beats to Relax/Study to', url: 'https://music.youtube.com/watch?v=lofi-beats', domain: 'music.youtube.com', faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico' },
+      { id: 'sub_3_3', title: 'Peaceful Piano Instrumental Focus Playlist', url: 'https://open.spotify.com/playlist/peaceful-piano', domain: 'spotify.com', faviconUrl: 'https://open.spotify.com/favicon.ico' },
+      { id: 'sub_3_4', title: 'Deep Electronic Concentration Beats', url: 'https://soundcloud.com/discover/deep-focus', domain: 'soundcloud.com', faviconUrl: 'https://soundcloud.com/favicon.ico' },
+      { id: 'sub_3_5', title: 'MyNoise — Customized Rain & Storm Audio Generator', url: 'https://mynoise.net/NoiseMachines/rainNoiseGenerator.php', domain: 'mynoise.net', faviconUrl: 'https://mynoise.net/favicon.ico' },
+      { id: 'sub_3_6', title: 'Brain.fm — Functional Music to Improve Focus', url: 'https://brain.fm/', domain: 'brain.fm', faviconUrl: 'https://brain.fm/favicon.ico' }
+    ]
   },
   {
     id: 'mock_4',
@@ -134,9 +142,23 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['design'],
     tags: ['Design', 'Inspiration', 'UI/UX'],
-    tabCount: 24,
+    tabCount: 12,
     archiveSizeBytes: 520 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_4_1', title: 'Figma — Global UI Design System & Tokens', url: 'https://figma.com/@design-system', domain: 'figma.com', faviconUrl: 'https://static.figma.com/app/icon/1/favicon.ico' },
+      { id: 'sub_4_2', title: 'Apple Human Interface Guidelines (macOS/iOS)', url: 'https://developer.apple.com/design/human-interface-guidelines', domain: 'apple.com', faviconUrl: 'https://developer.apple.com/favicon.ico' },
+      { id: 'sub_4_3', title: 'Material Design 3 — Expressive Dynamic Theming', url: 'https://m3.material.io/', domain: 'material.io', faviconUrl: 'https://m3.material.io/favicon.ico' },
+      { id: 'sub_4_4', title: 'Tailwind CSS — Rapid Modern Utility Styling', url: 'https://tailwindcss.com/docs', domain: 'tailwindcss.com', faviconUrl: 'https://tailwindcss.com/favicons/favicon.ico' },
+      { id: 'sub_4_5', title: 'Lucide Icons — Clean SVG Icon Library', url: 'https://lucide.dev/icons', domain: 'lucide.dev', faviconUrl: 'https://lucide.dev/favicon.ico' },
+      { id: 'sub_4_6', title: 'Dribbble — Frosted Glassmorphism Concepts', url: 'https://dribbble.com/tags/glassmorphism', domain: 'dribbble.com', faviconUrl: 'https://dribbble.com/favicon.ico' },
+      { id: 'sub_4_7', title: 'Mobbin — Real Mobile & Desktop UI Flows', url: 'https://mobbin.com/browse/ios/apps', domain: 'mobbin.com', faviconUrl: 'https://mobbin.com/favicon.ico' },
+      { id: 'sub_4_8', title: 'UI8 — Curated Design Resources & Kits', url: 'https://ui8.net/', domain: 'ui8.net', faviconUrl: 'https://ui8.net/favicon.ico' },
+      { id: 'sub_4_9', title: 'Siteinspire — Minimalist Web Architecture Gallery', url: 'https://siteinspire.com/', domain: 'siteinspire.com', faviconUrl: 'https://siteinspire.com/favicon.ico' },
+      { id: 'sub_4_10', title: 'Typewolf — Typography & Font Pairing Guides', url: 'https://typewolf.com/', domain: 'typewolf.com', faviconUrl: 'https://typewolf.com/favicon.ico' },
+      { id: 'sub_4_11', title: 'shadcn/ui — Accessible & Customizable UI Primitives', url: 'https://ui.shadcn.com/', domain: 'shadcn.com', faviconUrl: 'https://ui.shadcn.com/favicon.ico' },
+      { id: 'sub_4_12', title: 'Framer Motion — Declarative React Animations', url: 'https://www.framer.com/motion/', domain: 'framer.com', faviconUrl: 'https://www.framer.com/favicon.ico' }
+    ]
   },
   {
     id: 'mock_5',
@@ -155,9 +177,21 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['dev'],
     tags: ['Development', 'Tools', 'Productivity'],
-    tabCount: 18,
+    tabCount: 10,
     archiveSizeBytes: 340 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_5_1', title: 'GitHub — Trending Rust Repositories & Crates', url: 'https://github.com/trending/rust', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
+      { id: 'sub_5_2', title: 'Rust Programming Language — Fast, Reliable, Safe', url: 'https://www.rust-lang.org/', domain: 'rust-lang.org', faviconUrl: 'https://www.rust-lang.org/static/images/favicon.svg' },
+      { id: 'sub_5_3', title: 'Tokio — Asynchronous Runtime for the Rust Language', url: 'https://tokio.rs/', domain: 'tokio.rs', faviconUrl: 'https://tokio.rs/favicon.ico' },
+      { id: 'sub_5_4', title: 'Tauri 2.0 — Build Faster and More Secure Desktop Apps', url: 'https://tauri.app/', domain: 'tauri.app', faviconUrl: 'https://tauri.app/favicon.ico' },
+      { id: 'sub_5_5', title: 'SQLite — Self-Contained Serverless SQL Database', url: 'https://sqlite.org/', domain: 'sqlite.org', faviconUrl: 'https://sqlite.org/favicon.ico' },
+      { id: 'sub_5_6', title: 'Crates.io — The Rust Package Registry', url: 'https://crates.io/', domain: 'crates.io', faviconUrl: 'https://crates.io/favicon.ico' },
+      { id: 'sub_5_7', title: 'Docs.rs — Documentation for Crate Dependencies', url: 'https://docs.rs/', domain: 'docs.rs', faviconUrl: 'https://docs.rs/favicon.ico' },
+      { id: 'sub_5_8', title: 'GitHub CLI — Work with GitHub from your CLI', url: 'https://cli.github.com/', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
+      { id: 'sub_5_9', title: 'Vite — Next Generation Frontend Tooling', url: 'https://vite.dev/', domain: 'vite.dev', faviconUrl: 'https://vite.dev/logo.svg' },
+      { id: 'sub_5_10', title: 'Vitest — Blazing Fast Unit Test Framework', url: 'https://vitest.dev/', domain: 'vitest.dev', faviconUrl: 'https://vitest.dev/favicon.ico' }
+    ]
   },
   {
     id: 'mock_6',
@@ -176,9 +210,21 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['dev'],
     tags: ['Game Dev', 'Engine', 'Learning'],
-    tabCount: 32,
+    tabCount: 10,
     archiveSizeBytes: 812 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_6_1', title: 'Unity Learn — Tutorials and Project Modules', url: 'https://unity.com/learn', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
+      { id: 'sub_6_2', title: 'Unity Scripting Reference & Engine Manual', url: 'https://docs.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
+      { id: 'sub_6_3', title: 'Unity Asset Store — 3D Models, Shaders & Tools', url: 'https://assetstore.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
+      { id: 'sub_6_4', title: 'Catlike Coding — Math, Shaders, and Custom SRP', url: 'https://catlikecoding.com/unity/tutorials/', domain: 'catlikecoding.com', faviconUrl: 'https://catlikecoding.com/favicon.ico' },
+      { id: 'sub_6_5', title: 'Kenney — Public Domain 2D & 3D Game Assets', url: 'https://kenney.nl/assets', domain: 'kenney.nl', faviconUrl: 'https://kenney.nl/favicon.ico' },
+      { id: 'sub_6_6', title: 'Mixamo — Character Rigging & Animation Library', url: 'https://mixamo.com/', domain: 'mixamo.com', faviconUrl: 'https://mixamo.com/favicon.ico' },
+      { id: 'sub_6_7', title: 'Poly Pizza — Free Low Poly 3D Models', url: 'https://poly.pizza/', domain: 'poly.pizza', faviconUrl: 'https://poly.pizza/favicon.ico' },
+      { id: 'sub_6_8', title: 'Freesound — Creative Commons Audio & Foley Effects', url: 'https://freesound.org/', domain: 'freesound.org', faviconUrl: 'https://freesound.org/favicon.ico' },
+      { id: 'sub_6_9', title: 'Unity Forum — Developer Discussions & Releases', url: 'https://forum.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
+      { id: 'sub_6_10', title: 'Reddit — Game Development Community & Postmortems', url: 'https://reddit.com/r/gamedev', domain: 'reddit.com', faviconUrl: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png' }
+    ]
   },
   {
     id: 'mock_7',
@@ -197,9 +243,19 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['research'],
     tags: ['Research', 'Thesis', 'Notes'],
-    tabCount: 14,
+    tabCount: 8,
     archiveSizeBytes: 210 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_7_1', title: 'Google Docs — Thesis Chapter 3 Draft', url: 'https://docs.google.com/document/d/thesis-draft', domain: 'docs.google.com', faviconUrl: 'https://ssl.gstatic.com/docs/documents/images/kix-favicon7.ico' },
+      { id: 'sub_7_2', title: 'Google Scholar — Academic Citations & Literature', url: 'https://scholar.google.com/', domain: 'scholar.google.com', faviconUrl: 'https://scholar.google.com/favicon.ico' },
+      { id: 'sub_7_3', title: 'arXiv.org — Pre-print Archive in Computer Science', url: 'https://arxiv.org/', domain: 'arxiv.org', faviconUrl: 'https://arxiv.org/favicon.ico' },
+      { id: 'sub_7_4', title: 'ACM Digital Library — Peer-Reviewed Computing Research', url: 'https://dl.acm.org/', domain: 'acm.org', faviconUrl: 'https://dl.acm.org/favicon.ico' },
+      { id: 'sub_7_5', title: 'IEEE Xplore — Digital Library & Standards', url: 'https://ieeexplore.ieee.org/', domain: 'ieee.org', faviconUrl: 'https://ieeexplore.ieee.org/favicon.ico' },
+      { id: 'sub_7_6', title: 'Zotero — Reference Management & BibTeX Exporter', url: 'https://www.zotero.org/', domain: 'zotero.org', faviconUrl: 'https://www.zotero.org/favicon.ico' },
+      { id: 'sub_7_7', title: 'Semantic Scholar — AI-Powered Scientific Literature', url: 'https://semanticscholar.org/', domain: 'semanticscholar.org', faviconUrl: 'https://semanticscholar.org/favicon.ico' },
+      { id: 'sub_7_8', title: 'Papers with Code — ML Benchmarks & SOTA Models', url: 'https://paperswithcode.com/', domain: 'paperswithcode.com', faviconUrl: 'https://paperswithcode.com/favicon.ico' }
+    ]
   },
   {
     id: 'mock_8',
@@ -218,9 +274,19 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['design'],
     tags: ['Design', 'Creative', 'Reference'],
-    tabCount: 28,
+    tabCount: 8,
     archiveSizeBytes: 430 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_8_1', title: 'Behance — Interaction & Product Design Showcase', url: 'https://behance.net/galleries/interaction', domain: 'behance.net', faviconUrl: 'https://www.behance.net/favicon.ico' },
+      { id: 'sub_8_2', title: 'Awwwards — Website Awards & Design Excellence', url: 'https://www.awwwards.com/', domain: 'awwwards.com', faviconUrl: 'https://www.awwwards.com/favicon.ico' },
+      { id: 'sub_8_3', title: 'Designboom — Architecture, Art & Technology Magazine', url: 'https://www.designboom.com/', domain: 'designboom.com', faviconUrl: 'https://www.designboom.com/favicon.ico' },
+      { id: 'sub_8_4', title: 'It\'s Nice That — Championing Creativity in Art & Design', url: 'https://www.itsnicethat.com/', domain: 'itsnicethat.com', faviconUrl: 'https://www.itsnicethat.com/favicon.ico' },
+      { id: 'sub_8_5', title: 'Are.na — Visual Research & Collective Moodboards', url: 'https://www.are.na/', domain: 'are.na', faviconUrl: 'https://www.are.na/favicon.ico' },
+      { id: 'sub_8_6', title: 'Land-book — Curated Landing Page Inspiration', url: 'https://land-book.com/', domain: 'land-book.com', faviconUrl: 'https://land-book.com/favicon.ico' },
+      { id: 'sub_8_7', title: 'Fonts in Use — An Independent Archive of Typography', url: 'https://www.fontsinuse.com/', domain: 'fontsinuse.com', faviconUrl: 'https://www.fontsinuse.com/favicon.ico' },
+      { id: 'sub_8_8', title: 'Mindsparkle Mag — Design & Digital Showcase', url: 'https://mindsparklemag.com/', domain: 'mindsparklemag.com', faviconUrl: 'https://mindsparklemag.com/favicon.ico' }
+    ]
   },
   {
     id: 'mock_9',
@@ -239,9 +305,18 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     isFavorite: false,
     collectionIds: ['inbox'],
     tags: ['Shopping', 'Hardware', 'PC Setup'],
-    tabCount: 9,
+    tabCount: 7,
     archiveSizeBytes: 190 * 1024 * 1024,
-    availabilityStatus: 'reachable'
+    availabilityStatus: 'reachable',
+    sessionTabs: [
+      { id: 'sub_9_1', title: 'Amazon — High Performance PC Hardware Guide', url: 'https://amazon.com/dp/pc-hardware-guide', domain: 'amazon.com', faviconUrl: 'https://www.amazon.com/favicon.ico' },
+      { id: 'sub_9_2', title: 'PCPartPicker — Custom System Builder & Compatibility', url: 'https://pcpartpicker.com/list/', domain: 'pcpartpicker.com', faviconUrl: 'https://pcpartpicker.com/favicon.ico' },
+      { id: 'sub_9_3', title: 'Tom\'s Hardware — GPU Benchmarks & Hierarchy', url: 'https://www.tomshardware.com/reviews/gpu-hierarchy,4388.html', domain: 'tomshardware.com', faviconUrl: 'https://www.tomshardware.com/favicon.ico' },
+      { id: 'sub_9_4', title: 'TechPowerUp — GPU Database & Specifications', url: 'https://www.techpowerup.com/gpu-specs/', domain: 'techpowerup.com', faviconUrl: 'https://www.techpowerup.com/favicon.ico' },
+      { id: 'sub_9_5', title: 'RTINGS — Monitor Reviews & Color Accuracy Testing', url: 'https://www.rtings.com/monitor', domain: 'rtings.com', faviconUrl: 'https://www.rtings.com/favicon.ico' },
+      { id: 'sub_9_6', title: 'Reddit — PC Building Questions, Troubleshooting & Advice', url: 'https://reddit.com/r/buildapc', domain: 'reddit.com', faviconUrl: 'https://www.redditstatic.com/shreddit/assets/favicon/192x192.png' },
+      { id: 'sub_9_7', title: 'Mechanical Keyboards — Custom Switches & Keycaps', url: 'https://mechanicalkeyboards.com/', domain: 'mechanicalkeyboards.com', faviconUrl: 'https://mechanicalkeyboards.com/favicon.ico' }
+    ]
   }
 ];
 
@@ -255,7 +330,7 @@ export const App: React.FC = () => {
         if (Array.isArray(parsed) && parsed.length > 0) {
           return parsed.map(item => {
             const initialMatch = INITIAL_ITEMS.find(init => init.id === item.id);
-            if (initialMatch && (!item.sessionTabs || item.sessionTabs.length < (initialMatch.sessionTabs?.length || 0))) {
+            if (initialMatch && initialMatch.sessionTabs && (!item.sessionTabs || item.sessionTabs.length < initialMatch.sessionTabs.length)) {
               return { ...item, sessionTabs: initialMatch.sessionTabs, tabCount: initialMatch.tabCount };
             }
             return item;
@@ -426,12 +501,27 @@ export const App: React.FC = () => {
       result = result.filter(i => !i.deletedAt && i.browserFamily === 'Chrome');
     } else if (currentDestination === 'browser_firefox') {
       result = result.filter(i => !i.deletedAt && i.browserFamily === 'Firefox');
+    } else if (currentDestination === 'collections') {
+      result = result.filter(i => !i.deletedAt && i.collectionIds && i.collectionIds.length > 0);
     } else if (currentDestination.startsWith('col_')) {
       const colId = currentDestination.replace('col_', '');
       result = result.filter(i => i.collectionIds.includes(colId) && !i.deletedAt);
     } else {
       // Default: All active tabs
       result = result.filter(i => !i.deletedAt);
+    }
+
+    // Filter Type dropdown filter (favorites, tab, session, reachable)
+    if (filterType && filterType !== 'all') {
+      if (filterType === 'favorites') {
+        result = result.filter(i => i.isFavorite);
+      } else if (filterType === 'tab') {
+        result = result.filter(i => i.itemType === 'tab' || !i.tabCount || i.tabCount <= 1);
+      } else if (filterType === 'session') {
+        result = result.filter(i => i.itemType === 'session' || (i.tabCount && i.tabCount > 1));
+      } else if (filterType === 'reachable') {
+        result = result.filter(i => i.availabilityStatus === 'reachable');
+      }
     }
 
     // Pill Filter (All, Tab, Session, AI, Development, Research, Design, Work)
@@ -472,7 +562,7 @@ export const App: React.FC = () => {
       if (sortBy === 'size') return (b.archiveSizeBytes || 0) - (a.archiveSizeBytes || 0);
       return 0;
     });
-  }, [items, currentDestination, activeTagFilter, searchQuery, sortBy]);
+  }, [items, currentDestination, activeTagFilter, searchQuery, sortBy, filterType]);
 
   const selectedItem = useMemo(() => {
     return items.find(i => i.id === selectedItemId) || null;
@@ -492,6 +582,10 @@ export const App: React.FC = () => {
       itemCount: items.filter(i => i.collectionIds.includes(col.id) && !i.deletedAt).length
     }));
   }, [collections, items]);
+
+  const collectionsCount = useMemo(() => {
+    return items.filter(i => !i.deletedAt && i.collectionIds && i.collectionIds.length > 0).length;
+  }, [items]);
 
   const activeItemCount = useMemo(() => items.filter(i => !i.deletedAt).length, [items]);
 
@@ -657,6 +751,19 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleMagicOrganize = () => {
+    setItems(prev => prev.map(item => {
+      const newTags = new Set(item.tags);
+      const d = item.domain.toLowerCase();
+      if (d.includes('github') || d.includes('rust') || d.includes('unity') || d.includes('tauri')) newTags.add('Development');
+      if (d.includes('figma') || d.includes('behance') || d.includes('dribbble')) newTags.add('Design');
+      if (d.includes('arxiv') || d.includes('scholar') || d.includes('docs')) newTags.add('Research');
+      if (d.includes('youtube') || d.includes('spotify') || d.includes('soundcloud')) newTags.add('Entertainment');
+      if (d.includes('notion') || d.includes('linear')) newTags.add('Productivity');
+      return { ...item, tags: Array.from(newTags) };
+    }));
+  };
+
   // Get destination display title
   const getDestinationTitle = () => {
     if (currentDestination === 'favorites') return 'Favorites';
@@ -665,6 +772,7 @@ export const App: React.FC = () => {
     if (currentDestination === 'browser_edge') return 'Microsoft Edge Tabs';
     if (currentDestination === 'browser_chrome') return 'Google Chrome Tabs';
     if (currentDestination === 'browser_firefox') return 'Firefox Tabs';
+    if (currentDestination === 'collections') return 'All Collections';
     if (currentDestination.startsWith('col_')) {
       const col = collections.find(c => c.id === currentDestination.replace('col_', ''));
       return col ? col.name : 'Collection';
@@ -679,6 +787,7 @@ export const App: React.FC = () => {
         currentDestination={currentDestination}
         onSelectDestination={setCurrentDestination}
         collections={activeCollections}
+        collectionsCount={collectionsCount}
         onOpenCreateCollection={() => {
           const name = prompt('Enter new collection name:');
           if (name) {
@@ -736,6 +845,7 @@ export const App: React.FC = () => {
             setSaveModalScope('window');
             setSaveModalOpen(true);
           }}
+          onMagicAction={handleMagicOrganize}
           isTrash={currentDestination === 'trash'}
           onEmptyTrash={handleEmptyTrash}
           trashCount={trashCount}

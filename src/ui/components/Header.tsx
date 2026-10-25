@@ -63,19 +63,24 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme
 }) => {
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const saveMenuRef = useRef<HTMLDivElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (saveMenuRef.current && !saveMenuRef.current.contains(e.target as Node)) {
         setSaveMenuOpen(false);
       }
+      if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
+        setFilterMenuOpen(false);
+      }
     };
-    if (saveMenuOpen) {
+    if (saveMenuOpen || filterMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [saveMenuOpen]);
+  }, [saveMenuOpen, filterMenuOpen]);
 
   const filterPills = [
     { id: 'All', label: 'All', icon: null },
@@ -230,26 +235,81 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Filter Dropdown / Button */}
-          <button
-            title="Filter options"
-            onClick={() => onFilterTypeChange(filterType === 'all' ? 'favorites' : 'all')}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'var(--bg-input)',
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-md)',
-              padding: '7px 12px',
-              fontSize: '12px',
-              fontWeight: 500,
-              color: 'var(--text-secondary)',
-              cursor: 'pointer'
-            }}
-          >
-            <Filter size={14} />
-            <span>Filter</span>
-          </button>
+          <div style={{ position: 'relative' }} ref={filterMenuRef}>
+            <button
+              title="Filter options"
+              onClick={() => setFilterMenuOpen(!filterMenuOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: filterType !== 'all' ? 'var(--accent-light)' : 'var(--bg-input)',
+                border: filterType !== 'all' ? '1px solid var(--accent-color)' : '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                padding: '7px 12px',
+                fontSize: '12px',
+                fontWeight: filterType !== 'all' ? 600 : 500,
+                color: filterType !== 'all' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                cursor: 'pointer'
+              }}
+            >
+              <Filter size={14} />
+              <span>{filterType === 'all' ? 'Filter' : `Filtered: ${filterType}`}</span>
+              <ChevronDown size={12} />
+            </button>
+
+            {filterMenuOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '6px',
+                width: '180px',
+                backgroundColor: 'var(--bg-surface)',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                boxShadow: 'var(--shadow-lg)',
+                padding: '6px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '2px',
+                zIndex: 50
+              }}>
+                {[
+                  { id: 'all', label: 'All Items' },
+                  { id: 'favorites', label: 'Favorites Only' },
+                  { id: 'tab', label: 'Single Tabs Only' },
+                  { id: 'session', label: 'Tab Sessions Only' },
+                  { id: 'reachable', label: 'Reachable Links Only' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      onFilterTypeChange(opt.id);
+                      setFilterMenuOpen(false);
+                    }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      padding: '7px 10px',
+                      borderRadius: 'var(--radius-sm)',
+                      border: 'none',
+                      background: filterType === opt.id ? 'var(--accent-light)' : 'transparent',
+                      color: filterType === opt.id ? 'var(--accent-color)' : 'var(--text-primary)',
+                      fontSize: '12px',
+                      fontWeight: filterType === opt.id ? 600 : 400,
+                      cursor: 'pointer',
+                      textAlign: 'left'
+                    }}
+                  >
+                    <span>{opt.label}</span>
+                    {filterType === opt.id && <span style={{ fontSize: '12px' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Primary Action Button: Save Tabs or Empty Trash */}
           {isTrash ? (
