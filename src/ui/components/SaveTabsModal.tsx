@@ -210,7 +210,18 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
           borderBottom: '1px solid var(--border-subtle)'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <Layers size={18} color="var(--accent-color)" />
+            <img
+              src="/logo-32.png"
+              srcSet="/logo-32.png 1x, /logo-64.png 2x"
+              alt="Tabsed"
+              style={{
+                width: '20px',
+                height: '20px',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 1px 4px rgba(37, 99, 235, 0.35))',
+                imageRendering: '-webkit-optimize-contrast'
+              }}
+            />
             <span style={{ fontSize: '15px', fontWeight: 600 }}>Save Tabs to Vault</span>
           </div>
           <button

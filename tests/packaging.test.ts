@@ -174,6 +174,25 @@ describe('Cross-Cutting Packaging & Native Messaging Suite (PRD Section 15 & Epi
         const fullIconPath = path.join(tauriDir, iconRelPath);
         expect(fs.existsSync(fullIconPath), `Missing icon: ${iconRelPath}`).toBe(true);
       }
+
+      // Verify Windows Store and Tile assets
+      for (const tileName of ['StoreLogo.png', 'Square30x30Logo.png', 'Square44x44Logo.png', 'Square71x71Logo.png', 'Square150x150Logo.png', 'Square310x310Logo.png']) {
+        expect(fs.existsSync(path.join(tauriDir, 'icons', tileName)), `Missing tile asset: ${tileName}`).toBe(true);
+      }
+
+      // Verify icon.ico format and entry count (7 standard resolutions)
+      const icoBuffer = fs.readFileSync(path.join(tauriDir, 'icons', 'icon.ico'));
+      const count = icoBuffer.readUInt16LE(4);
+      expect(count).toBe(7);
+    });
+
+    it('verifies public web brand and favicon assets exist and are valid', () => {
+      const publicDir = path.join(rootDir, 'public');
+      for (const file of ['favicon.ico', 'favicon.png', 'favicon.svg', 'logo.png', 'logo-32.png', 'logo-64.png']) {
+        const p = path.join(publicDir, file);
+        expect(fs.existsSync(p), `Missing public asset: ${file}`).toBe(true);
+        expect(fs.statSync(p).size).toBeGreaterThan(0);
+      }
     });
 
     it('verifies automated Windows compilation scripts exist and are executable', () => {

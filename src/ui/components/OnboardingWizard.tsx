@@ -57,14 +57,23 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
             <div style={{
               width: '26px',
               height: '26px',
-              borderRadius: '6px',
-              backgroundColor: 'var(--accent-color)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: '#ffffff'
+              filter: 'drop-shadow(0 2px 6px rgba(37, 99, 235, 0.35))',
+              flexShrink: 0
             }}>
-              <Layers size={16} />
+              <img
+                src="/logo-32.png"
+                srcSet="/logo-32.png 1x, /logo-64.png 2x"
+                alt="Tabsed"
+                style={{
+                  width: '26px',
+                  height: '26px',
+                  objectFit: 'contain',
+                  imageRendering: '-webkit-optimize-contrast'
+                }}
+              />
             </div>
             <span style={{ fontSize: '14px', fontWeight: 600 }}>Welcome to Tabsed</span>
           </div>

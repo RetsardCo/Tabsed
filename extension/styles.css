@@ -80,7 +80,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.4));
+  filter: drop-shadow(0 2px 8px rgba(59, 130, 246, 0.45)) drop-shadow(0 0 6px rgba(56, 189, 248, 0.3));
   flex-shrink: 0;
 }
 
@@ -89,6 +89,7 @@ body {
   height: 28px;
   object-fit: contain;
   display: block;
+  image-rendering: -webkit-optimize-contrast;
 }
 
 .brand-icon {

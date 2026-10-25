@@ -123,16 +123,18 @@ export const Header: React.FC<HeaderProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            filter: 'drop-shadow(0 2px 6px rgba(37, 99, 235, 0.3))',
+            filter: 'drop-shadow(0 2px 8px rgba(37, 99, 235, 0.35)) drop-shadow(0 0 6px rgba(56, 189, 248, 0.25))',
             flexShrink: 0
           }}>
             <img
-              src="/logo.png"
+              src="/logo-32.png"
+              srcSet="/logo-32.png 1x, /logo-64.png 2x, /logo.png 3x"
               alt="Tabsed"
               style={{
                 width: '32px',
                 height: '32px',
-                objectFit: 'contain'
+                objectFit: 'contain',
+                imageRendering: '-webkit-optimize-contrast'
               }}
             />
           </div>
