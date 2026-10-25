@@ -175,7 +175,7 @@ function handleMessage(message) {
             url: t.url,
             normalizedUrl: t.url,
             domain: domain,
-            faviconUrl: t.favIconUrl || (domain ? `https://${domain}/favicon.ico` : null),
+            faviconUrl: t.favIconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null),
             thumbnailUrl: t.thumbnail || null,
             browserFamily: browserFamily,
             profileLabel: 'Default',
@@ -206,7 +206,7 @@ function handleMessage(message) {
                 url: t.url,
                 normalizedUrl: t.url,
                 domain: domain,
-                faviconUrl: t.favIconUrl || (domain ? `https://${domain}/favicon.ico` : null),
+                faviconUrl: t.favIconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null),
                 thumbnailUrl: t.thumbnail || null,
                 browserFamily: browserFamily,
                 profileLabel: 'Default',
@@ -236,7 +236,7 @@ function handleMessage(message) {
                 title: t.title || dom || 'Untitled',
                 url: t.url,
                 domain: dom,
-                faviconUrl: t.favIconUrl || (dom ? `https://${dom}/favicon.ico` : null),
+                faviconUrl: t.favIconUrl || (dom ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=64` : null),
                 pinned: !!t.pinned
               };
             });
@@ -249,7 +249,7 @@ function handleMessage(message) {
               url: firstTab.url,
               normalizedUrl: firstTab.url,
               domain: firstDomain,
-              faviconUrl: firstTab.favIconUrl || (firstDomain ? `https://${firstDomain}/favicon.ico` : null),
+              faviconUrl: firstTab.favIconUrl || (firstDomain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(firstDomain)}&sz=64` : null),
               thumbnailUrl: firstTab.thumbnail || null,
               browserFamily: browserFamily,
               profileLabel: 'Default',

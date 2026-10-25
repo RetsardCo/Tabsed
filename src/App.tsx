@@ -557,7 +557,9 @@ export const App: React.FC = () => {
     helpModalOpen,
     archiveSearchModalOpen,
     backupModalOpen,
-    portableVaultModalOpen
+    portableVaultModalOpen,
+    createGroupModalOpen,
+    manageGroupModalOpen
   ]);
 
   // Filtered & Sorted items

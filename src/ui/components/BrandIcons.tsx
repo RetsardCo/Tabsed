@@ -1,5 +1,4 @@
 import React from 'react';
-import { Globe } from 'lucide-react';
 
 interface IconProps {
   size?: number;
@@ -153,6 +152,35 @@ export const FirefoxIcon: React.FC<IconProps> = ({ size = 17, style }) => (
   </svg>
 );
 
+export const AppSquircleSvg: React.FC<IconProps> = ({ size = 16, style, className }) => {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 32 32"
+      fill="none"
+      style={{ display: 'block', flexShrink: 0, ...style }}
+      className={className}
+    >
+      <defs>
+        <linearGradient id="tabsed-squircle-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#38bdf8" />
+          <stop offset="52%" stopColor="#2563eb" />
+          <stop offset="100%" stopColor="#8b5cf6" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="7.5" fill="url(#tabsed-squircle-grad)" />
+      {/* Back tab */}
+      <rect x="7" y="6" width="13" height="12" rx="2" fill="#ffffff" fillOpacity="0.45" />
+      {/* Front tab */}
+      <rect x="10.5" y="10.5" width="14.5" height="15" rx="2.5" fill="#ffffff" fillOpacity="0.95" />
+      {/* Front tab line detail */}
+      <rect x="13" y="14" width="9.5" height="1.8" rx="0.9" fill="#2563eb" fillOpacity="0.65" />
+      <rect x="13" y="18" width="6.5" height="1.8" rx="0.9" fill="#2563eb" fillOpacity="0.4" />
+    </svg>
+  );
+};
+
 function cleanDomainName(domain?: string, url?: string): string {
   if (domain && domain.trim()) {
     return domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].split(':')[0];
@@ -169,11 +197,11 @@ function cleanDomainName(domain?: string, url?: string): string {
 /**
  * Smart Favicon Component that matches known domains with crisp vector SVGs
  * and falls back through:
- * 1. Provided faviconUrl
- * 2. Google s2 favicons (domain-based, 64px)
+ * 1. Provided custom faviconUrl (if valid and not a 404 dummy favicon.ico)
+ * 2. Google S2 favicons service (domain-based, 64px)
  * 3. Official Tabsed squircle app icon (/logo-32.png)
- * 4. Crisp vector brand squircle
- * Never leaves an empty box.
+ * 4. Official Tabsed vector brand squircle SVG (AppSquircleSvg)
+ * Guaranteed: never leaves an empty box.
  */
 export const SmartFavicon: React.FC<{
   domain?: string;
@@ -200,17 +228,33 @@ export const SmartFavicon: React.FC<{
 
   const cleanDomain = cleanDomainName(domain, url);
 
-  // Resolution stages: 0 = custom faviconUrl, 1 = google s2, 2 = /logo-32.png, 3 = vector fallback
-  const initialStage = (faviconUrl && faviconUrl.trim()) ? 0 : (cleanDomain ? 1 : 2);
-  const [stage, setStage] = React.useState<number>(initialStage);
+  const hasCustomFavicon = Boolean(
+    faviconUrl &&
+    faviconUrl.trim() &&
+    faviconUrl !== 'null' &&
+    faviconUrl !== 'undefined' &&
+    !faviconUrl.endsWith('/favicon.ico')
+  );
+
+  // Resolution stages: 0 = custom faviconUrl, 1 = google s2, 2 = /logo-32.png, 3 = AppSquircleSvg vector fallback
+  const determineInitialStage = () => {
+    if (hasCustomFavicon) return 0;
+    if (cleanDomain) return 1;
+    return 2;
+  };
+
+  const [stage, setStage] = React.useState<number>(determineInitialStage);
 
   React.useEffect(() => {
-    const nextStage = (faviconUrl && faviconUrl.trim()) ? 0 : (cleanDomain ? 1 : 2);
-    setStage(nextStage);
+    setStage(determineInitialStage());
   }, [faviconUrl, cleanDomain]);
 
   const handleImgError = () => {
-    setStage(prev => prev + 1);
+    setStage(prev => {
+      if (prev === 0) return cleanDomain ? 1 : 2;
+      if (prev === 1) return 2;
+      return 3;
+    });
   };
 
   if (stage === 0 && faviconUrl && faviconUrl.trim()) {
@@ -225,7 +269,7 @@ export const SmartFavicon: React.FC<{
     );
   }
 
-  if (stage <= 1 && cleanDomain) {
+  if (stage === 1 && cleanDomain) {
     return (
       <img
         src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=64`}
@@ -237,7 +281,7 @@ export const SmartFavicon: React.FC<{
     );
   }
 
-  if (stage <= 2) {
+  if (stage === 2) {
     return (
       <img
         src="/logo-32.png"
@@ -257,23 +301,6 @@ export const SmartFavicon: React.FC<{
     );
   }
 
-  // Final Stage: Crisp squircle vector brand icon
-  return (
-    <div
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'var(--accent-light)',
-        borderRadius: `${Math.max(3, Math.round(size * 0.25))}px`,
-        color: 'var(--accent-color)',
-        ...style
-      }}
-      className={className}
-    >
-      <Globe size={Math.round(size * 0.8)} strokeWidth={2} />
-    </div>
-  );
+  // Final Stage: Crisp official Tabsed brand squircle SVG (100% reliable, zero network required)
+  return <AppSquircleSvg size={size} style={style} className={className} />;
 };

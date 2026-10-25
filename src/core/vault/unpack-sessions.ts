@@ -41,7 +41,7 @@ export function unpackSessionItem(item: SavedTabItem): SavedTabItem[] {
       url: sub.url,
       normalizedUrl: sub.url,
       domain: domain,
-      faviconUrl: sub.faviconUrl || (domain ? `https://${domain}/favicon.ico` : null),
+      faviconUrl: sub.faviconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null),
       thumbnailUrl: (idx === 0 ? item.thumbnailUrl : null) || null,
       browserFamily: item.browserFamily || 'Edge',
       profileLabel: item.profileLabel || 'Default',

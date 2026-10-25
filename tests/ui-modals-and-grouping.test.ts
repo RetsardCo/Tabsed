@@ -20,7 +20,8 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
       'SaveTabsModal.tsx',
       'ConfirmationModal.tsx',
       'CreateGroupModal.tsx',
-      'ManageGroupTabsModal.tsx'
+      'ManageGroupTabsModal.tsx',
+      'OnboardingWizard.tsx'
     ];
 
     modalFiles.forEach((file) => {
@@ -146,7 +147,7 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
   });
 
   describe('3. Favicon & Thumbnail Fallback Guarantee', () => {
-    it('verifies SmartFavicon cascades through Google S2, official app logo, and vector fallback', () => {
+    it('verifies SmartFavicon cascades through Google S2, official app logo, and AppSquircleSvg fallback', () => {
       const brandIconsContent = fs.readFileSync(path.join(componentsDir, 'BrandIcons.tsx'), 'utf8');
 
       // Google S2 fallback
@@ -156,11 +157,22 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
       // Official Tabsed logo fallback
       expect(brandIconsContent).toContain('/logo-32.png');
 
-      // Vector fallback
-      expect(brandIconsContent).toContain('Globe');
+      // Vector app icon fallback (User requested app icon fallback when no site icon can be retrieved)
+      expect(brandIconsContent).toContain('AppSquircleSvg');
 
       // Error event advances stage
       expect(brandIconsContent).toContain('onError={handleImgError}');
+    });
+
+    it('verifies SmartBrandThumbnail renders mini-browser mockup when screenshot is absent', () => {
+      const thumbContent = fs.readFileSync(path.join(componentsDir, 'SmartBrandThumbnail.tsx'), 'utf8');
+
+      // Address bar mockup with lock icon & domain
+      expect(thumbContent).toContain('Lock');
+      expect(thumbContent).toContain('{domain || \'web\'}');
+
+      // Center Brand Icon / Vector Squircle
+      expect(thumbContent).toContain('<SmartFavicon');
     });
 
     it('verifies TabGrid enables drag-and-drop grouping and glow indicators on tab cards', () => {

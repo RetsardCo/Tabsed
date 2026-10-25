@@ -70,11 +70,11 @@ An end-to-end security audit was conducted covering the extension and IPC bridge
    npm run package:extensions
    ```
    This generates the verified production zip at:
-   `dist/tabsed-chromium-extension.zip`
+   `dist/extensions/tabsed-chromium-v1.0.0.zip` (and unpacked directory at `dist/extensions/unpacked-chromium`).
 
 2. **Log into the Microsoft Edge Partner Center:**
    - Navigate to [Microsoft Edge Partner Center](https://partner.microsoft.com/dashboard/microsoftedge/overview).
-   - Click **Create new extension** and upload `dist/tabsed-chromium-extension.zip`.
+   - Click **Create new extension** and upload `dist/extensions/tabsed-chromium-v1.0.0.zip`.
 
 3. **Complete the Store Listing:**
    - **Name:** Tabsed - Tab Saver & Restorer

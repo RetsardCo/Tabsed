@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Layers, ShieldCheck, CheckCircle2, ArrowRight, Folder, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Layers, ShieldCheck, CheckCircle2, ArrowRight, Folder, Check, X } from 'lucide-react';
 
 interface OnboardingWizardProps {
   isOpen: boolean;
@@ -7,6 +7,18 @@ interface OnboardingWizardProps {
 }
 
 export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onComplete }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onComplete();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onComplete]);
+
   if (!isOpen) return null;
 
   const [step, setStep] = useState<number>(1);
@@ -21,19 +33,27 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.6)',
-      backdropFilter: 'blur(6px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 2000
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onComplete();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 2000
+      }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-wizard-title"
+    >
       <div style={{
         width: '520px',
         backgroundColor: 'var(--bg-surface)',
@@ -75,9 +95,29 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
                 }}
               />
             </div>
-            <span style={{ fontSize: '14px', fontWeight: 600 }}>Welcome to Tabsed</span>
+            <span id="onboarding-wizard-title" style={{ fontSize: '14px', fontWeight: 600 }}>Welcome to Tabsed</span>
           </div>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Step {step} of 4</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Step {step} of 4</span>
+            <button
+              onClick={onComplete}
+              aria-label="Close dialog"
+              title="Close (Esc)"
+              style={{
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+                color: 'var(--text-muted)',
+                padding: '4px',
+                borderRadius: 'var(--radius-sm)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <X size={18} />
+            </button>
+          </div>
         </div>
 
         {/* Content Body */}
@@ -275,22 +315,39 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
           borderTop: '1px solid var(--border-subtle)',
           backgroundColor: 'var(--bg-app)'
         }}>
-          {step > 1 ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {step > 1 && (
+              <button
+                onClick={() => setStep(step - 1)}
+                style={{
+                  padding: '8px 14px',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  backgroundColor: 'transparent',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                Back
+              </button>
+            )}
             <button
-              onClick={() => setStep(step - 1)}
+              onClick={onComplete}
+              aria-label="Skip onboarding"
               style={{
-                padding: '8px 14px',
+                padding: '8px 12px',
                 borderRadius: 'var(--radius-md)',
-                border: '1px solid var(--border-subtle)',
+                border: 'none',
                 backgroundColor: 'transparent',
                 fontSize: '12px',
                 cursor: 'pointer',
-                color: 'var(--text-secondary)'
+                color: 'var(--text-muted)'
               }}
             >
-              Back
+              Skip
             </button>
-          ) : <div />}
+          </div>
 
           <button
             onClick={() => {

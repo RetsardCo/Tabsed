@@ -1,6 +1,6 @@
 import React from 'react';
 import { SmartFavicon } from './BrandIcons';
-import { Globe, FileText, Code2, Sparkles, Database, Box, Terminal, Cpu } from 'lucide-react';
+import { Globe, FileText, Code2, Sparkles, Database, Box, Terminal, Cpu, Lock } from 'lucide-react';
 
 interface SmartBrandThumbnailProps {
   domain: string;
@@ -231,7 +231,7 @@ export const SmartBrandThumbnail: React.FC<SmartBrandThumbnailProps> = ({
     );
   }
 
-  // Umark-style rich domain brand card surface
+  // Rich browser window card mockup: clear visual site representation
   return (
     <div
       style={{
@@ -241,86 +241,147 @@ export const SmartBrandThumbnail: React.FC<SmartBrandThumbnailProps> = ({
         position: 'relative',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
         overflow: 'hidden',
-        padding: '16px',
         boxSizing: 'border-box'
       }}
     >
-      {/* Subtle ambient radial highlight */}
+      {/* Top Mini Browser Chrome Header Bar */}
       <div
         style={{
-          position: 'absolute',
-          top: '-20%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '180px',
-          height: '100px',
-          borderRadius: '50%',
-          background: meta.accent,
-          filter: 'blur(45px)',
-          opacity: 0.22,
-          pointerEvents: 'none'
-        }}
-      />
-
-      {/* Grid line watermark pattern */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)',
-          backgroundSize: '16px 16px',
-          opacity: 0.35,
-          pointerEvents: 'none'
-        }}
-      />
-
-      {/* Center Brand Icon / Vector */}
-      <div
-        style={{
-          width: '46px',
-          height: '46px',
-          borderRadius: '12px',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          border: '1px solid rgba(255, 255, 255, 0.15)',
-          backdropFilter: 'blur(8px)',
+          height: '24px',
+          backgroundColor: 'rgba(0, 0, 0, 0.28)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: `0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2)`,
-          zIndex: 1,
-          marginBottom: '8px'
+          justifyContent: 'space-between',
+          padding: '0 10px',
+          flexShrink: 0,
+          zIndex: 2
         }}
       >
-        <SmartFavicon
-          domain={domain}
-          url={url}
-          faviconUrl={faviconUrl}
-          size={24}
-        />
+        {/* Window controls (left) */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.75)' }} />
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.75)' }} />
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.75)' }} />
+        </div>
+
+        {/* Address bar mockup (center) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            backgroundColor: 'rgba(0, 0, 0, 0.25)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '4px',
+            padding: '1px 8px',
+            fontSize: '10px',
+            color: 'rgba(255, 255, 255, 0.8)',
+            maxWidth: '180px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap'
+          }}
+        >
+          <Lock size={9} style={{ flexShrink: 0, opacity: 0.8 }} />
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {domain || 'web'}
+          </span>
+        </div>
+
+        {/* Empty space on right for balance */}
+        <div style={{ width: '28px' }} />
       </div>
 
-      {/* Center Brand Pill / Title */}
+      {/* Center Website Preview Surface */}
       <div
         style={{
-          fontSize: '11px',
-          fontWeight: 600,
-          color: 'rgba(255, 255, 255, 0.9)',
-          backgroundColor: 'rgba(0, 0, 0, 0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
-          borderRadius: '20px',
-          padding: '2px 10px',
-          letterSpacing: '0.2px',
-          zIndex: 1,
-          maxWidth: '85%',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap'
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          padding: '12px',
+          boxSizing: 'border-box'
         }}
       >
-        {meta.badge}
+        {/* Ambient radial highlight */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-10%',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: '160px',
+            height: '90px',
+            borderRadius: '50%',
+            background: meta.accent,
+            filter: 'blur(40px)',
+            opacity: 0.25,
+            pointerEvents: 'none'
+          }}
+        />
+
+        {/* Watermark grid texture */}
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            backgroundImage: 'radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px)',
+            backgroundSize: '16px 16px',
+            opacity: 0.35,
+            pointerEvents: 'none'
+          }}
+        />
+
+        {/* Center Brand Icon / Vector Squircle */}
+        <div
+          style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            backgroundColor: 'rgba(255, 255, 255, 0.12)',
+            border: '1px solid rgba(255, 255, 255, 0.22)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: `0 8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.25)`,
+            zIndex: 1,
+            marginBottom: '8px'
+          }}
+        >
+          <SmartFavicon
+            domain={domain}
+            url={url}
+            faviconUrl={faviconUrl}
+            size={24}
+          />
+        </div>
+
+        {/* Center Brand Pill / Title */}
+        <div
+          style={{
+            fontSize: '11px',
+            fontWeight: 600,
+            color: 'rgba(255, 255, 255, 0.95)',
+            backgroundColor: 'rgba(0, 0, 0, 0.35)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: '20px',
+            padding: '2px 10px',
+            letterSpacing: '0.2px',
+            zIndex: 1,
+            maxWidth: '85%',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+          }}
+        >
+          {meta.badge}
+        </div>
       </div>
     </div>
   );
