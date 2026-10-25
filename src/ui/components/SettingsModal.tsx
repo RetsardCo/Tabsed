@@ -38,8 +38,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>('appearance');
 
   // Phase 4 states
@@ -86,6 +84,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       `• Protected: ${sim.protected.length} (${sim.protected.map(p => `${p.tab.title}: ${p.reason}`).join('; ')})`
     );
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
@@ -268,6 +268,82 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       <span style={{ fontSize: '11px', fontWeight: 500, color: 'var(--text-primary)' }}>{p.name}</span>
                     </button>
                   ))}
+                </div>
+              </div>
+
+              {/* Grid Layout Preferences */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  Grid Columns
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '6px' }}>
+                  {([
+                    { val: 'auto' as const, label: 'Auto' },
+                    { val: 2 as const, label: '2' },
+                    { val: 3 as const, label: '3' },
+                    { val: 4 as const, label: '4' },
+                    { val: 5 as const, label: '5' },
+                    { val: 6 as const, label: '6' }
+                  ]).map(col => {
+                    const isSelected = (preferences.gridColumns || 'auto') === col.val;
+                    return (
+                      <button
+                        key={col.label}
+                        type="button"
+                        onClick={() => onUpdatePreferences({ gridColumns: col.val })}
+                        style={{
+                          padding: '7px 4px',
+                          borderRadius: 'var(--radius-md)',
+                          border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
+                          backgroundColor: isSelected ? 'var(--accent-light)' : 'var(--bg-app)',
+                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                          fontSize: '12px',
+                          fontWeight: isSelected ? 600 : 500,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {col.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Card Density / Size Preferences */}
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  Tab Card Size
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                  {([
+                    { key: 'compact' as const, label: 'Compact', desc: 'Smaller cards, fit more' },
+                    { key: 'medium' as const, label: 'Medium', desc: 'Balanced default' },
+                    { key: 'large' as const, label: 'Large', desc: 'Large preview screenshots' }
+                  ]).map(size => {
+                    const isSelected = (preferences.cardSize || 'medium') === size.key;
+                    return (
+                      <button
+                        key={size.key}
+                        type="button"
+                        onClick={() => onUpdatePreferences({ cardSize: size.key })}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          padding: '8px',
+                          borderRadius: 'var(--radius-md)',
+                          border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
+                          backgroundColor: isSelected ? 'var(--accent-light)' : 'var(--bg-app)',
+                          color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                          cursor: 'pointer',
+                          gap: '2px'
+                        }}
+                      >
+                        <span style={{ fontSize: '12px', fontWeight: 600 }}>{size.label}</span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{size.desc}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </>

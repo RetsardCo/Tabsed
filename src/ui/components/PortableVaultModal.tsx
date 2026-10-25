@@ -31,8 +31,6 @@ export const PortableVaultModal: React.FC<PortableVaultModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'export' | 'import' | 'migrate'>('export');
   const [conflictStrategy, setConflictStrategy] = useState<ImportConflictStrategy>('keep-both');
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
@@ -88,6 +86,8 @@ export const PortableVaultModal: React.FC<PortableVaultModalProps> = ({
       setStatusMessage(`Drive migration to "${targetDrivePath}" verified. All file checksums verified. Source preserved.`);
     }, 700);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

@@ -237,6 +237,7 @@ function handleMessage(message) {
                 url: t.url,
                 domain: dom,
                 faviconUrl: t.favIconUrl || (dom ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(dom)}&sz=64` : null),
+                thumbnailUrl: t.thumbnail || null,
                 pinned: !!t.pinned
               };
             });

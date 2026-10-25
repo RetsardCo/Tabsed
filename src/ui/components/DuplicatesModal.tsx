@@ -11,6 +11,8 @@ interface DuplicatesModalProps {
 }
 
 export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClose, items, onDeleteItem }) => {
+  const [stripTracking, setStripTracking] = useState(false);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -23,13 +25,11 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
-  const [stripTracking, setStripTracking] = useState(false);
-
   const duplicateGroups: DuplicateGroup<SavedTabItem>[] = UrlNormalizer.findDuplicates(items, {
     stripTrackingParams: stripTracking
   });
+
+  if (!isOpen) return null;
 
   return (
     <div

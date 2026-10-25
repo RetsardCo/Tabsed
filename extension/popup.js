@@ -289,6 +289,33 @@ document.addEventListener('DOMContentLoaded', async () => {
       <span>Saving individual cards...</span>
     `;
 
+    // Capture high-definition screenshot for foreground/active tab while popup is open
+    if (captureThumbnails && typeof chrome !== 'undefined' && chrome.tabs && typeof chrome.tabs.captureVisibleTab === 'function') {
+      try {
+        const captureOpts = { format: 'jpeg', quality: 80 };
+        let screenshot = null;
+        if (winId !== null) {
+          try {
+            screenshot = await chrome.tabs.captureVisibleTab(winId, captureOpts);
+          } catch (winErr) {
+            screenshot = await chrome.tabs.captureVisibleTab(captureOpts);
+          }
+        } else {
+          screenshot = await chrome.tabs.captureVisibleTab(captureOpts);
+        }
+        if (screenshot) {
+          const activeItem = tabsToSave.find(t => t.active || (activeTab && t.id === activeTab.id));
+          if (activeItem) {
+            activeItem.thumbnail = screenshot;
+          } else if (tabsToSave.length === 1) {
+            tabsToSave[0].thumbnail = screenshot;
+          }
+        }
+      } catch (err) {
+        console.warn('Direct popup captureVisibleTab skipped or unavailable:', err);
+      }
+    }
+
     try {
       const response = await chrome.runtime.sendMessage({
         action: 'saveTabs',

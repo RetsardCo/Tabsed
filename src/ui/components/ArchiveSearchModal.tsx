@@ -32,8 +32,6 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCollectionId, setSelectedCollectionId] = useState<string>('');
 
@@ -43,6 +41,8 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
       collectionId: selectedCollectionId || undefined
     });
   }, [items, searchQuery, selectedCollectionId]);
+
+  if (!isOpen) return null;
 
   return (
     <div

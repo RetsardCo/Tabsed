@@ -42,13 +42,19 @@ async function handleSaveTabs(request) {
       domain = '';
     }
 
-    let thumbnailDataUrl = null;
-    if (captureThumbnails && !isRestricted && tab.active) {
+    let thumbnailDataUrl = tab.thumbnail || null;
+    if (!thumbnailDataUrl && captureThumbnails && !isRestricted && tab.active) {
       try {
-        thumbnailDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
-          format: 'jpeg',
-          quality: 60
-        });
+        const captureOpts = { format: 'jpeg', quality: 80 };
+        if (typeof tab.windowId === 'number') {
+          try {
+            thumbnailDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, captureOpts);
+          } catch (winErr) {
+            thumbnailDataUrl = await chrome.tabs.captureVisibleTab(captureOpts);
+          }
+        } else {
+          thumbnailDataUrl = await chrome.tabs.captureVisibleTab(captureOpts);
+        }
       } catch (e) {
         console.warn(`Thumbnail capture blocked or unavailable for tab ${tab.id}:`, e);
       }

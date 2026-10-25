@@ -22,8 +22,6 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const [batchSize, setBatchSize] = useState<number>(3);
   const [delayMs, setDelayMs] = useState<number>(400);
   const [targetBrowser, setTargetBrowser] = useState<string>('Microsoft Edge (Default Profile)');
@@ -116,6 +114,8 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
       setRestoreItems(prev => prev.map(i => (i.status === 'failed' || i.status === 'skipped') ? { ...i, status: 'queued' } : i));
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

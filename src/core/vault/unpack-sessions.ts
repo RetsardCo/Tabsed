@@ -42,7 +42,7 @@ export function unpackSessionItem(item: SavedTabItem): SavedTabItem[] {
       normalizedUrl: sub.url,
       domain: domain,
       faviconUrl: sub.faviconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null),
-      thumbnailUrl: (idx === 0 ? item.thumbnailUrl : null) || null,
+      thumbnailUrl: sub.thumbnailUrl || (idx === 0 ? item.thumbnailUrl : null) || null,
       browserFamily: item.browserFamily || 'Edge',
       profileLabel: item.profileLabel || 'Default',
       savedAt: item.savedAt || new Date().toISOString(),
@@ -116,6 +116,7 @@ export function groupTabsBySession(items: SavedTabItem[]): SavedTabItem[] {
       url: t.url,
       domain: t.domain,
       faviconUrl: t.faviconUrl,
+      thumbnailUrl: t.thumbnailUrl,
       pinned: false
     }));
 

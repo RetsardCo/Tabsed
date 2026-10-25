@@ -9,6 +9,7 @@ export interface SessionTab {
   url: string;
   domain: string;
   faviconUrl?: string | null;
+  thumbnailUrl?: string | null;
   pinned?: boolean;
 }
 
@@ -74,6 +75,8 @@ export interface UserPreferences {
   restoreBatchDelayMs: number;
   storageQuotaBytes?: number;
   autoPruneThresholdPercent?: number;
+  gridColumns?: 'auto' | 2 | 3 | 4 | 5 | 6;
+  cardSize?: 'compact' | 'medium' | 'large';
 }
 
 export interface BackupManifest {

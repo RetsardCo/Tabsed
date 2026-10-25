@@ -28,8 +28,6 @@ export const BackupModal: React.FC<BackupModalProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   const [activeTab, setActiveTab] = useState<'create' | 'restore'>('create');
   const [createdBackup, setCreatedBackup] = useState<BackupResult | null>(null);
   const [restoreText, setRestoreText] = useState('');
@@ -92,6 +90,8 @@ export const BackupModal: React.FC<BackupModalProps> = ({
       setRestoreError('Failed to parse backup JSON: ' + e.message);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

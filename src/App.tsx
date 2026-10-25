@@ -20,6 +20,7 @@ import { BackupModal } from './ui/components/BackupModal';
 import { PortableVaultModal } from './ui/components/PortableVaultModal';
 import { CreateGroupModal } from './ui/components/CreateGroupModal';
 import { ManageGroupTabsModal } from './ui/components/ManageGroupTabsModal';
+import { ErrorBoundary } from './ui/components/ErrorBoundary';
 import { SavedTabItem, Collection, ViewMode, GroupMode, UserPreferences, Tag } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
@@ -55,14 +56,14 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     archiveSizeBytes: 342 * 1024 * 1024,
     availabilityStatus: 'reachable',
     sessionTabs: [
-      { id: 'sub_1_1', title: 'Unity Documentation — Scripting API & Architecture', url: 'https://docs.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico' },
-      { id: 'sub_1_2', title: 'Blender — 3D for everyone and open pipeline', url: 'https://www.blender.org/', domain: 'blender.org', faviconUrl: 'https://www.blender.org/favicon.ico' },
-      { id: 'sub_1_3', title: 'Free Game Assets & Textures — Itch.io Collections', url: 'https://itch.io/game-assets', domain: 'itch.io', faviconUrl: 'https://itch.io/favicon.ico' },
-      { id: 'sub_1_4', title: 'Game Design Notes — Mechanics and Level Flow', url: 'https://notion.so/gamedesign', domain: 'notion.so', faviconUrl: 'https://www.notion.so/front-static/favicon.ico' },
-      { id: 'sub_1_5', title: 'Pixel Art References — Visual Palette & Moodboards', url: 'https://pinterest.com/pin/pixelart', domain: 'pinterest.com', faviconUrl: 'https://pinterest.com/favicon.ico' },
-      { id: 'sub_1_6', title: 'Godot Engine 4 Documentation — Getting Started & Nodes', url: 'https://docs.godotengine.org/en/stable/', domain: 'godotengine.org', faviconUrl: 'https://godotengine.org/favicon.ico' },
-      { id: 'sub_1_7', title: 'Shadertoy — Real-time GLSL Shader Experiments', url: 'https://www.shadertoy.com/browse', domain: 'shadertoy.com', faviconUrl: 'https://www.shadertoy.com/favicon.ico' },
-      { id: 'sub_1_8', title: 'OpenGameArt.org — Free 2D Sprites, Tilesets & Sounds', url: 'https://opengameart.org/', domain: 'opengameart.org', faviconUrl: 'https://opengameart.org/favicon.ico' },
+      { id: 'sub_1_1', title: 'Unity Documentation — Scripting API & Architecture', url: 'https://docs.unity.com/', domain: 'unity.com', faviconUrl: 'https://unity.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_2', title: 'Blender — 3D for everyone and open pipeline', url: 'https://www.blender.org/', domain: 'blender.org', faviconUrl: 'https://www.blender.org/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_3', title: 'Free Game Assets & Textures — Itch.io Collections', url: 'https://itch.io/game-assets', domain: 'itch.io', faviconUrl: 'https://itch.io/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_4', title: 'Game Design Notes — Mechanics and Level Flow', url: 'https://notion.so/gamedesign', domain: 'notion.so', faviconUrl: 'https://www.notion.so/front-static/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1517842645767-c639042777db?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_5', title: 'Pixel Art References — Visual Palette & Moodboards', url: 'https://pinterest.com/pin/pixelart', domain: 'pinterest.com', faviconUrl: 'https://pinterest.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_6', title: 'Godot Engine 4 Documentation — Getting Started & Nodes', url: 'https://docs.godotengine.org/en/stable/', domain: 'godotengine.org', faviconUrl: 'https://godotengine.org/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_7', title: 'Shadertoy — Real-time GLSL Shader Experiments', url: 'https://www.shadertoy.com/browse', domain: 'shadertoy.com', faviconUrl: 'https://www.shadertoy.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_1_8', title: 'OpenGameArt.org — Free 2D Sprites, Tilesets & Sounds', url: 'https://opengameart.org/', domain: 'opengameart.org', faviconUrl: 'https://opengameart.org/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=700&auto=format&fit=crop&q=75' },
       { id: 'sub_1_9', title: 'GDC Vault — Architecture & Procedural Generation', url: 'https://www.gdcvault.com/', domain: 'gdcvault.com', faviconUrl: 'https://www.gdcvault.com/favicon.ico' },
       { id: 'sub_1_10', title: 'Kenney — Thousands of Free Game Assets & Audio', url: 'https://kenney.nl/assets', domain: 'kenney.nl', faviconUrl: 'https://kenney.nl/favicon.ico' },
       { id: 'sub_1_11', title: 'Freesound — Creative Commons Audio & Foley Effects', url: 'https://freesound.org/', domain: 'freesound.org', faviconUrl: 'https://freesound.org/favicon.ico' },
@@ -90,12 +91,12 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     archiveSizeBytes: 128 * 1024 * 1024,
     availabilityStatus: 'reachable',
     sessionTabs: [
-      { id: 'sub_2_1', title: 'OpenAI Platform — API Documentation', url: 'https://platform.openai.com/docs', domain: 'openai.com', faviconUrl: 'https://openai.com/favicon.ico' },
-      { id: 'sub_2_2', title: 'Anthropic Claude — Prompt Engineering Best Practices', url: 'https://docs.anthropic.com/', domain: 'anthropic.com', faviconUrl: 'https://anthropic.com/favicon.ico' },
-      { id: 'sub_2_3', title: 'Hugging Face — Open Source Models & Datasets Hub', url: 'https://huggingface.co/models', domain: 'huggingface.co', faviconUrl: 'https://huggingface.co/favicon.ico' },
-      { id: 'sub_2_4', title: 'LangChain — Building Context-Aware Reasoning Agents', url: 'https://python.langchain.com/', domain: 'langchain.com', faviconUrl: 'https://python.langchain.com/favicon.ico' },
-      { id: 'sub_2_5', title: 'ArXiv — Attention Is All You Need Paper Archive', url: 'https://arxiv.org/abs/1706.03762', domain: 'arxiv.org', faviconUrl: 'https://arxiv.org/favicon.ico' },
-      { id: 'sub_2_6', title: 'GitHub — LLM Inference Engine Benchmarks', url: 'https://github.com/vllm-project/vllm', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
+      { id: 'sub_2_1', title: 'OpenAI Platform — API Documentation', url: 'https://platform.openai.com/docs', domain: 'openai.com', faviconUrl: 'https://openai.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_2_2', title: 'Anthropic Claude — Prompt Engineering Best Practices', url: 'https://docs.anthropic.com/', domain: 'anthropic.com', faviconUrl: 'https://anthropic.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_2_3', title: 'Hugging Face — Open Source Models & Datasets Hub', url: 'https://huggingface.co/models', domain: 'huggingface.co', faviconUrl: 'https://huggingface.co/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_2_4', title: 'LangChain — Building Context-Aware Reasoning Agents', url: 'https://python.langchain.com/', domain: 'langchain.com', faviconUrl: 'https://python.langchain.com/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_2_5', title: 'ArXiv — Attention Is All You Need Paper Archive', url: 'https://arxiv.org/abs/1706.03762', domain: 'arxiv.org', faviconUrl: 'https://arxiv.org/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?w=700&auto=format&fit=crop&q=75' },
+      { id: 'sub_2_6', title: 'GitHub — LLM Inference Engine Benchmarks', url: 'https://github.com/vllm-project/vllm', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png', thumbnailUrl: 'https://images.unsplash.com/photo-1618401471353-b98aedd04e11?w=700&auto=format&fit=crop&q=75' },
       { id: 'sub_2_7', title: 'DeepSeek — Open Reasoning Models Technical Report', url: 'https://github.com/deepseek-ai', domain: 'github.com', faviconUrl: 'https://github.githubassets.com/favicons/favicon.png' },
       { id: 'sub_2_8', title: 'Weights & Biases — Machine Learning Experiment Tracking', url: 'https://wandb.ai/site', domain: 'wandb.ai', faviconUrl: 'https://wandb.ai/favicon.ico' }
     ]
@@ -121,7 +122,7 @@ const INITIAL_ITEMS: SavedTabItem[] = [
     archiveSizeBytes: 210 * 1024 * 1024,
     availabilityStatus: 'reachable',
     sessionTabs: [
-      { id: 'sub_3_1', title: 'Ambient Nature Soundscapes (10h Focus Audio)', url: 'https://www.youtube.com/watch?v=ambient-nature', domain: 'youtube.com', faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico' },
+      { id: 'sub_3_1', title: 'Ambient Nature Soundscapes (10h Focus Audio)', url: 'https://www.youtube.com/watch?v=ambient-nature', domain: 'youtube.com', faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico', thumbnailUrl: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=700&auto=format&fit=crop&q=75' },
       { id: 'sub_3_2', title: 'Lofi Hip Hop Radio — Beats to Relax/Study to', url: 'https://music.youtube.com/watch?v=lofi-beats', domain: 'music.youtube.com', faviconUrl: 'https://www.youtube.com/s/desktop/favicon.ico' },
       { id: 'sub_3_3', title: 'Peaceful Piano Instrumental Focus Playlist', url: 'https://open.spotify.com/playlist/peaceful-piano', domain: 'spotify.com', faviconUrl: 'https://open.spotify.com/favicon.ico' },
       { id: 'sub_3_4', title: 'Deep Electronic Concentration Beats', url: 'https://soundcloud.com/discover/deep-focus', domain: 'soundcloud.com', faviconUrl: 'https://soundcloud.com/favicon.ico' },
@@ -359,7 +360,8 @@ export const App: React.FC = () => {
 
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
     const saved = localStorage.getItem('tabsed_preferences');
-    return saved ? JSON.parse(saved) : {
+    const base = saved ? JSON.parse(saved) : {};
+    return {
       theme: 'system',
       accent: 'blue',
       customAccentHex: '#2563eb',
@@ -369,7 +371,10 @@ export const App: React.FC = () => {
       confirmBeforeBulkClose: true,
       restoreBatchSize: 5,
       restoreBatchDelayMs: 400,
-      storageQuotaBytes: 50 * 1024 * 1024 * 1024
+      storageQuotaBytes: 50 * 1024 * 1024 * 1024,
+      gridColumns: 'auto',
+      cardSize: 'medium',
+      ...base
     };
   });
 
@@ -1096,6 +1101,10 @@ export const App: React.FC = () => {
           syncStatus={syncStatus}
           groupMode={groupMode}
           onGroupModeChange={setGroupMode}
+          gridColumns={preferences.gridColumns || 'auto'}
+          onGridColumnsChange={(cols) => setPreferences(prev => ({ ...prev, gridColumns: cols }))}
+          cardSize={preferences.cardSize || 'medium'}
+          onCardSizeChange={(size) => setPreferences(prev => ({ ...prev, cardSize: size }))}
         />
 
         {currentDestination === 'trash' && (
@@ -1203,6 +1212,8 @@ export const App: React.FC = () => {
                 groupMode={groupMode}
                 onGroupTabs={handleGroupTabs}
                 onAddToGroup={handleAddToGroup}
+                gridColumns={preferences.gridColumns || 'auto'}
+                cardSize={preferences.cardSize || 'medium'}
               />
             )}
             {viewMode === 'compact' && (
@@ -1233,23 +1244,25 @@ export const App: React.FC = () => {
 
           {/* Collapsible Detail Inspector (PRD Section 9.4 & Mockup) */}
           {selectedItem && (
-            <DetailInspector
-              item={selectedItem}
-              collections={collections}
-              onClose={() => setSelectedItemId(null)}
-              onUpdateNotes={handleUpdateNotes}
-              onUpdateTitle={handleUpdateTitle}
-              onAddTag={handleAddTag}
-              onRemoveTag={handleRemoveTag}
-              onOpenLiveUrl={handleOpenLiveUrl}
-              onCheckAvailability={handleCheckAvailability}
-              onRestoreItem={handleRestoreFromTrash}
-              onDeleteItem={handleDeleteItem}
-              onToggleFavorite={handleToggleFavorite}
-              onDeleteSubTab={handleDeleteSubTab}
-              onMoveToCollection={handleMoveItemToCollection}
-              isTrash={currentDestination === 'trash'}
-            />
+            <ErrorBoundary fallbackTitle="Tab Details Inspector" onReset={() => setSelectedItemId(null)}>
+              <DetailInspector
+                item={selectedItem}
+                collections={collections}
+                onClose={() => setSelectedItemId(null)}
+                onUpdateNotes={handleUpdateNotes}
+                onUpdateTitle={handleUpdateTitle}
+                onAddTag={handleAddTag}
+                onRemoveTag={handleRemoveTag}
+                onOpenLiveUrl={handleOpenLiveUrl}
+                onCheckAvailability={handleCheckAvailability}
+                onRestoreItem={handleRestoreFromTrash}
+                onDeleteItem={handleDeleteItem}
+                onToggleFavorite={handleToggleFavorite}
+                onDeleteSubTab={handleDeleteSubTab}
+                onMoveToCollection={handleMoveItemToCollection}
+                isTrash={currentDestination === 'trash'}
+              />
+            </ErrorBoundary>
           )}
         </div>
       </div>
@@ -1283,13 +1296,15 @@ export const App: React.FC = () => {
       )}
 
       {/* Modals & Dialogs */}
-      <SaveTabsModal
-        isOpen={saveModalOpen}
-        onClose={() => setSaveModalOpen(false)}
-        collections={collections}
-        onSaveCompleted={handleSaveCompleted}
-        initialScope={saveModalScope}
-      />
+      <ErrorBoundary fallbackTitle="Save Tabs" onReset={() => setSaveModalOpen(false)}>
+        <SaveTabsModal
+          isOpen={saveModalOpen}
+          onClose={() => setSaveModalOpen(false)}
+          collections={collections}
+          onSaveCompleted={handleSaveCompleted}
+          initialScope={saveModalScope}
+        />
+      </ErrorBoundary>
 
       <OnboardingWizard
         isOpen={!hasOnboarded}
@@ -1299,90 +1314,110 @@ export const App: React.FC = () => {
         }}
       />
 
-      <StorageModal
-        isOpen={storageModalOpen}
-        onClose={() => setStorageModalOpen(false)}
-        storageReport={{
-          exactVaultBytes: 12400000000,
-          thumbnailsBytes: 6200000000,
-          databaseBytes: 1800000000,
-          archivesBytes: 3800000000,
-          trashBytes: 420000000,
-          backupsBytes: 120000000,
-          temporaryBytes: 60000000,
-          manifestBytes: 4096,
-          freeSpaceBytes: 142000000000,
-          profileEstimateBytes: null
-        }}
-        quotaBytes={50 * 1024 * 1024 * 1024}
-      />
+      <ErrorBoundary fallbackTitle="Storage Breakdown" onReset={() => setStorageModalOpen(false)}>
+        <StorageModal
+          isOpen={storageModalOpen}
+          onClose={() => setStorageModalOpen(false)}
+          storageReport={{
+            exactVaultBytes: 12400000000,
+            thumbnailsBytes: 6200000000,
+            databaseBytes: 1800000000,
+            archivesBytes: 3800000000,
+            trashBytes: 420000000,
+            backupsBytes: 120000000,
+            temporaryBytes: 60000000,
+            manifestBytes: 4096,
+            freeSpaceBytes: 142000000000,
+            profileEstimateBytes: null
+          }}
+          quotaBytes={50 * 1024 * 1024 * 1024}
+        />
+      </ErrorBoundary>
 
-      <DuplicatesModal
-        isOpen={duplicatesModalOpen}
-        onClose={() => setDuplicatesModalOpen(false)}
-        items={items}
-        onDeleteItem={handleDeleteItem}
-      />
+      <ErrorBoundary fallbackTitle="Duplicate Tabs Detector" onReset={() => setDuplicatesModalOpen(false)}>
+        <DuplicatesModal
+          isOpen={duplicatesModalOpen}
+          onClose={() => setDuplicatesModalOpen(false)}
+          items={items}
+          onDeleteItem={handleDeleteItem}
+        />
+      </ErrorBoundary>
 
-      <RestoreQueueModal
-        isOpen={restoreModalOpen}
-        onClose={() => setRestoreModalOpen(false)}
-        items={items}
-      />
+      <ErrorBoundary fallbackTitle="Restore Queue" onReset={() => setRestoreModalOpen(false)}>
+        <RestoreQueueModal
+          isOpen={restoreModalOpen}
+          onClose={() => setRestoreModalOpen(false)}
+          items={items}
+        />
+      </ErrorBoundary>
 
-      <ArchiveSearchModal
-        isOpen={archiveSearchModalOpen}
-        onClose={() => setArchiveSearchModalOpen(false)}
-        items={items}
-        collections={collections}
-        onSelectItem={setSelectedItemId}
-        onOpenLiveUrl={handleOpenLiveUrl}
-      />
+      <ErrorBoundary fallbackTitle="Archive Search" onReset={() => setArchiveSearchModalOpen(false)}>
+        <ArchiveSearchModal
+          isOpen={archiveSearchModalOpen}
+          onClose={() => setArchiveSearchModalOpen(false)}
+          items={items}
+          collections={collections}
+          onSelectItem={setSelectedItemId}
+          onOpenLiveUrl={handleOpenLiveUrl}
+        />
+      </ErrorBoundary>
 
-      <BackupModal
-        isOpen={backupModalOpen}
-        onClose={() => setBackupModalOpen(false)}
-        items={items}
-        onRestoreBackup={(restored) => setItems(restored)}
-      />
+      <ErrorBoundary fallbackTitle="Vault Backups" onReset={() => setBackupModalOpen(false)}>
+        <BackupModal
+          isOpen={backupModalOpen}
+          onClose={() => setBackupModalOpen(false)}
+          items={items}
+          onRestoreBackup={(restored) => setItems(restored)}
+        />
+      </ErrorBoundary>
 
-      <PortableVaultModal
-        isOpen={portableVaultModalOpen}
-        onClose={() => setPortableVaultModalOpen(false)}
-        items={items}
-        collections={collections}
-        tags={INITIAL_COLLECTIONS.map(c => ({ id: c.id, name: c.name }))}
-        onImportItems={(imported) => setItems(imported)}
-      />
+      <ErrorBoundary fallbackTitle="Portable Vault Export/Import" onReset={() => setPortableVaultModalOpen(false)}>
+        <PortableVaultModal
+          isOpen={portableVaultModalOpen}
+          onClose={() => setPortableVaultModalOpen(false)}
+          items={items}
+          collections={collections}
+          tags={INITIAL_COLLECTIONS.map(c => ({ id: c.id, name: c.name }))}
+          onImportItems={(imported) => setItems(imported)}
+        />
+      </ErrorBoundary>
 
-      <SettingsModal
-        isOpen={settingsModalOpen}
-        onClose={() => setSettingsModalOpen(false)}
-        preferences={preferences}
-        onUpdatePreferences={(newPrefs) => setPreferences(prev => ({ ...prev, ...newPrefs }))}
-      />
+      <ErrorBoundary fallbackTitle="Preferences & Settings" onReset={() => setSettingsModalOpen(false)}>
+        <SettingsModal
+          isOpen={settingsModalOpen}
+          onClose={() => setSettingsModalOpen(false)}
+          preferences={preferences}
+          onUpdatePreferences={(newPrefs) => setPreferences(prev => ({ ...prev, ...newPrefs }))}
+        />
+      </ErrorBoundary>
 
-      <HelpDiagnosticsModal
-        isOpen={helpModalOpen}
-        onClose={() => setHelpModalOpen(false)}
-      />
+      <ErrorBoundary fallbackTitle="Help & Diagnostics" onReset={() => setHelpModalOpen(false)}>
+        <HelpDiagnosticsModal
+          isOpen={helpModalOpen}
+          onClose={() => setHelpModalOpen(false)}
+        />
+      </ErrorBoundary>
 
-      <CreateGroupModal
-        isOpen={createGroupModalOpen}
-        onClose={() => setCreateGroupModalOpen(false)}
-        sourceTab={groupSourceTab}
-        targetTab={groupTargetTab}
-        allTabs={items}
-        onCreateGroup={handleCreateGroup}
-      />
+      <ErrorBoundary fallbackTitle="Create Group" onReset={() => setCreateGroupModalOpen(false)}>
+        <CreateGroupModal
+          isOpen={createGroupModalOpen}
+          onClose={() => setCreateGroupModalOpen(false)}
+          sourceTab={groupSourceTab}
+          targetTab={groupTargetTab}
+          allTabs={items}
+          onCreateGroup={handleCreateGroup}
+        />
+      </ErrorBoundary>
 
-      <ManageGroupTabsModal
-        isOpen={manageGroupModalOpen}
-        onClose={() => setManageGroupModalOpen(false)}
-        collection={targetCollectionForManage}
-        allTabs={items}
-        onSaveGroupTabs={handleSaveGroupTabs}
-      />
+      <ErrorBoundary fallbackTitle="Manage Group Tabs" onReset={() => setManageGroupModalOpen(false)}>
+        <ManageGroupTabsModal
+          isOpen={manageGroupModalOpen}
+          onClose={() => setManageGroupModalOpen(false)}
+          collection={targetCollectionForManage}
+          allTabs={items}
+          onSaveGroupTabs={handleSaveGroupTabs}
+        />
+      </ErrorBoundary>
 
       {confirmDialog && (
         <ConfirmationModal

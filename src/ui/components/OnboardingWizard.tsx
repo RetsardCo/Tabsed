@@ -19,8 +19,6 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onComplete]);
 
-  if (!isOpen) return null;
-
   const [step, setStep] = useState<number>(1);
   const [vaultPath, setVaultPath] = useState<string>('C:\\Users\\Kurados\\TabsedVault');
   const [selectedMode, setSelectedMode] = useState<'basic' | 'connected'>('connected');
@@ -31,6 +29,8 @@ export const OnboardingWizard: React.FC<OnboardingWizardProps> = ({ isOpen, onCo
       setTestCaptureDone(true);
     }, 600);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

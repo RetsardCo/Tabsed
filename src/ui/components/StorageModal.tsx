@@ -15,6 +15,9 @@ export const StorageModal: React.FC<StorageModalProps> = ({
   storageReport,
   quotaBytes = 50 * 1024 * 1024 * 1024
 }) => {
+  const [dryRunRunning, setDryRunRunning] = useState(false);
+  const [dryRunResult, setDryRunResult] = useState<{ candidateFiles: string[]; reclaimableBytes: number } | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -26,11 +29,6 @@ export const StorageModal: React.FC<StorageModalProps> = ({
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  const [dryRunRunning, setDryRunRunning] = useState(false);
-  const [dryRunResult, setDryRunResult] = useState<{ candidateFiles: string[]; reclaimableBytes: number } | null>(null);
 
   const handleRunCleanupPreview = () => {
     setDryRunRunning(true);
@@ -57,6 +55,8 @@ export const StorageModal: React.FC<StorageModalProps> = ({
 
   const exactVault = storageReport.exactVaultBytes || 7840000;
   const quotaPercent = Math.min(100, Math.round((exactVault / quotaBytes) * 100));
+
+  if (!isOpen) return null;
 
   return (
     <div

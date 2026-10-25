@@ -16,7 +16,8 @@ import {
   User,
   Copy,
   Search,
-  Folder
+  Folder,
+  Lock
 } from 'lucide-react';
 import { SavedTabItem, SessionTab, Collection } from '../types';
 import { SmartFavicon, EdgeIcon, ChromeIcon, FirefoxIcon } from './BrandIcons';
@@ -57,11 +58,8 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   onMoveToCollection,
   isTrash
 }) => {
-  if (!item) return null;
-
-  const inTrash = isTrash || Boolean(item.deletedAt);
-  const [notesText, setNotesText] = useState(item.notes);
-  const [titleText, setTitleText] = useState(item.title);
+  const [notesText, setNotesText] = useState(item?.notes || '');
+  const [titleText, setTitleText] = useState(item?.title || '');
   const [isEditing, setIsEditing] = useState(false);
   const [isEditingNotes, setIsEditingNotes] = useState(false);
   const [newTagInput, setNewTagInput] = useState('');
@@ -72,13 +70,70 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   const [subTabSearch, setSubTabSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [selectedSubTabId, setSelectedSubTabId] = useState<string>(item?.id || '');
+  const [previewImgError, setPreviewImgError] = useState(false);
+
+  const sessionTabs: SessionTab[] = React.useMemo(() => {
+    if (!item) return [];
+    if (item.sessionTabs && item.sessionTabs.length > 0) {
+      return item.sessionTabs;
+    }
+    const count = item.tabCount && item.tabCount > 1 ? item.tabCount : 1;
+    if (count > 1) {
+      return Array.from({ length: count }, (_, idx) => ({
+        id: `synth_${item.id}_${idx + 1}`,
+        title: `${item.title} — Tab ${idx + 1}`,
+        url: `${item.url}${item.url.includes('?') ? '&' : '?'}tab=${idx + 1}`,
+        domain: item.domain,
+        faviconUrl: item.faviconUrl
+      }));
+    }
+    return [
+      {
+        id: `sub_${item.id}_1`,
+        title: item.title,
+        url: item.url,
+        domain: item.domain,
+        faviconUrl: item.faviconUrl
+      }
+    ];
+  }, [item]);
 
   useEffect(() => {
-    setNotesText(item.notes);
-    setTitleText(item.title);
+    if (item) {
+      setNotesText(item.notes);
+      setTitleText(item.title);
+      setSelectedSubTabId(sessionTabs[0]?.id || item.id);
+      setPreviewImgError(false);
+    }
     setIsEditing(false);
     setIsEditingNotes(false);
-  }, [item.id, item.notes, item.title]);
+  }, [item?.id, item?.notes, item?.title, sessionTabs]);
+
+  useEffect(() => {
+    setPreviewImgError(false);
+  }, [selectedSubTabId]);
+
+  const handleSafeClose = React.useCallback(() => {
+    if (item && notesText !== item.notes) {
+      onUpdateNotes(item.id, notesText);
+    }
+    onClose();
+  }, [item, notesText, onUpdateNotes, onClose]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleSafeClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handleSafeClose]);
+
+  if (!item) return null;
+
+  const inTrash = isTrash || Boolean(item.deletedAt);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -118,30 +173,16 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
     return (bytes / 1024).toFixed(0) + ' KB';
   };
 
-  const sessionTabs: SessionTab[] = React.useMemo(() => {
-    if (item.sessionTabs && item.sessionTabs.length > 0) {
-      return item.sessionTabs;
-    }
-    const count = item.tabCount && item.tabCount > 1 ? item.tabCount : 1;
-    if (count > 1) {
-      return Array.from({ length: count }, (_, idx) => ({
-        id: `synth_${item.id}_${idx + 1}`,
-        title: `${item.title} — Tab ${idx + 1}`,
-        url: `${item.url}${item.url.includes('?') ? '&' : '?'}tab=${idx + 1}`,
-        domain: item.domain,
-        faviconUrl: item.faviconUrl
-      }));
-    }
-    return [
-      {
-        id: `sub_${item.id}_1`,
-        title: item.title,
-        url: item.url,
-        domain: item.domain,
-        faviconUrl: item.faviconUrl
-      }
-    ];
-  }, [item]);
+  const currentActiveTab = sessionTabs.find(t => t.id === selectedSubTabId) || sessionTabs[0] || {
+    id: item.id,
+    title: item.title,
+    url: item.url,
+    domain: item.domain,
+    faviconUrl: item.faviconUrl
+  };
+  const currentPreviewThumbnail = currentActiveTab.id === item.id 
+    ? item.thumbnailUrl 
+    : (currentActiveTab.thumbnailUrl || item.thumbnailUrl);
 
   const isSessionGroup = item.itemType === 'session' || (item.tabCount && item.tabCount > 1) || sessionTabs.length > 1;
   const tabCount = item.tabCount || sessionTabs.length;
@@ -203,95 +244,336 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   };
 
   return (
-    <aside style={{
-      width: '360px',
-      minWidth: '360px',
-      backgroundColor: 'var(--bg-surface)',
-      borderLeft: '1px solid var(--border-subtle)',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflowY: 'auto',
-      zIndex: 10
-    }}>
-      {/* Top Preview Image with close & star controls (Mockup image 4) */}
-      <div style={{
-        position: 'relative',
-        width: '100%',
-        height: '190px',
-        backgroundColor: 'var(--bg-app)',
-        borderBottom: '1px solid var(--border-subtle)',
-        overflow: 'hidden'
-      }}>
-        {item.thumbnailUrl ? (
-          <img
-            src={item.thumbnailUrl}
-            alt={item.title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          />
-        ) : (
-          <SmartBrandThumbnail
-            domain={item.domain}
-            url={item.url}
-            title={item.title}
-            faviconUrl={item.faviconUrl}
-            thumbnailUrl={item.thumbnailUrl}
-          />
-        )}
-
-        {/* Top Controls Overlay */}
-        <div style={{
-          position: 'absolute',
-          top: '12px',
-          right: '12px',
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Tab Details Inspector"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleSafeClose();
+        }
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(15, 23, 42, 0.72)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        zIndex: 1000,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '24px',
+        boxSizing: 'border-box'
+      }}
+    >
+      <div
+        style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          zIndex: 3
-        }}>
-          {onToggleFavorite && (
-            <button
-              onClick={() => onToggleFavorite(item.id)}
-              title={item.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+          width: '94vw',
+          maxWidth: '1240px',
+          height: '88vh',
+          maxHeight: '840px',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: '16px',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.08)',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Left / Middle High-Definition Browser Preview */}
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'var(--bg-app)',
+            borderRight: '1px solid var(--border-subtle)',
+            minWidth: 0,
+            overflow: 'hidden'
+          }}
+        >
+          {/* Top Browser Chrome Bar */}
+          <div
+            style={{
+              height: '46px',
+              padding: '0 16px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              borderBottom: '1px solid var(--border-subtle)',
+              backgroundColor: 'var(--bg-surface)',
+              flexShrink: 0
+            }}
+          >
+            {/* Window Traffic Dots */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <button
+                onClick={handleSafeClose}
+                title="Close"
+                aria-label="Close"
+                style={{
+                  width: '10px',
+                  height: '10px',
+                  borderRadius: '50%',
+                  backgroundColor: '#ef4444',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer'
+                }}
+              />
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
+              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10b981' }} />
+            </div>
+
+            {/* Address Bar Pill */}
+            <div
               style={{
-                width: '30px',
-                height: '30px',
-                borderRadius: '50%',
-                backgroundColor: 'rgba(255, 255, 255, 0.92)',
-                border: 'none',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                flex: 1,
+                maxWidth: '620px',
+                height: '32px',
+                borderRadius: '8px',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                color: item.isFavorite ? '#f59e0b' : '#64748b'
+                padding: '0 12px',
+                gap: '8px',
+                overflow: 'hidden'
               }}
             >
-              <Star size={16} fill={item.isFavorite ? '#f59e0b' : 'none'} strokeWidth={item.isFavorite ? 2 : 2.2} />
+              <Lock size={13} style={{ color: '#10b981', flexShrink: 0 }} />
+              <span
+                style={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: 'var(--text-secondary)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  flex: 1
+                }}
+              >
+                {currentActiveTab.url}
+              </span>
+              <button
+                onClick={() => handleCopy(currentActiveTab.url, 'preview_url')}
+                title="Copy URL"
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: copiedId === 'preview_url' ? '#10b981' : 'var(--text-muted)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '2px'
+                }}
+              >
+                {copiedId === 'preview_url' ? <Check size={14} /> : <Copy size={14} />}
+              </button>
+            </div>
+
+            {/* Open Live Button */}
+            <button
+              onClick={() => onOpenLiveUrl(currentActiveTab.url)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 14px',
+                borderRadius: '6px',
+                backgroundColor: 'var(--accent-color)',
+                color: '#ffffff',
+                border: 'none',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+            >
+              <ExternalLink size={13} />
+              <span>Open Live</span>
             </button>
+          </div>
+
+          {/* Sub-tab strip if multiple session tabs */}
+          {sessionTabs.length > 1 && (
+            <div
+              style={{
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '0 12px',
+                borderBottom: '1px solid var(--border-subtle)',
+                backgroundColor: 'var(--bg-surface)',
+                overflowX: 'auto',
+                flexShrink: 0
+              }}
+            >
+              {sessionTabs.map((st) => {
+                const isActive = st.id === currentActiveTab.id;
+                return (
+                  <button
+                    key={st.id}
+                    onClick={() => setSelectedSubTabId(st.id)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: isActive ? '1px solid var(--accent-color)' : '1px solid var(--border-subtle)',
+                      backgroundColor: isActive ? 'rgba(37, 99, 235, 0.12)' : 'var(--bg-app)',
+                      color: isActive ? 'var(--accent-color)' : 'var(--text-secondary)',
+                      fontSize: '11px',
+                      fontWeight: isActive ? 600 : 500,
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap',
+                      maxWidth: '180px',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      flexShrink: 0
+                    }}
+                  >
+                    <SmartFavicon domain={st.domain} url={st.url} faviconUrl={st.faviconUrl} size={13} />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {st.title}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           )}
 
-          <button
-            onClick={onClose}
-            title="Close inspector"
+          {/* Screen capture display area */}
+          <div
             style={{
-              width: '30px',
-              height: '30px',
-              borderRadius: '50%',
-              backgroundColor: 'rgba(255, 255, 255, 0.92)',
-              border: 'none',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+              flex: 1,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              cursor: 'pointer',
-              color: '#334155'
+              padding: '24px',
+              overflow: 'auto',
+              backgroundColor: 'rgba(0, 0, 0, 0.18)'
             }}
           >
-            <X size={16} />
-          </button>
+            {!previewImgError && currentPreviewThumbnail && !currentPreviewThumbnail.startsWith('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB') ? (
+              <img
+                src={currentPreviewThumbnail}
+                alt={currentActiveTab.title}
+                onError={() => setPreviewImgError(true)}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain',
+                  borderRadius: '10px',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.35)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  maxWidth: '680px',
+                  maxHeight: '450px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.35)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
+                <SmartBrandThumbnail
+                  domain={currentActiveTab.domain || item.domain}
+                  url={currentActiveTab.url || item.url}
+                  title={currentActiveTab.title || item.title}
+                  faviconUrl={currentActiveTab.faviconUrl || item.faviconUrl}
+                  thumbnailUrl={previewImgError ? undefined : currentPreviewThumbnail}
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+
+        {/* Right Inspector Aside */}
+        <aside
+          style={{
+            width: '380px',
+            minWidth: '380px',
+            backgroundColor: 'var(--bg-surface)',
+            display: 'flex',
+            flexDirection: 'column',
+            height: '100%',
+            overflowY: 'auto'
+          }}
+        >
+          {/* Header Bar with Domain, Favorite & Close */}
+          <div
+            style={{
+              padding: '12px 18px',
+              borderBottom: '1px solid var(--border-subtle)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              flexShrink: 0,
+              backgroundColor: 'var(--bg-surface)'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+              <SmartFavicon domain={item.domain} url={item.url} faviconUrl={item.faviconUrl} size={16} />
+              <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {item.domain || 'Tab Details'}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+              {onToggleFavorite && (
+                <button
+                  onClick={() => onToggleFavorite(item.id)}
+                  title={item.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '6px',
+                    backgroundColor: 'var(--bg-app)',
+                    border: '1px solid var(--border-subtle)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: item.isFavorite ? '#f59e0b' : 'var(--text-secondary)'
+                  }}
+                >
+                  <Star size={15} fill={item.isFavorite ? '#f59e0b' : 'none'} strokeWidth={item.isFavorite ? 2 : 2.2} />
+                </button>
+              )}
+              <button
+                onClick={handleSafeClose}
+                title="Close inspector"
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  borderRadius: '6px',
+                  backgroundColor: 'var(--bg-app)',
+                  border: '1px solid var(--border-subtle)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                <X size={15} />
+              </button>
+            </div>
+          </div>
 
       {/* Main Inspector Details Content */}
       <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -950,6 +1232,13 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             <textarea
               value={notesText}
               onChange={(e) => setNotesText(e.target.value)}
+              onBlur={handleSaveNotes}
+              onKeyDown={(e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSaveNotes();
+                }
+              }}
               placeholder="Add your personal notes or context..."
               rows={4}
               style={{
@@ -1462,6 +1751,8 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
           <span>{toastMessage}</span>
         </div>
       )}
-    </aside>
+        </aside>
+      </div>
+    </div>
   );
 };

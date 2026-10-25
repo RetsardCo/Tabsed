@@ -13,7 +13,8 @@ import {
   Sun,
   Globe,
   Layers,
-  Link
+  Link,
+  SlidersHorizontal
 } from 'lucide-react';
 import { ViewMode, GroupMode } from '../types';
 
@@ -41,6 +42,10 @@ interface HeaderProps {
   syncStatus?: 'ready' | 'synced' | 'syncing';
   groupMode?: GroupMode;
   onGroupModeChange?: (mode: GroupMode) => void;
+  gridColumns?: 'auto' | 2 | 3 | 4 | 5 | 6;
+  onGridColumnsChange?: (cols: 'auto' | 2 | 3 | 4 | 5 | 6) => void;
+  cardSize?: 'compact' | 'medium' | 'large';
+  onCardSizeChange?: (size: 'compact' | 'medium' | 'large') => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -66,12 +71,18 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme,
   syncStatus = 'ready',
   groupMode = 'individual',
-  onGroupModeChange
+  onGroupModeChange,
+  gridColumns = 'auto',
+  onGridColumnsChange,
+  cardSize = 'medium',
+  onCardSizeChange
 }) => {
   const [saveMenuOpen, setSaveMenuOpen] = useState(false);
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
+  const [gridMenuOpen, setGridMenuOpen] = useState(false);
   const saveMenuRef = useRef<HTMLDivElement>(null);
   const filterMenuRef = useRef<HTMLDivElement>(null);
+  const gridMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -81,12 +92,15 @@ export const Header: React.FC<HeaderProps> = ({
       if (filterMenuRef.current && !filterMenuRef.current.contains(e.target as Node)) {
         setFilterMenuOpen(false);
       }
+      if (gridMenuRef.current && !gridMenuRef.current.contains(e.target as Node)) {
+        setGridMenuOpen(false);
+      }
     };
-    if (saveMenuOpen || filterMenuOpen) {
+    if (saveMenuOpen || filterMenuOpen || gridMenuOpen) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [saveMenuOpen, filterMenuOpen]);
+  }, [saveMenuOpen, filterMenuOpen, gridMenuOpen]);
 
   const filterPills = [
     { id: 'All', label: 'All', icon: null },
@@ -272,6 +286,129 @@ export const Header: React.FC<HeaderProps> = ({
               <List size={15} />
             </button>
           </div>
+
+          {/* Grid Layout & Card Size Preferences (Only shown in grid view) */}
+          {viewMode === 'grid' && onGridColumnsChange && (
+            <div style={{ position: 'relative' }} ref={gridMenuRef}>
+              <button
+                title="Grid layout and card size preferences"
+                onClick={() => setGridMenuOpen(!gridMenuOpen)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: gridMenuOpen ? 'var(--accent-light)' : 'var(--bg-input)',
+                  border: gridMenuOpen ? '1px solid var(--accent-color)' : '1px solid var(--border-subtle)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '7px 11px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: gridMenuOpen ? 'var(--accent-color)' : 'var(--text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <SlidersHorizontal size={14} />
+                <span>
+                  {gridColumns === 'auto' ? 'Auto' : `${gridColumns} cols`} • {cardSize === 'compact' ? 'Compact' : cardSize === 'large' ? 'Large' : 'Normal'}
+                </span>
+                <ChevronDown size={12} />
+              </button>
+
+              {gridMenuOpen && (
+                <div style={{
+                  position: 'absolute',
+                  top: '100%',
+                  right: 0,
+                  marginTop: '6px',
+                  width: '260px',
+                  backgroundColor: 'var(--bg-surface)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)',
+                  boxShadow: 'var(--shadow-lg), 0 10px 25px -5px rgba(0,0,0,0.25)',
+                  padding: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px',
+                  zIndex: 50
+                }}>
+                  {/* Columns section */}
+                  <div>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                      Grid Columns
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '4px' }}>
+                      {([
+                        { val: 'auto' as const, label: 'Auto' },
+                        { val: 2 as const, label: '2' },
+                        { val: 3 as const, label: '3' },
+                        { val: 4 as const, label: '4' },
+                        { val: 5 as const, label: '5' },
+                        { val: 6 as const, label: '6' }
+                      ]).map(col => {
+                        const isSelected = gridColumns === col.val;
+                        return (
+                          <button
+                            key={col.label}
+                            type="button"
+                            onClick={() => onGridColumnsChange(col.val)}
+                            style={{
+                              padding: '6px 2px',
+                              borderRadius: 'var(--radius-sm)',
+                              border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
+                              backgroundColor: isSelected ? 'var(--accent-light)' : 'var(--bg-app)',
+                              color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                              fontSize: '11px',
+                              fontWeight: isSelected ? 700 : 500,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {col.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Card Size / Density section */}
+                  {onCardSizeChange && (
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+                        Card Size
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
+                        {([
+                          { key: 'compact' as const, label: 'Compact' },
+                          { key: 'medium' as const, label: 'Medium' },
+                          { key: 'large' as const, label: 'Large' }
+                        ]).map(size => {
+                          const isSelected = cardSize === size.key;
+                          return (
+                            <button
+                              key={size.key}
+                              type="button"
+                              onClick={() => onCardSizeChange(size.key)}
+                              style={{
+                                padding: '6px 4px',
+                                borderRadius: 'var(--radius-sm)',
+                                border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-subtle)'}`,
+                                backgroundColor: isSelected ? 'var(--accent-light)' : 'var(--bg-app)',
+                                color: isSelected ? 'var(--accent-color)' : 'var(--text-primary)',
+                                fontSize: '11px',
+                                fontWeight: isSelected ? 700 : 500,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {size.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Filter Dropdown / Button */}
           <div style={{ position: 'relative' }} ref={filterMenuRef}>

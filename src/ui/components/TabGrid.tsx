@@ -12,7 +12,8 @@ import {
   Link,
   ArrowRight,
   Clipboard,
-  FolderPlus
+  FolderPlus,
+  FileText
 } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartFavicon } from './BrandIcons';
@@ -31,6 +32,8 @@ interface TabGridProps {
   groupMode?: 'individual' | 'session';
   onGroupTabs?: (sourceTabId: string, targetTabId: string) => void;
   onAddToGroup?: (tabId: string) => void;
+  gridColumns?: 'auto' | 2 | 3 | 4 | 5 | 6;
+  cardSize?: 'compact' | 'medium' | 'large';
 }
 
 export const TabGrid: React.FC<TabGridProps> = ({
@@ -45,7 +48,9 @@ export const TabGrid: React.FC<TabGridProps> = ({
   onQuickAddUrl,
   groupMode = 'individual',
   onGroupTabs,
-  onAddToGroup
+  onAddToGroup,
+  gridColumns = 'auto',
+  cardSize = 'medium'
 }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
@@ -143,11 +148,28 @@ export const TabGrid: React.FC<TabGridProps> = ({
     );
   }
 
+  const getGridTemplateColumns = () => {
+    if (typeof gridColumns === 'number') {
+      return `repeat(${gridColumns}, minmax(0, 1fr))`;
+    }
+    if (cardSize === 'compact') {
+      return 'repeat(auto-fill, minmax(240px, 1fr))';
+    }
+    if (cardSize === 'large') {
+      return 'repeat(auto-fill, minmax(360px, 1fr))';
+    }
+    return 'repeat(auto-fill, minmax(310px, 1fr))';
+  };
+
+  const thumbHeight = cardSize === 'compact' ? '118px' : cardSize === 'large' ? '205px' : '154px';
+  const bodyPadding = cardSize === 'compact' ? '10px 12px' : cardSize === 'large' ? '16px 18px' : '14px 16px';
+  const gapSize = cardSize === 'compact' ? '14px' : cardSize === 'large' ? '24px' : '20px';
+
   return (
     <div style={{
       display: 'grid',
-      gridTemplateColumns: 'repeat(auto-fill, minmax(310px, 1fr))',
-      gap: '20px',
+      gridTemplateColumns: getGridTemplateColumns(),
+      gap: gapSize,
       padding: '24px'
     }}>
       {/* Umark-Style Inline Quick Add Card (Top of Grid, active view only) */}
@@ -426,7 +448,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
             )}
             {/* Top Thumbnail Section with SmartBrandThumbnail fallback */}
             <div style={{
-              height: '154px',
+              height: thumbHeight,
               backgroundColor: 'var(--bg-app)',
               position: 'relative',
               overflow: 'hidden',
@@ -500,7 +522,7 @@ export const TabGrid: React.FC<TabGridProps> = ({
             </div>
 
             {/* Card Body */}
-            <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+            <div style={{ padding: bodyPadding, display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
               {/* Title */}
               <h3 style={{
                 fontSize: '14px',
@@ -563,6 +585,39 @@ export const TabGrid: React.FC<TabGridProps> = ({
                   </span>
                 )}
               </div>
+
+              {/* Note Snippet on Tab Card (Visible at a glance in the grid) */}
+              {item.notes && item.notes.trim() && (
+                <div
+                  title={`Note: ${item.notes.trim()}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '6px',
+                    padding: '6px 10px',
+                    borderRadius: 'var(--radius-sm)',
+                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    border: '1px solid rgba(37, 99, 235, 0.22)',
+                    fontSize: '11px',
+                    color: 'var(--text-primary)',
+                    lineHeight: 1.4,
+                    marginTop: '4px'
+                  }}
+                >
+                  <FileText size={12} color="var(--accent-color)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                  <span style={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    wordBreak: 'break-word',
+                    fontWeight: 500
+                  }}>
+                    {item.notes.trim()}
+                  </span>
+                </div>
+              )}
             </div>
 
             {/* Card Footer */}

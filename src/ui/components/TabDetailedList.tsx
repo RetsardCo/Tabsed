@@ -111,9 +111,24 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
                 {item.url}
               </div>
 
-              {item.notes && (
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
-                  {item.notes}
+              {item.notes && item.notes.trim() && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  fontSize: '11px',
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                  padding: '3px 8px',
+                  borderRadius: '4px',
+                  alignSelf: 'flex-start',
+                  maxWidth: '100%',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }}>
+                  <span style={{ color: 'var(--accent-color)', fontWeight: 700 }}>Note:</span>
+                  <span>{item.notes.trim()}</span>
                 </div>
               )}
 

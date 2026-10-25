@@ -8,6 +8,8 @@ interface HelpDiagnosticsModalProps {
 }
 
 export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOpen, onClose }) => {
+  const [testResult, setTestResult] = useState<string | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -19,10 +21,6 @@ export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOp
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
-
-  const [testResult, setTestResult] = useState<string | null>(null);
 
   const handleRunDiagnostic = () => {
     setTestResult('Running handshake test...');
@@ -57,6 +55,8 @@ export const HelpDiagnosticsModal: React.FC<HelpDiagnosticsModalProps> = ({ isOp
     a.click();
     URL.revokeObjectURL(url);
   };
+
+  if (!isOpen) return null;
 
   return (
     <div

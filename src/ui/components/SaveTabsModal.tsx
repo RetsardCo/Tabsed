@@ -19,8 +19,6 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   onSaveCompleted,
   initialScope = 'window'
 }) => {
-  if (!isOpen) return null;
-
   const [scope, setScope] = useState<'window' | 'tab' | 'manual'>(initialScope);
 
   React.useEffect(() => {
@@ -104,16 +102,25 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
     try {
       const session = new SaveTransactionSession();
 
-      // 1. Validation
+      // 1. Validation & Thumbnail Capture
+      setProgressState('validating');
+      const tabsToValidate = await Promise.all(candidateTabs.map(async (t) => {
+        let thumb: string | null = null;
+        if (captureThumbnails) {
+          thumb = await connector.captureThumbnail(t.tabId);
+        }
+        return {
+          tabId: t.tabId,
+          url: t.url,
+          title: t.title,
+          pinned: t.pinned,
+          incognito: t.incognito,
+          thumbnailDataUrl: thumb
+        };
+      }));
+
+      session.validate(tabsToValidate, { closeAfterSave });
       setProgressState('validated');
-      session.validate(candidateTabs.map(t => ({
-        tabId: t.tabId,
-        url: t.url,
-        title: t.title,
-        pinned: t.pinned,
-        incognito: t.incognito,
-        thumbnailDataUrl: captureThumbnails ? 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' : null
-      })), { closeAfterSave });
 
       // 2. Staging
       setProgressState('staging');
@@ -160,7 +167,7 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
         normalizedUrl: st.normalizedUrl,
         domain: st.domain,
         faviconUrl: `https://${st.domain}/favicon.ico`,
-        thumbnailUrl: captureThumbnails ? st.stagedThumbnailPath || 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' : null,
+        thumbnailUrl: captureThumbnails ? (st.stagedThumbnailPath || null) : null,
         browserFamily: scope === 'manual' ? manualBrowser : ('Edge' as const),
         savedAt: new Date().toISOString(),
         notes: '',
@@ -185,6 +192,8 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
       setIsProcessing(false);
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div
