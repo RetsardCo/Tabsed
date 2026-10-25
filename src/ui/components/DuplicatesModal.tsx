@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { X, Copy, ExternalLink, Trash2, ArrowRightLeft, ShieldCheck } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { UrlNormalizer, DuplicateGroup } from '../../core/transaction/duplicate-detector';
@@ -25,9 +25,13 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
-  const duplicateGroups: DuplicateGroup<SavedTabItem>[] = UrlNormalizer.findDuplicates(items, {
-    stripTrackingParams: stripTracking
-  });
+  const duplicateGroups: DuplicateGroup<SavedTabItem>[] = useMemo(() => {
+    if (!isOpen) return [];
+    const activeItems = items.filter(i => !i.deletedAt);
+    return UrlNormalizer.findDuplicates(activeItems, {
+      stripTrackingParams: stripTracking
+    });
+  }, [isOpen, items, stripTracking]);
 
   if (!isOpen) return null;
 

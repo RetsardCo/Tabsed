@@ -34,10 +34,10 @@ export class ArchiveSearchEngine {
       if (item.deletedAt) continue;
 
       // Apply filters
-      if (filter?.collectionId && !item.collectionIds.includes(filter.collectionId)) {
+      if (filter?.collectionId && !(item.collectionIds || []).includes(filter.collectionId)) {
         continue;
       }
-      if (filter?.domain && item.domain.toLowerCase() !== filter.domain.toLowerCase()) {
+      if (filter?.domain && (item.domain || '').toLowerCase() !== (filter.domain || '').toLowerCase()) {
         continue;
       }
       if (filter?.itemType && item.itemType !== filter.itemType) {
@@ -54,11 +54,11 @@ export class ArchiveSearchEngine {
       const matchedFields: ('title' | 'url' | 'domain' | 'notes' | 'tags' | 'content')[] = [];
       let foundSnippet = '';
 
-      const titleLower = item.title.toLowerCase();
-      const urlLower = item.url.toLowerCase();
-      const domainLower = item.domain.toLowerCase();
+      const titleLower = (item.title || '').toLowerCase();
+      const urlLower = (item.url || '').toLowerCase();
+      const domainLower = (item.domain || '').toLowerCase();
       const notesLower = (item.notes || '').toLowerCase();
-      const tagsLower = (item.tags || []).map((t: string) => t.toLowerCase());
+      const tagsLower = (item.tags || []).map((t: string) => (t || '').toLowerCase());
       const contentLower = (item.archiveContent || '').toLowerCase();
 
       // Check all terms
@@ -84,7 +84,7 @@ export class ArchiveSearchEngine {
           score += 10;
           termMatched = true;
           if (!matchedFields.includes('notes')) matchedFields.push('notes');
-          if (!foundSnippet) {
+          if (!foundSnippet && item.notes) {
             foundSnippet = this.extractContextSnippet(item.notes, term);
           }
         }
@@ -127,6 +127,7 @@ export class ArchiveSearchEngine {
    * Extracts a bounded snippet with surrounding words around the matching term
    */
   private static extractContextSnippet(text: string, term: string, maxChars = 140): string {
+    if (!text) return '';
     const lowerText = text.toLowerCase();
     const index = lowerText.indexOf(term.toLowerCase());
     if (index === -1) return text.slice(0, maxChars);

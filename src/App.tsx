@@ -20,9 +20,10 @@ import { BackupModal } from './ui/components/BackupModal';
 import { PortableVaultModal } from './ui/components/PortableVaultModal';
 import { CreateGroupModal } from './ui/components/CreateGroupModal';
 import { ManageGroupTabsModal } from './ui/components/ManageGroupTabsModal';
+import { CheckLinksModal } from './ui/components/CheckLinksModal';
 import { ErrorBoundary } from './ui/components/ErrorBoundary';
 import { SavedTabItem, Collection, ViewMode, GroupMode, UserPreferences, Tag } from './ui/types';
-import { AvailabilityChecker } from './core/transaction/availability-checker';
+import { AvailabilityChecker, AvailabilityCategory } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
 import { unpackAllSessionItems, groupTabsBySession, extractDomainFromUrl } from './core/vault/unpack-sessions';
 
@@ -400,6 +401,8 @@ export const App: React.FC = () => {
   const [duplicatesModalOpen, setDuplicatesModalOpen] = useState(false);
   const [restoreModalOpen, setRestoreModalOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [settingsInitialTab, setSettingsInitialTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>('appearance');
+  const [checkLinksModalOpen, setCheckLinksModalOpen] = useState(false);
   const [helpModalOpen, setHelpModalOpen] = useState(false);
   const [archiveSearchModalOpen, setArchiveSearchModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
@@ -441,12 +444,48 @@ export const App: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
-  // Sync to local storage & disk vault (only after initial vault load has completed)
+  const persistTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+
+  // Flush pending writes on window exit to guarantee no data loss
   useEffect(() => {
-    localStorage.setItem('tabsed_items', JSON.stringify(items));
-    if (isInitialVaultLoaded.current) {
-      VaultSyncService.persistVaultItems(items);
+    const handleBeforeUnload = () => {
+      try {
+        localStorage.setItem('tabsed_items', JSON.stringify(itemsRef.current));
+      } catch (err) {
+        console.warn('Failed to save to localStorage before unload:', err);
+      }
+      if (isInitialVaultLoaded.current) {
+        VaultSyncService.persistVaultItems(itemsRef.current);
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, []);
+
+  // Sync to local storage & disk vault (debounced to eliminate serial save lag during rapid updates)
+  useEffect(() => {
+    if (persistTimeoutRef.current) {
+      clearTimeout(persistTimeoutRef.current);
     }
+
+    persistTimeoutRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem('tabsed_items', JSON.stringify(items));
+      } catch (err) {
+        console.warn('Failed to save to localStorage:', err);
+      }
+      if (isInitialVaultLoaded.current) {
+        VaultSyncService.persistVaultItems(items);
+      }
+    }, 250);
+
+    return () => {
+      if (persistTimeoutRef.current) {
+        clearTimeout(persistTimeoutRef.current);
+      }
+    };
   }, [items]);
 
   // Live real-time synchronization listener for incoming extension saves
@@ -532,7 +571,8 @@ export const App: React.FC = () => {
           backupModalOpen ||
           portableVaultModalOpen ||
           createGroupModalOpen ||
-          manageGroupModalOpen
+          manageGroupModalOpen ||
+          checkLinksModalOpen
         ) {
           setSaveModalOpen(false);
           setStorageModalOpen(false);
@@ -545,6 +585,7 @@ export const App: React.FC = () => {
           setPortableVaultModalOpen(false);
           setCreateGroupModalOpen(false);
           setManageGroupModalOpen(false);
+          setCheckLinksModalOpen(false);
           return;
         }
         setSelectedItemId(null);
@@ -564,7 +605,8 @@ export const App: React.FC = () => {
     backupModalOpen,
     portableVaultModalOpen,
     createGroupModalOpen,
-    manageGroupModalOpen
+    manageGroupModalOpen,
+    checkLinksModalOpen
   ]);
 
   // Filtered & Sorted items
@@ -589,7 +631,7 @@ export const App: React.FC = () => {
       result = result.filter(i => !i.deletedAt && i.collectionIds && i.collectionIds.length > 0);
     } else if (currentDestination.startsWith('col_')) {
       const colId = currentDestination.replace('col_', '');
-      result = result.filter(i => i.collectionIds.includes(colId) && !i.deletedAt);
+      result = result.filter(i => (i.collectionIds || []).includes(colId) && !i.deletedAt);
     } else {
       // Default: All active tabs
       result = result.filter(i => !i.deletedAt);
@@ -617,23 +659,23 @@ export const App: React.FC = () => {
         result = result.filter(i => i.itemType === 'session' || (i.tabCount && i.tabCount > 1));
       } else {
         result = result.filter(i =>
-          i.tags.some(t => t.toLowerCase().includes(pill)) ||
-          i.title.toLowerCase().includes(pill) ||
-          i.domain.toLowerCase().includes(pill) ||
-          i.notes.toLowerCase().includes(pill)
+          (i.tags || []).some(t => (t || '').toLowerCase().includes(pill)) ||
+          (i.title || '').toLowerCase().includes(pill) ||
+          (i.domain || '').toLowerCase().includes(pill) ||
+          (i.notes || '').toLowerCase().includes(pill)
         );
       }
     }
 
     // Global Search filter
-    if (searchQuery.trim()) {
+    if (searchQuery && searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(i =>
-        i.title.toLowerCase().includes(q) ||
-        i.url.toLowerCase().includes(q) ||
-        i.domain.toLowerCase().includes(q) ||
-        i.notes.toLowerCase().includes(q) ||
-        i.tags.some(t => t.toLowerCase().includes(q))
+        (i.title || '').toLowerCase().includes(q) ||
+        (i.url || '').toLowerCase().includes(q) ||
+        (i.domain || '').toLowerCase().includes(q) ||
+        (i.notes || '').toLowerCase().includes(q) ||
+        (i.tags || []).some(t => (t || '').toLowerCase().includes(q))
       );
     }
 
@@ -641,8 +683,8 @@ export const App: React.FC = () => {
     return [...result].sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime();
       if (sortBy === 'oldest') return new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime();
-      if (sortBy === 'title') return a.title.localeCompare(b.title);
-      if (sortBy === 'domain') return a.domain.localeCompare(b.domain);
+      if (sortBy === 'title') return (a.title || '').localeCompare(b.title || '');
+      if (sortBy === 'domain') return (a.domain || '').localeCompare(b.domain || '');
       if (sortBy === 'size') return (b.archiveSizeBytes || 0) - (a.archiveSizeBytes || 0);
       return 0;
     });
@@ -685,7 +727,11 @@ export const App: React.FC = () => {
           domain: domain,
           faviconUrl: domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null,
           thumbnailUrl: null,
-          browserFamily: 'Edge',
+          browserFamily: currentDestination === 'browser_chrome'
+            ? 'Chrome'
+            : currentDestination === 'browser_firefox'
+              ? 'Firefox'
+              : 'Edge',
           profileLabel: 'Default',
           savedAt: now,
           notes: '',
@@ -721,7 +767,7 @@ export const App: React.FC = () => {
   const activeCollections = useMemo(() => {
     return collections.map(col => ({
       ...col,
-      itemCount: items.filter(i => i.collectionIds.includes(col.id) && !i.deletedAt).length
+      itemCount: items.filter(i => (i.collectionIds || []).includes(col.id) && !i.deletedAt).length
     }));
   }, [collections, items]);
 
@@ -743,6 +789,30 @@ export const App: React.FC = () => {
   const storageUsedBytes = useMemo(() => {
     return items.filter(i => !i.deletedAt).reduce((acc, i) => acc + (i.archiveSizeBytes || 128 * 1024), 0);
   }, [items]);
+
+  const dynamicStorageReport = useMemo(() => {
+    const activeItems = items.filter(i => !i.deletedAt);
+    const trashItems = items.filter(i => Boolean(i.deletedAt));
+
+    const totalActiveArchiveBytes = activeItems.reduce((acc, i) => acc + (i.archiveSizeBytes || 131072), 0);
+    const totalTrashBytes = trashItems.reduce((acc, i) => acc + (i.archiveSizeBytes || 131072), 0);
+    const thumbnailsBytes = activeItems.filter(i => i.thumbnailUrl).length * 85000;
+    const databaseBytes = Math.max(items.length * 4096, 65536);
+    const exactVaultBytes = totalActiveArchiveBytes + totalTrashBytes + thumbnailsBytes + databaseBytes;
+
+    return {
+      exactVaultBytes,
+      thumbnailsBytes,
+      archivesBytes: totalActiveArchiveBytes,
+      databaseBytes,
+      trashBytes: totalTrashBytes,
+      backupsBytes: 0,
+      temporaryBytes: 32768,
+      manifestBytes: 4096,
+      freeSpaceBytes: Math.max(0, (preferences.storageQuotaBytes || (50 * 1024 * 1024 * 1024)) - exactVaultBytes),
+      profileEstimateBytes: null
+    };
+  }, [items, preferences.storageQuotaBytes]);
 
   const duplicatesCount = useMemo(() => {
     const active = items.filter(i => !i.deletedAt);
@@ -960,11 +1030,11 @@ export const App: React.FC = () => {
   };
 
   const handleAddTag = (id: string, tag: string) => {
-    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) && !item.tags.includes(tag) ? { ...item, tags: [...item.tags, tag] } : item));
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) && !(item.tags || []).includes(tag) ? { ...item, tags: [...(item.tags || []), tag] } : item));
   };
 
   const handleRemoveTag = (id: string, tag: string) => {
-    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) ? { ...item, tags: item.tags.filter(t => t !== tag) } : item));
+    setItems(prev => prev.map(item => (item.id === id || item.windowSessionId === id) ? { ...item, tags: (item.tags || []).filter(t => t !== tag) } : item));
   };
 
   const handleOpenLiveUrl = (url: string) => {
@@ -989,22 +1059,34 @@ export const App: React.FC = () => {
     setItems(prev => [...newTabs, ...prev]);
     setCollections(prev => prev.map(col => ({
       ...col,
-      itemCount: col.itemCount + newTabs.filter(t => t.collectionIds.includes(col.id)).length
+      itemCount: col.itemCount + newTabs.filter(t => (t.collectionIds || []).includes(col.id)).length
     })));
   };
 
-  const handleCheckAllLinks = async () => {
-    for (const item of items) {
-      if (!item.deletedAt && item.url.startsWith('http')) {
-        handleCheckAvailability(item.url);
+  const handleBatchAvailabilityResults = (results: { url: string; status: AvailabilityCategory; checkedAt: string }[]) => {
+    const resultMap = new Map(results.map(r => [r.url, r]));
+    setItems(prev => prev.map(item => {
+      const match = resultMap.get(item.url);
+      if (match) {
+        const mappedStatus = match.status === 'forbidden_scheme' ? 'blocked_uncertain' : match.status;
+        return {
+          ...item,
+          availabilityStatus: mappedStatus,
+          availabilityCheckedAt: match.checkedAt
+        };
       }
-    }
+      return item;
+    }));
+  };
+
+  const handleCheckAllLinks = () => {
+    setCheckLinksModalOpen(true);
   };
 
   const handleMagicOrganize = () => {
     setItems(prev => prev.map(item => {
-      const newTags = new Set(item.tags);
-      const d = item.domain.toLowerCase();
+      const newTags = new Set(item.tags || []);
+      const d = (item.domain || '').toLowerCase();
       if (d.includes('github') || d.includes('rust') || d.includes('unity') || d.includes('tauri')) newTags.add('Development');
       if (d.includes('figma') || d.includes('behance') || d.includes('dribbble')) newTags.add('Design');
       if (d.includes('arxiv') || d.includes('scholar') || d.includes('docs')) newTags.add('Research');
@@ -1047,11 +1129,18 @@ export const App: React.FC = () => {
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         onOpenStorage={() => setStorageModalOpen(true)}
         onOpenDuplicates={() => setDuplicatesModalOpen(true)}
-        onOpenSettings={() => setSettingsModalOpen(true)}
+        onOpenSettings={() => {
+          setSettingsInitialTab('appearance');
+          setSettingsModalOpen(true);
+        }}
+        onOpenConnectBrowser={() => {
+          setSettingsInitialTab('browsers');
+          setSettingsModalOpen(true);
+        }}
         onOpenHelp={() => setHelpModalOpen(true)}
         onOpenRestoreQueue={() => setRestoreModalOpen(true)}
         onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
-        onOpenCheckLinks={handleCheckAllLinks}
+        onOpenCheckLinks={() => setCheckLinksModalOpen(true)}
         onOpenPortableVault={() => setPortableVaultModalOpen(true)}
         activeItemCount={activeItemCount}
         favoritesCount={favoritesCount}
@@ -1214,6 +1303,12 @@ export const App: React.FC = () => {
                 onAddToGroup={handleAddToGroup}
                 gridColumns={preferences.gridColumns || 'auto'}
                 cardSize={preferences.cardSize || 'medium'}
+                currentDestination={currentDestination}
+                onOpenConnectBrowser={() => {
+                  setSettingsInitialTab('browsers');
+                  setSettingsModalOpen(true);
+                }}
+                searchQuery={searchQuery}
               />
             )}
             {viewMode === 'compact' && (
@@ -1318,19 +1413,8 @@ export const App: React.FC = () => {
         <StorageModal
           isOpen={storageModalOpen}
           onClose={() => setStorageModalOpen(false)}
-          storageReport={{
-            exactVaultBytes: 12400000000,
-            thumbnailsBytes: 6200000000,
-            databaseBytes: 1800000000,
-            archivesBytes: 3800000000,
-            trashBytes: 420000000,
-            backupsBytes: 120000000,
-            temporaryBytes: 60000000,
-            manifestBytes: 4096,
-            freeSpaceBytes: 142000000000,
-            profileEstimateBytes: null
-          }}
-          quotaBytes={50 * 1024 * 1024 * 1024}
+          storageReport={dynamicStorageReport}
+          quotaBytes={preferences.storageQuotaBytes || (50 * 1024 * 1024 * 1024)}
         />
       </ErrorBoundary>
 
@@ -1348,6 +1432,17 @@ export const App: React.FC = () => {
           isOpen={restoreModalOpen}
           onClose={() => setRestoreModalOpen(false)}
           items={items}
+        />
+      </ErrorBoundary>
+
+      <ErrorBoundary fallbackTitle="Check Links Availability" onReset={() => setCheckLinksModalOpen(false)}>
+        <CheckLinksModal
+          isOpen={checkLinksModalOpen}
+          onClose={() => setCheckLinksModalOpen(false)}
+          items={items}
+          onOpenLiveUrl={handleOpenLiveUrl}
+          onDeleteItem={handleDeleteItem}
+          onBatchCheckUrls={handleBatchAvailabilityResults}
         />
       </ErrorBoundary>
 
@@ -1388,6 +1483,7 @@ export const App: React.FC = () => {
           onClose={() => setSettingsModalOpen(false)}
           preferences={preferences}
           onUpdatePreferences={(newPrefs) => setPreferences(prev => ({ ...prev, ...newPrefs }))}
+          initialTab={settingsInitialTab}
         />
       </ErrorBoundary>
 

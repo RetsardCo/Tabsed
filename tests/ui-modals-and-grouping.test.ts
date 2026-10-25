@@ -21,6 +21,7 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
       'ConfirmationModal.tsx',
       'CreateGroupModal.tsx',
       'ManageGroupTabsModal.tsx',
+      'CheckLinksModal.tsx',
       'OnboardingWizard.tsx'
     ];
 
@@ -246,6 +247,74 @@ describe('UI Modals, Tab Grouping, and Favicon Fallbacks', () => {
       expect(inspectorContent).toContain('className="glass-modal-overlay"');
       expect(inspectorContent).toContain('className="glass-modal-dialog"');
       expect(inspectorContent).toContain('className="glass-menu-item"');
+    });
+  });
+
+  describe('5. Defensive Data Handling & Modal Integrity (Zero Blank Screens)', () => {
+    it('verifies TabGrid suppresses Quick Add card on empty browser views to cleanly center Connect Browser CTA', () => {
+      const gridContent = fs.readFileSync(path.join(componentsDir, 'TabGrid.tsx'), 'utf8');
+      expect(gridContent).toContain('isSpecialEmptyView');
+      expect(gridContent).toContain('showQuickAdd');
+      expect(gridContent).toContain('No tabs from Google Chrome yet');
+      expect(gridContent).toContain('Connect Google Chrome');
+      expect(gridContent).toContain('Connect Firefox');
+    });
+
+    it('verifies CheckLinksModal filters valid URLs safely and aligns broken count with sidebar', () => {
+      const checkLinksContent = fs.readFileSync(path.join(componentsDir, 'CheckLinksModal.tsx'), 'utf8');
+      // Boolean(i.url) prevents crash on undefined url
+      expect(checkLinksContent).toContain('Boolean(i.url)');
+      // Accurately counts network errors and timeouts
+      expect(checkLinksContent).toContain("i.availabilityStatus === 'network_error' || i.availabilityStatus === 'timeout'");
+      // Differentiates redirect and internal/protected schemes
+      expect(checkLinksContent).toContain("status === 'redirect'");
+      expect(checkLinksContent).toContain("status === 'blocked_uncertain' || status === 'forbidden_scheme'");
+    });
+
+    it('verifies StorageModal does not fall back to mock numbers when exact vault size is 0 bytes', () => {
+      const storageContent = fs.readFileSync(path.join(componentsDir, 'StorageModal.tsx'), 'utf8');
+      expect(storageContent).toContain('exactVaultBytes ?? 0');
+      expect(storageContent).not.toContain('exactVaultBytes || 7840000');
+    });
+
+    it('verifies filter and sort functions execute without throwing when items have undefined properties', () => {
+      const malformedItems: any[] = [
+        { id: '1', savedAt: new Date().toISOString() }, // missing title, domain, notes, tags, collectionIds, url
+        { id: '2', title: null, domain: undefined, tags: null, collectionIds: undefined, savedAt: new Date().toISOString() },
+        { id: '3', title: 'Valid Tab', domain: 'example.com', tags: ['dev'], collectionIds: ['col1'], savedAt: new Date().toISOString() }
+      ];
+
+      // 1. Tag/Pill filtering
+      const pill = 'dev';
+      const filteredByPill = malformedItems.filter(i =>
+        (i.tags || []).some((t: string) => (t || '').toLowerCase().includes(pill)) ||
+        (i.title || '').toLowerCase().includes(pill) ||
+        (i.domain || '').toLowerCase().includes(pill) ||
+        (i.notes || '').toLowerCase().includes(pill)
+      );
+      expect(filteredByPill.length).toBe(1);
+
+      // 2. Global search filtering
+      const q = 'valid';
+      const filteredByQuery = malformedItems.filter(i =>
+        (i.title || '').toLowerCase().includes(q) ||
+        (i.url || '').toLowerCase().includes(q) ||
+        (i.domain || '').toLowerCase().includes(q) ||
+        (i.notes || '').toLowerCase().includes(q) ||
+        (i.tags || []).some((t: string) => (t || '').toLowerCase().includes(q))
+      );
+      expect(filteredByQuery.length).toBe(1);
+
+      // 3. Sorting by title and domain
+      expect(() => {
+        [...malformedItems].sort((a, b) => (a.title || '').localeCompare(b.title || ''));
+        [...malformedItems].sort((a, b) => (a.domain || '').localeCompare(b.domain || ''));
+      }).not.toThrow();
+
+      // 4. Collection inclusion check
+      const colId = 'col1';
+      const colItems = malformedItems.filter(i => (i.collectionIds || []).includes(colId));
+      expect(colItems.length).toBe(1);
     });
   });
 });

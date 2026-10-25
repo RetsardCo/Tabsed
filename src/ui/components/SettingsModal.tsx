@@ -9,6 +9,7 @@ interface SettingsModalProps {
   onClose: () => void;
   preferences: UserPreferences;
   onUpdatePreferences: (prefs: Partial<UserPreferences>) => void;
+  initialTab?: 'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray';
 }
 
 const ACCENT_PRESETS: { key: AccentPreset; name: string; hex: string }[] = [
@@ -24,8 +25,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
   preferences,
-  onUpdatePreferences
+  onUpdatePreferences,
+  initialTab = 'appearance'
 }) => {
+  const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>(initialTab);
+
+  useEffect(() => {
+    if (isOpen && initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [isOpen, initialTab]);
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -37,8 +47,6 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     window.addEventListener('keydown', handleKeyDown, true);
     return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
-
-  const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>('appearance');
 
   // Phase 4 states
   const [privateTabsOptIn, setPrivateTabsOptIn] = useState(false);
@@ -355,39 +363,100 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
 
           {activeTab === 'browsers' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <div style={{
-                padding: '12px',
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'var(--bg-app)',
-                border: '1px solid var(--border-subtle)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                fontSize: '12px'
-              }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Microsoft Edge Connector</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Native Messaging Host v1.0.0</div>
-                </div>
-                <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                Connect your desktop browsers to Tabsed using our high-performance Native Messaging Host (<code>com.tabsed.vault</code>). Saved tabs and sessions sync directly to your local vault.
               </div>
 
+              {/* Microsoft Edge */}
               <div style={{
-                padding: '12px',
+                padding: '14px',
                 borderRadius: 'var(--radius-md)',
                 backgroundColor: 'var(--bg-app)',
                 border: '1px solid var(--border-subtle)',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                flexDirection: 'column',
+                gap: '8px',
                 fontSize: '12px'
               }}>
-                <div>
-                  <div style={{ fontWeight: 600 }}>Google Chrome Extension</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Native Messaging Host v1.0.0</div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Microsoft Edge Connector</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Windows Native Host (Registry: HKCU\Software\Microsoft\Edge\NativeMessagingHosts)</div>
+                  </div>
+                  <span style={{ color: '#10b981', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)' }}>
+                    Connected &amp; Ready
+                  </span>
                 </div>
-                <span style={{ color: '#10b981', fontWeight: 600 }}>Connected</span>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Extension registered. Clicking the Tabsed extension icon in Edge puts your active tabs away into this vault immediately.
+                </div>
+              </div>
+
+              {/* Google Chrome */}
+              <div style={{
+                padding: '14px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                fontSize: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Google Chrome Extension</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Native Messaging Host v1.0.0 (Windows Registry HKCU)</div>
+                  </div>
+                  <span style={{ color: '#10b981', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', backgroundColor: 'rgba(16, 185, 129, 0.12)' }}>
+                    Connected &amp; Ready
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Installed at <code>extension/chrome/</code>. To install in Chrome: open <code>chrome://extensions</code>, enable Developer Mode, and click "Load unpacked".
+                </div>
+              </div>
+
+              {/* Mozilla Firefox */}
+              <div style={{
+                padding: '14px',
+                borderRadius: 'var(--radius-md)',
+                backgroundColor: 'var(--bg-app)',
+                border: '1px solid var(--border-subtle)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                fontSize: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div>
+                    <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>Mozilla Firefox Add-on</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>WebExtensions Connector (Native Messaging Manifest)</div>
+                  </div>
+                  <span style={{ color: 'var(--accent-color)', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', backgroundColor: 'var(--accent-light)' }}>
+                    Ready to Connect
+                  </span>
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                  Installed at <code>extension/firefox/</code>. Open <code>about:debugging#/runtime/this-firefox</code> in Firefox and select <code>manifest.json</code> to load.
+                </div>
+              </div>
+
+              {/* Host Health Note */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 14px',
+                backgroundColor: 'var(--accent-light)',
+                borderRadius: 'var(--radius-sm)',
+                fontSize: '11px',
+                color: 'var(--text-secondary)',
+                border: '1px solid rgba(59, 130, 246, 0.25)'
+              }}>
+                <Check size={16} color="var(--accent-color)" />
+                <span>Native Messaging Host Bridge is running and listening for save transactions on standard pipe.</span>
               </div>
             </div>
           )}

@@ -31,16 +31,42 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
   const queueRef = React.useRef<RestoreQueue | null>(null);
   const pauseRequestedRef = React.useRef<boolean>(false);
 
-  const [restoreItems, setRestoreItems] = useState<RestoreItem[]>(() =>
-    items.slice(0, 8).map((it, idx) => ({
+  const [restoreItems, setRestoreItems] = useState<RestoreItem[]>(() => {
+    const active = items.filter(it => !it.deletedAt);
+    return active.slice(0, 10).map((it, idx) => ({
       id: it.id,
       url: it.url,
       title: it.title,
       pinned: false,
       orderIndex: idx,
       status: 'queued'
-    }))
-  );
+    }));
+  });
+
+  useEffect(() => {
+    if (isOpen && !isRunning) {
+      const active = items.filter(it => !it.deletedAt);
+      setRestoreItems(
+        active.slice(0, 10).map((it, idx) => ({
+          id: it.id,
+          url: it.url,
+          title: it.title,
+          pinned: false,
+          orderIndex: idx,
+          status: 'queued'
+        }))
+      );
+    }
+  }, [isOpen, items]);
+
+  useEffect(() => {
+    return () => {
+      pauseRequestedRef.current = true;
+      if (queueRef.current) {
+        queueRef.current.pause();
+      }
+    };
+  }, []);
 
   const handleStartQueue = async () => {
     setIsRunning(true);
@@ -376,7 +402,12 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
             Restoration Queue ({restoreItems.length} tabs)
           </div>
 
-          {restoreItems.map((item, idx) => (
+          {restoreItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '36px 16px', color: 'var(--text-muted)', fontSize: '13px' }}>
+              No active tabs available in the restoration queue.
+            </div>
+          ) : (
+            restoreItems.map((item, idx) => (
             <div
               key={item.id}
               style={{
@@ -416,7 +447,7 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
                 {item.status}
               </div>
             </div>
-          ))}
+          )))}
         </div>
         </div>
 

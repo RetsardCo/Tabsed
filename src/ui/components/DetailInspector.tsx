@@ -159,7 +159,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   const handleAddTagSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const tag = newTagInput.trim();
-    if (tag && !item.tags.includes(tag)) {
+    if (tag && !(item.tags || []).includes(tag)) {
       onAddTag(item.id, tag);
       setNewTagInput('');
       setShowTagInput(false);
@@ -955,7 +955,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '200px', overflowY: 'auto' }}>
                 {collections && collections.length > 0 ? (
                   collections.map(col => {
-                    const isCol = item.collectionIds.includes(col.id);
+                    const isCol = (item.collectionIds || []).includes(col.id);
                     return (
                       <button
                         key={col.id}
@@ -1097,7 +1097,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
             Tags
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            {item.tags.map(tag => (
+            {(item.tags || []).map(tag => (
               <span
                 key={tag}
                 style={{
@@ -1571,7 +1571,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
                 .filter(st => {
                   if (!subTabSearch.trim()) return true;
                   const q = subTabSearch.toLowerCase();
-                  return st.title.toLowerCase().includes(q) || st.url.toLowerCase().includes(q) || (st.domain && st.domain.toLowerCase().includes(q));
+                  return (st.title || '').toLowerCase().includes(q) || (st.url || '').toLowerCase().includes(q) || ((st.domain || '').toLowerCase().includes(q));
                 })
                 .map((tab, idx) => (
                   <div

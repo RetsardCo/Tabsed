@@ -34,6 +34,7 @@ interface SidebarProps {
   onOpenArchiveSearch?: () => void;
   onOpenCheckLinks?: () => void;
   onOpenPortableVault?: () => void;
+  onOpenConnectBrowser?: () => void;
   activeItemCount: number;
   favoritesCount: number;
   trashCount: number;
@@ -63,6 +64,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenArchiveSearch,
   onOpenCheckLinks,
   onOpenPortableVault,
+  onOpenConnectBrowser,
   activeItemCount,
   favoritesCount,
   trashCount,
@@ -422,7 +424,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {!isCollapsed && (
           <button
-            onClick={onOpenSettings}
+            onClick={onOpenConnectBrowser || onOpenSettings}
             style={{
               display: 'flex',
               alignItems: 'center',

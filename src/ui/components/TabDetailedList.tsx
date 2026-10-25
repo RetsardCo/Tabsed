@@ -142,9 +142,9 @@ export const TabDetailedList: React.FC<TabDetailedListProps> = ({
                 <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>
                   {item.tabCount || (item.sessionTabs ? item.sessionTabs.length : 1)} tabs
                 </span>
-                {item.tags.length > 0 && (
+                {(item.tags || []).length > 0 && (
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    {item.tags.map(t => (
+                    {(item.tags || []).map(t => (
                       <span key={t} style={{ color: 'var(--accent-color)' }}>#{t}</span>
                     ))}
                   </div>

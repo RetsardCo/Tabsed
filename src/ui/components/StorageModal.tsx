@@ -53,7 +53,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
     return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
   };
 
-  const exactVault = storageReport.exactVaultBytes || 7840000;
+  const exactVault = storageReport?.exactVaultBytes ?? 0;
   const quotaPercent = Math.min(100, Math.round((exactVault / quotaBytes) * 100));
 
   if (!isOpen) return null;
@@ -207,43 +207,43 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Thumbnails</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.thumbnailsBytes || 4200000)}
+                  {formatBytes(storageReport?.thumbnailsBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Database</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.databaseBytes || 2048000)}
+                  {formatBytes(storageReport?.databaseBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Archives</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.archivesBytes || 1200000)}
+                  {formatBytes(storageReport?.archivesBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Trash</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.trashBytes || 320000)}
+                  {formatBytes(storageReport?.trashBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Backups</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.backupsBytes || 0)}
+                  {formatBytes(storageReport?.backupsBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Temporary</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.temporaryBytes || 72000)}
+                  {formatBytes(storageReport?.temporaryBytes ?? 0)}
                 </div>
               </div>
               <div style={{ padding: '10px 12px', borderRadius: 'var(--radius-sm)', backgroundColor: 'var(--bg-app)', border: '1px solid var(--border-subtle)', gridColumn: 'span 3' }}>
                 <span style={{ color: 'var(--text-muted)', fontWeight: 600 }}>Vault Manifest &amp; Metadata</span>
                 <div style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '14px', marginTop: '2px' }}>
-                  {formatBytes(storageReport.manifestBytes || 2048)}
+                  {formatBytes(storageReport?.manifestBytes ?? 0)}
                 </div>
               </div>
             </div>

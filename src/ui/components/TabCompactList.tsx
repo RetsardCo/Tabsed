@@ -109,7 +109,7 @@ export const TabCompactList: React.FC<TabCompactListProps> = ({
                 </td>
                 <td style={{ padding: '8px 12px' }}>
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    {item.tags.map(t => (
+                    {(item.tags || []).map(t => (
                       <span key={t} style={{
                         fontSize: '10px',
                         padding: '1px 5px',

@@ -137,7 +137,7 @@ export function groupTabsBySession(items: SavedTabItem[]): SavedTabItem[] {
       savedAt: first.savedAt,
       notes: `Window session containing ${tabs.length} tabs.`,
       isFavorite: tabs.some(t => t.isFavorite),
-      collectionIds: Array.from(new Set(tabs.flatMap(t => t.collectionIds))),
+      collectionIds: Array.from(new Set(tabs.flatMap(t => t.collectionIds || []))),
       tags: ['Session', 'Window Session', first.browserFamily],
       tabCount: tabs.length,
       sessionTabs: sessionTabs,

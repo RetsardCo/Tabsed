@@ -259,6 +259,13 @@ select option {
   box-shadow: var(--shadow-popover), 0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Optimized high-performance repeated cards (PRD Epic 2.1 & GPU Rasterization optimization) */
+.tab-card {
+  contain: content;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
 /* Custom scrollbars */
 ::-webkit-scrollbar {
   width: 6px;

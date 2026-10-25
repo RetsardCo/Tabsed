@@ -51,7 +51,7 @@ export const ManageGroupTabsModal: React.FC<ManageGroupTabsModalProps> = ({
     if (!searchQuery.trim()) return activeTabs;
     const query = searchQuery.toLowerCase();
     return activeTabs.filter(t =>
-      t.title.toLowerCase().includes(query) ||
+      (t.title || '').toLowerCase().includes(query) ||
       (t.domain && t.domain.toLowerCase().includes(query)) ||
       (t.url && t.url.toLowerCase().includes(query)) ||
       (t.tags && t.tags.some(tag => tag.toLowerCase().includes(query)))
