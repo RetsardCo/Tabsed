@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, HardDrive, ShieldCheck, Trash2, RefreshCw, AlertCircle, Check, Sparkles } from 'lucide-react';
 import { StorageReport } from '../../core/vault/vault-manager';
 
@@ -15,6 +15,18 @@ export const StorageModal: React.FC<StorageModalProps> = ({
   storageReport,
   quotaBytes = 50 * 1024 * 1024 * 1024
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [dryRunRunning, setDryRunRunning] = useState(false);
@@ -47,42 +59,51 @@ export const StorageModal: React.FC<StorageModalProps> = ({
   const quotaPercent = Math.min(100, Math.round((exactVault / quotaBytes) * 100));
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500,
-      padding: '20px'
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="storage-modal-title"
         style={{
-        width: '600px',
-        maxHeight: '90vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Modal Header */}
+          width: '620px',
+          maxWidth: '92vw',
+          maxHeight: '90vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Modal Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 22px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
@@ -98,7 +119,7 @@ export const StorageModal: React.FC<StorageModalProps> = ({
               <HardDrive size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+              <h2 id="storage-modal-title" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, margin: 0 }}>
                 Storage Explorer &amp; Transparency
               </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -108,20 +129,26 @@ export const StorageModal: React.FC<StorageModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
             style={{
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
               color: 'var(--text-muted)',
-              padding: '4px'
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Modal Content */}
-        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {/* Modal Content - Scrollable */}
+        <div style={{ padding: '22px', display: 'flex', flexDirection: 'column', gap: '18px', overflowY: 'auto', flex: 1 }}>
           {/* Exact Vault Summary Card */}
           <div style={{
             padding: '18px',
@@ -313,16 +340,22 @@ export const StorageModal: React.FC<StorageModalProps> = ({
           </div>
         </div>
 
-        {/* Modal Footer */}
+        {/* Modal Footer - Fixed */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface)'
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Press Esc or click outside to dismiss
+          </span>
           <button
             onClick={onClose}
+            aria-label="Close storage explorer"
             style={{
               padding: '8px 20px',
               borderRadius: 'var(--radius-md)',

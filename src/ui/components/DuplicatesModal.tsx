@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Copy, ExternalLink, Trash2, ArrowRightLeft, ShieldCheck } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { UrlNormalizer, DuplicateGroup } from '../../core/transaction/duplicate-detector';
@@ -11,6 +11,18 @@ interface DuplicatesModalProps {
 }
 
 export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClose, items, onDeleteItem }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [stripTracking, setStripTracking] = useState(false);
@@ -20,52 +32,88 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
   });
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="duplicates-modal-title"
         style={{
-        width: '620px',
-        maxHeight: '85vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
+          width: '640px',
+          maxWidth: '92vw',
+          maxHeight: '85vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <Copy size={18} color="var(--accent-color)" />
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Duplicate URL Resolver</span>
+            <span id="duplicates-modal-title" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Duplicate URL Resolver
+            </span>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'background 0.15s ease, color 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--bg-app)';
+              e.currentTarget.style.color = 'var(--text-primary)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+              e.currentTarget.style.color = 'var(--text-muted)';
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Subheader / Settings */}
+        {/* Subheader / Settings - Fixed */}
         <div style={{
           padding: '12px 20px',
           backgroundColor: 'var(--bg-app)',
@@ -73,7 +121,8 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          fontSize: '12px'
+          fontSize: '12px',
+          flexShrink: 0
         }}>
           <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
             <input
@@ -88,8 +137,8 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
           </span>
         </div>
 
-        {/* Content Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Content Body - Scrollable */}
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
           {duplicateGroups.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-secondary)' }}>
               <Copy size={36} color="var(--text-muted)" style={{ marginBottom: '12px' }} />
@@ -186,27 +235,35 @@ export const DuplicatesModal: React.FC<DuplicatesModalProps> = ({ isOpen, onClos
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer - Fixed */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '12px 20px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '14px 20px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-app)',
+          flexShrink: 0
         }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Press Esc or click outside to dismiss
+          </span>
           <button
             onClick={onClose}
+            aria-label="Close duplicate resolver"
             style={{
-              padding: '6px 14px',
+              padding: '8px 20px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',
               border: 'none',
-              fontSize: '12px',
-              cursor: 'pointer'
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
-            Close
+            Done
           </button>
         </div>
       </div>

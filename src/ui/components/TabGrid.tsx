@@ -11,7 +11,8 @@ import {
   Plus,
   Link,
   ArrowRight,
-  Clipboard
+  Clipboard,
+  FolderPlus
 } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartFavicon } from './BrandIcons';
@@ -28,6 +29,8 @@ interface TabGridProps {
   isTrash?: boolean;
   onQuickAddUrl?: (url: string) => void;
   groupMode?: 'individual' | 'session';
+  onGroupTabs?: (sourceTabId: string, targetTabId: string) => void;
+  onAddToGroup?: (tabId: string) => void;
 }
 
 export const TabGrid: React.FC<TabGridProps> = ({
@@ -40,9 +43,13 @@ export const TabGrid: React.FC<TabGridProps> = ({
   onRestoreItem,
   isTrash,
   onQuickAddUrl,
-  groupMode = 'individual'
+  groupMode = 'individual',
+  onGroupTabs,
+  onAddToGroup
 }) => {
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
   const [quickInput, setQuickInput] = useState('');
   const [quickError, setQuickError] = useState(false);
 
@@ -304,27 +311,119 @@ export const TabGrid: React.FC<TabGridProps> = ({
         const isSelected = item.id === selectedItemId;
         const isSession = item.itemType === 'session' && (item.tabCount ? item.tabCount > 1 : false);
         const tabCount = item.tabCount || (item.sessionTabs ? item.sessionTabs.length : 1);
+        const isBeingDragged = draggedItemId === item.id;
+        const isDropTarget = !isTrash && draggedItemId !== null && draggedItemId !== item.id && dragOverItemId === item.id;
 
         return (
           <div
             key={item.id}
             onClick={() => onSelectItem(item.id)}
+            draggable={!isTrash}
+            onDragStart={(e) => {
+              e.dataTransfer.setData('text/plain', item.id);
+              e.dataTransfer.effectAllowed = 'move';
+              setDraggedItemId(item.id);
+            }}
+            onDragOver={(e) => {
+              if (!isTrash && draggedItemId && draggedItemId !== item.id) {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                if (dragOverItemId !== item.id) {
+                  setDragOverItemId(item.id);
+                }
+              }
+            }}
+            onDragLeave={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget as Node) && dragOverItemId === item.id) {
+                setDragOverItemId(null);
+              }
+            }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              const sourceId = draggedItemId || e.dataTransfer.getData('text/plain');
+              if (sourceId && sourceId !== item.id && onGroupTabs) {
+                onGroupTabs(sourceId, item.id);
+              }
+              setDraggedItemId(null);
+              setDragOverItemId(null);
+            }}
+            onDragEnd={() => {
+              setDraggedItemId(null);
+              setDragOverItemId(null);
+            }}
             style={{
               backgroundColor: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
               backdropFilter: 'var(--backdrop-filter)',
-              border: `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-card)'}`,
+              border: isDropTarget
+                ? '2px solid var(--accent-color)'
+                : `1px solid ${isSelected ? 'var(--accent-color)' : 'var(--border-card)'}`,
               borderRadius: 'var(--radius-lg)',
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column',
               cursor: 'pointer',
               transition: 'all 0.18s cubic-bezier(0.16, 1, 0.3, 1)',
-              boxShadow: isSelected
-                ? 'var(--shadow-md), var(--card-highlight), 0 0 0 1px var(--accent-color)'
-                : 'var(--shadow-sm), var(--card-highlight)',
+              opacity: isBeingDragged ? 0.45 : 1,
+              transform: isDropTarget ? 'scale(1.03)' : (isBeingDragged ? 'scale(0.98)' : 'none'),
+              boxShadow: isDropTarget
+                ? '0 0 0 4px rgba(37, 99, 235, 0.45), 0 14px 32px rgba(37, 99, 235, 0.35)'
+                : (isSelected
+                  ? 'var(--shadow-md), var(--card-highlight), 0 0 0 1px var(--accent-color)'
+                  : 'var(--shadow-sm), var(--card-highlight)'),
               position: 'relative'
             }}
           >
+            {/* Visual Drop to Group Glow Indicator */}
+            {isDropTarget && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundColor: 'rgba(37, 99, 235, 0.25)',
+                  backdropFilter: 'blur(3px)',
+                  borderRadius: 'var(--radius-lg)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  zIndex: 20,
+                  pointerEvents: 'none',
+                  border: '2px dashed #ffffff',
+                  boxShadow: 'inset 0 0 20px rgba(37, 99, 235, 0.5)'
+                }}
+              >
+                <div
+                  style={{
+                    width: '44px',
+                    height: '44px',
+                    borderRadius: '50%',
+                    backgroundColor: 'var(--accent-color)',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.35)'
+                  }}
+                >
+                  <FolderPlus size={22} strokeWidth={2.5} />
+                </div>
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 700,
+                    color: '#ffffff',
+                    textShadow: '0 2px 4px rgba(0, 0, 0, 0.8)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                    padding: '3px 12px',
+                    borderRadius: '12px'
+                  }}
+                >
+                  Drop to group tabs
+                </span>
+              </div>
+            )}
             {/* Top Thumbnail Section with SmartBrandThumbnail fallback */}
             <div style={{
               height: '154px',
@@ -566,6 +665,28 @@ export const TabGrid: React.FC<TabGridProps> = ({
                     >
                       <Trash2 size={15} />
                     </button>
+                    {onAddToGroup && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onAddToGroup(item.id);
+                        }}
+                        title="Add to group"
+                        aria-label="Add to group"
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          cursor: 'pointer',
+                          color: 'var(--text-muted)',
+                          padding: '4px',
+                          borderRadius: '4px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <FolderPlus size={15} />
+                      </button>
+                    )}
                     <div style={{ position: 'relative' }}>
                       <button
                         onClick={(e) => {
@@ -674,6 +795,30 @@ export const TabGrid: React.FC<TabGridProps> = ({
                             >
                               <Layers size={13} color="var(--accent-color)" />
                               <span>View All Tabs</span>
+                            </button>
+                          )}
+                          {onAddToGroup && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                onAddToGroup(item.id);
+                              }}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '7px 10px',
+                                borderRadius: 'var(--radius-sm)',
+                                border: 'none',
+                                background: 'transparent',
+                                color: 'var(--text-primary)',
+                                fontSize: '12px',
+                                cursor: 'pointer',
+                                textAlign: 'left'
+                              }}
+                            >
+                              <FolderPlus size={13} color="var(--accent-color)" />
+                              <span>Add to Group...</span>
                             </button>
                           )}
                           <div style={{ height: '1px', backgroundColor: 'var(--border-subtle)', margin: '2px 0' }} />

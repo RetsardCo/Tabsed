@@ -18,6 +18,8 @@ import { ConfirmationModal } from './ui/components/ConfirmationModal';
 import { ArchiveSearchModal } from './ui/components/ArchiveSearchModal';
 import { BackupModal } from './ui/components/BackupModal';
 import { PortableVaultModal } from './ui/components/PortableVaultModal';
+import { CreateGroupModal } from './ui/components/CreateGroupModal';
+import { ManageGroupTabsModal } from './ui/components/ManageGroupTabsModal';
 import { SavedTabItem, Collection, ViewMode, GroupMode, UserPreferences, Tag } from './ui/types';
 import { AvailabilityChecker } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
@@ -397,6 +399,11 @@ export const App: React.FC = () => {
   const [archiveSearchModalOpen, setArchiveSearchModalOpen] = useState(false);
   const [backupModalOpen, setBackupModalOpen] = useState(false);
   const [portableVaultModalOpen, setPortableVaultModalOpen] = useState(false);
+  const [createGroupModalOpen, setCreateGroupModalOpen] = useState(false);
+  const [groupSourceTab, setGroupSourceTab] = useState<SavedTabItem | null>(null);
+  const [groupTargetTab, setGroupTargetTab] = useState<SavedTabItem | null>(null);
+  const [manageGroupModalOpen, setManageGroupModalOpen] = useState(false);
+  const [targetCollectionForManage, setTargetCollectionForManage] = useState<Collection | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -518,7 +525,9 @@ export const App: React.FC = () => {
           helpModalOpen ||
           archiveSearchModalOpen ||
           backupModalOpen ||
-          portableVaultModalOpen
+          portableVaultModalOpen ||
+          createGroupModalOpen ||
+          manageGroupModalOpen
         ) {
           setSaveModalOpen(false);
           setStorageModalOpen(false);
@@ -529,6 +538,8 @@ export const App: React.FC = () => {
           setArchiveSearchModalOpen(false);
           setBackupModalOpen(false);
           setPortableVaultModalOpen(false);
+          setCreateGroupModalOpen(false);
+          setManageGroupModalOpen(false);
           return;
         }
         setSelectedItemId(null);
@@ -665,7 +676,7 @@ export const App: React.FC = () => {
           url: normalized,
           normalizedUrl: normalized,
           domain: domain,
-          faviconUrl: domain ? `https://${domain}/favicon.ico` : null,
+          faviconUrl: domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null,
           thumbnailUrl: null,
           browserFamily: 'Edge',
           profileLabel: 'Default',
@@ -773,6 +784,70 @@ export const App: React.FC = () => {
       }
       return item;
     }));
+  };
+
+  const handleGroupTabs = (sourceTabId: string, targetTabId: string) => {
+    const s = items.find(i => i.id === sourceTabId) || null;
+    const t = items.find(i => i.id === targetTabId) || null;
+    setGroupSourceTab(s);
+    setGroupTargetTab(t);
+    setCreateGroupModalOpen(true);
+  };
+
+  const handleAddToGroup = (tabId: string) => {
+    const s = items.find(i => i.id === tabId) || null;
+    setGroupSourceTab(s);
+    setGroupTargetTab(null);
+    setCreateGroupModalOpen(true);
+  };
+
+  const handleCreateGroup = (name: string, selectedTabIds: string[], accentColor: string, description?: string) => {
+    const newCollectionId = `col_${Date.now()}`;
+    const newCollection: Collection = {
+      id: newCollectionId,
+      name: name.trim(),
+      accentColor: accentColor || '#2563eb',
+      description: description || 'Group created from tabs',
+      itemCount: selectedTabIds.length,
+      createdAt: new Date().toISOString()
+    };
+    setCollections(prev => [...prev, newCollection]);
+    setItems(prev => prev.map(tab => {
+      if (selectedTabIds.includes(tab.id)) {
+        const current = tab.collectionIds || [];
+        if (!current.includes(newCollectionId)) {
+          return { ...tab, collectionIds: [...current, newCollectionId] };
+        }
+      }
+      return tab;
+    }));
+    setSyncToast({
+      message: `Group "${name}" created with ${selectedTabIds.length} tabs`,
+      timestamp: Date.now()
+    });
+    setTimeout(() => setSyncToast(null), 3500);
+  };
+
+  const handleSaveGroupTabs = (collectionId: string, selectedTabIds: string[]) => {
+    setItems(prev => prev.map(tab => {
+      const current = tab.collectionIds || [];
+      const hasCol = current.includes(collectionId);
+      const shouldHaveCol = selectedTabIds.includes(tab.id);
+
+      if (shouldHaveCol && !hasCol) {
+        return { ...tab, collectionIds: [...current, collectionId] };
+      } else if (!shouldHaveCol && hasCol) {
+        return { ...tab, collectionIds: current.filter(c => c !== collectionId) };
+      }
+      return tab;
+    }));
+
+    const col = collections.find(c => c.id === collectionId);
+    setSyncToast({
+      message: `Updated tabs for group "${col?.name || 'Group'}" (${selectedTabIds.length} tabs)`,
+      timestamp: Date.now()
+    });
+    setTimeout(() => setSyncToast(null), 3500);
   };
 
   const handleToggleFavorite = (id: string) => {
@@ -957,17 +1032,9 @@ export const App: React.FC = () => {
         collections={activeCollections}
         collectionsCount={collectionsCount}
         onOpenCreateCollection={() => {
-          const name = prompt('Enter new collection name:');
-          if (name) {
-            const newCol: Collection = {
-              id: 'col_' + Date.now(),
-              name,
-              description: '',
-              accentColor: '#2563eb',
-              itemCount: 0
-            };
-            setCollections(prev => [...prev, newCol]);
-          }
+          setGroupSourceTab(null);
+          setGroupTargetTab(null);
+          setCreateGroupModalOpen(true);
         }}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
@@ -1070,6 +1137,53 @@ export const App: React.FC = () => {
           </div>
         )}
 
+        {currentDestination.startsWith('col_') && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '10px 24px',
+            backgroundColor: 'var(--bg-card)',
+            borderBottom: '1px solid var(--border-subtle)',
+            fontSize: '13px',
+            color: 'var(--text-secondary)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                Collection: {collections.find(c => c.id === currentDestination.replace('col_', ''))?.name || 'Group'}
+              </span>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                ({displayedItems.length} {displayedItems.length === 1 ? 'tab' : 'tabs'})
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                const col = collections.find(c => c.id === currentDestination.replace('col_', ''));
+                if (col) {
+                  setTargetCollectionForManage(col);
+                  setManageGroupModalOpen(true);
+                }
+              }}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                backgroundColor: 'var(--accent-color)',
+                color: '#ffffff',
+                border: 'none',
+                borderRadius: 'var(--radius-md)',
+                padding: '6px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                boxShadow: 'var(--shadow-sm)'
+              }}
+            >
+              <span>Manage Group Tabs</span>
+            </button>
+          </div>
+        )}
+
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Main List / Grid View */}
           <main style={{ flex: 1, overflowY: 'auto' }}>
@@ -1085,6 +1199,8 @@ export const App: React.FC = () => {
                 isTrash={currentDestination === 'trash'}
                 onQuickAddUrl={handleQuickAddUrl}
                 groupMode={groupMode}
+                onGroupTabs={handleGroupTabs}
+                onAddToGroup={handleAddToGroup}
               />
             )}
             {viewMode === 'compact' && (
@@ -1247,6 +1363,23 @@ export const App: React.FC = () => {
       <HelpDiagnosticsModal
         isOpen={helpModalOpen}
         onClose={() => setHelpModalOpen(false)}
+      />
+
+      <CreateGroupModal
+        isOpen={createGroupModalOpen}
+        onClose={() => setCreateGroupModalOpen(false)}
+        sourceTab={groupSourceTab}
+        targetTab={groupTargetTab}
+        allTabs={items}
+        onCreateGroup={handleCreateGroup}
+      />
+
+      <ManageGroupTabsModal
+        isOpen={manageGroupModalOpen}
+        onClose={() => setManageGroupModalOpen(false)}
+        collection={targetCollectionForManage}
+        allTabs={items}
+        onSaveGroupTabs={handleSaveGroupTabs}
       />
 
       {confirmDialog && (

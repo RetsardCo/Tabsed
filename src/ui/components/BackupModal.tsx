@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, ShieldCheck, Download, Upload, CheckCircle2, AlertTriangle, FileArchive } from 'lucide-react';
 import { SavedTabItem, BackupManifest } from '../types';
 import { BackupManager, BackupResult } from '../../core/vault/backup-manager';
@@ -16,6 +16,18 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   items,
   onRestoreBackup
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [activeTab, setActiveTab] = useState<'create' | 'restore'>('create');
@@ -82,42 +94,51 @@ export const BackupModal: React.FC<BackupModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500,
-      padding: '20px'
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="backup-modal-title"
         style={{
-        width: '580px',
-        maxHeight: '85vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
+          width: '580px',
+          maxWidth: '92vw',
+          maxHeight: '85vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 22px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
@@ -133,7 +154,7 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               <ShieldCheck size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, margin: 0 }}>
+              <h2 id="backup-modal-title" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2, margin: 0 }}>
                 Vault Backup &amp; Integrity
               </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -141,13 +162,28 @@ export const BackupModal: React.FC<BackupModalProps> = ({
               </span>
             </div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Mode Selector Tabs */}
-        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-app)' }}>
+        {/* Mode Selector Tabs - Fixed */}
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--border-subtle)', backgroundColor: 'var(--bg-app)', flexShrink: 0 }}>
           <button
             onClick={() => setActiveTab('create')}
             style={{
@@ -328,24 +364,32 @@ export const BackupModal: React.FC<BackupModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Fixed */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface)'
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Press Esc or click outside to dismiss
+          </span>
           <button
             onClick={onClose}
+            aria-label="Close backup dialog"
             style={{
               padding: '8px 18px',
               borderRadius: 'var(--radius-md)',
-              backgroundColor: 'var(--bg-input)',
-              border: '1px solid var(--border-subtle)',
-              color: 'var(--text-primary)',
+              backgroundColor: 'var(--accent-color)',
+              color: '#ffffff',
+              border: 'none',
               fontWeight: 600,
-              cursor: 'pointer'
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
             Close

@@ -53,6 +53,7 @@ export interface Collection {
   iconKey?: string;
   accentColor?: string;
   itemCount: number;
+  createdAt?: string;
 }
 
 export interface Tag {

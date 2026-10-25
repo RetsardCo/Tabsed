@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Play, Pause, Square, RefreshCw, CheckCircle2, Clock, Globe } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { RestoreQueue, RestoreItem } from '../../core/transaction/restore-queue';
@@ -10,6 +10,18 @@ interface RestoreQueueModalProps {
 }
 
 export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, onClose, items }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [batchSize, setBatchSize] = useState<number>(3);
@@ -106,42 +118,51 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500,
-      padding: '20px'
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="restore-queue-modal-title"
         style={{
-        width: '580px',
-        maxHeight: '85vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflowY: 'auto',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
+          width: '600px',
+          maxWidth: '92vw',
+          maxHeight: '85vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 22px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
@@ -157,7 +178,7 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
               <Clock size={18} />
             </div>
             <div>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
+              <h2 id="restore-queue-modal-title" style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', margin: 0, lineHeight: 1.2 }}>
                 Bounded Session Restore Queue
               </h2>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -165,10 +186,28 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
               </span>
             </div>
           </div>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <X size={18} />
           </button>
         </div>
+
+        {/* Scrollable Content Container */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
 
         {/* Controls */}
         <div style={{
@@ -374,17 +413,24 @@ export const RestoreQueueModal: React.FC<RestoreQueueModalProps> = ({ isOpen, on
             </div>
           ))}
         </div>
+        </div>
 
-        {/* Footer */}
+        {/* Footer - Fixed */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
+          justifyContent: 'space-between',
+          alignItems: 'center',
           padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-surface)'
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Press Esc or click outside to dismiss
+          </span>
           <button
             onClick={onClose}
+            aria-label="Close restoration queue"
             style={{
               padding: '8px 18px',
               borderRadius: 'var(--radius-md)',

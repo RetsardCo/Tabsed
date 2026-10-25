@@ -26,6 +26,7 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   React.useEffect(() => {
     if (initialScope) setScope(initialScope);
   }, [initialScope, isOpen]);
+
   const [selectedCollectionId, setSelectedCollectionId] = useState(collections[0]?.id || 'inbox');
   const [captureThumbnails, setCaptureThumbnails] = useState(true);
   const [closeAfterSave, setCloseAfterSave] = useState(false);
@@ -37,6 +38,18 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [progressState, setProgressState] = useState<string>('idle');
   const [statusMessage, setStatusMessage] = useState<string>('');
+
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isProcessing) {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, isProcessing, onClose]);
 
   const handlePasteClipboard = async () => {
     try {
@@ -174,40 +187,51 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1000
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !isProcessing) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="save-tabs-modal-title"
         style={{
-        width: '460px',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
+          width: '480px',
+          maxWidth: '92vw',
+          maxHeight: '88vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img
@@ -222,19 +246,33 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
                 imageRendering: '-webkit-optimize-contrast'
               }}
             />
-            <span style={{ fontSize: '15px', fontWeight: 600 }}>Save Tabs to Vault</span>
+            <span id="save-tabs-modal-title" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Save Tabs to Vault
+            </span>
           </div>
           <button
             onClick={onClose}
             disabled={isProcessing}
-            style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}
+            aria-label="Close dialog"
+            title="Close (Esc)"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
+              color: 'var(--text-muted)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        {/* Body - Scrollable */}
+        <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px', overflowY: 'auto', flex: 1 }}>
           {/* Scope selection */}
           <div>
             <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '6px' }}>
@@ -497,7 +535,7 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
           )}
         </div>
 
-        {/* Footer actions */}
+        {/* Footer actions - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -505,7 +543,8 @@ export const SaveTabsModal: React.FC<SaveTabsModalProps> = ({
           gap: '10px',
           padding: '14px 20px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-app)',
+          flexShrink: 0
         }}>
           <button
             onClick={onClose}

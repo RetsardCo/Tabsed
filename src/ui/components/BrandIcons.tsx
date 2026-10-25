@@ -153,8 +153,27 @@ export const FirefoxIcon: React.FC<IconProps> = ({ size = 17, style }) => (
   </svg>
 );
 
+function cleanDomainName(domain?: string, url?: string): string {
+  if (domain && domain.trim()) {
+    return domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0].split(':')[0];
+  }
+  if (url && url.trim()) {
+    try {
+      const u = new URL(url.startsWith('http') || url.startsWith('file') ? url : `https://${url}`);
+      return u.hostname.toLowerCase().replace(/^www\./, '');
+    } catch {}
+  }
+  return '';
+}
+
 /**
  * Smart Favicon Component that matches known domains with crisp vector SVGs
+ * and falls back through:
+ * 1. Provided faviconUrl
+ * 2. Google s2 favicons (domain-based, 64px)
+ * 3. Official Tabsed squircle app icon (/logo-32.png)
+ * 4. Crisp vector brand squircle
+ * Never leaves an empty box.
  */
 export const SmartFavicon: React.FC<{
   domain?: string;
@@ -162,34 +181,99 @@ export const SmartFavicon: React.FC<{
   faviconUrl?: string | null;
   size?: number;
   style?: React.CSSProperties;
-}> = ({ domain = '', url = '', faviconUrl, size = 16, style }) => {
+  className?: string;
+}> = ({ domain = '', url = '', faviconUrl, size = 16, style, className }) => {
   const d = (domain || url).toLowerCase();
 
-  if (d.includes('notion')) return <NotionIcon size={size} style={style} />;
-  if (d.includes('openai') || d.includes('chatgpt')) return <ChatGptIcon size={size} style={style} />;
-  if (d.includes('youtube')) return <YouTubeIcon size={size} style={style} />;
-  if (d.includes('figma')) return <FigmaIcon size={size} style={style} />;
-  if (d.includes('github')) return <GitHubIcon size={size} style={style} />;
-  if (d.includes('unity')) return <UnityIcon size={size} style={style} />;
-  if (d.includes('docs.google') || d.includes('google.com/document')) return <GoogleDocsIcon size={size} style={style} />;
-  if (d.includes('behance')) return <BehanceIcon size={size} style={style} />;
-  if (d.includes('amazon')) return <AmazonIcon size={size} style={style} />;
-  if (d.includes('blender')) return <BlenderIcon size={size} style={style} />;
-  if (d.includes('itch.io')) return <ItchIoIcon size={size} style={style} />;
-  if (d.includes('pinterest')) return <PinterestIcon size={size} style={style} />;
+  if (d.includes('notion')) return <NotionIcon size={size} style={style} className={className} />;
+  if (d.includes('openai') || d.includes('chatgpt')) return <ChatGptIcon size={size} style={style} className={className} />;
+  if (d.includes('youtube')) return <YouTubeIcon size={size} style={style} className={className} />;
+  if (d.includes('figma')) return <FigmaIcon size={size} style={style} className={className} />;
+  if (d.includes('github')) return <GitHubIcon size={size} style={style} className={className} />;
+  if (d.includes('unity')) return <UnityIcon size={size} style={style} className={className} />;
+  if (d.includes('docs.google') || d.includes('google.com/document')) return <GoogleDocsIcon size={size} style={style} className={className} />;
+  if (d.includes('behance')) return <BehanceIcon size={size} style={style} className={className} />;
+  if (d.includes('amazon')) return <AmazonIcon size={size} style={style} className={className} />;
+  if (d.includes('blender')) return <BlenderIcon size={size} style={style} className={className} />;
+  if (d.includes('itch.io')) return <ItchIoIcon size={size} style={style} className={className} />;
+  if (d.includes('pinterest')) return <PinterestIcon size={size} style={style} className={className} />;
 
-  if (faviconUrl) {
+  const cleanDomain = cleanDomainName(domain, url);
+
+  // Resolution stages: 0 = custom faviconUrl, 1 = google s2, 2 = /logo-32.png, 3 = vector fallback
+  const initialStage = (faviconUrl && faviconUrl.trim()) ? 0 : (cleanDomain ? 1 : 2);
+  const [stage, setStage] = React.useState<number>(initialStage);
+
+  React.useEffect(() => {
+    const nextStage = (faviconUrl && faviconUrl.trim()) ? 0 : (cleanDomain ? 1 : 2);
+    setStage(nextStage);
+  }, [faviconUrl, cleanDomain]);
+
+  const handleImgError = () => {
+    setStage(prev => prev + 1);
+  };
+
+  if (stage === 0 && faviconUrl && faviconUrl.trim()) {
     return (
       <img
         src={faviconUrl}
         alt=""
-        style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain', ...style }}
-        onError={(e) => {
-          (e.target as HTMLElement).style.display = 'none';
-        }}
+        style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain', display: 'block', ...style }}
+        onError={handleImgError}
+        className={className}
       />
     );
   }
 
-  return <Globe size={size} color="var(--text-muted)" style={style} />;
+  if (stage <= 1 && cleanDomain) {
+    return (
+      <img
+        src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(cleanDomain)}&sz=64`}
+        alt=""
+        style={{ width: `${size}px`, height: `${size}px`, objectFit: 'contain', display: 'block', ...style }}
+        onError={handleImgError}
+        className={className}
+      />
+    );
+  }
+
+  if (stage <= 2) {
+    return (
+      <img
+        src="/logo-32.png"
+        srcSet="/logo-32.png 1x, /logo-64.png 2x"
+        alt="Tabsed"
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          objectFit: 'contain',
+          display: 'block',
+          imageRendering: '-webkit-optimize-contrast',
+          ...style
+        }}
+        onError={handleImgError}
+        className={className}
+      />
+    );
+  }
+
+  // Final Stage: Crisp squircle vector brand icon
+  return (
+    <div
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'var(--accent-light)',
+        borderRadius: `${Math.max(3, Math.round(size * 0.25))}px`,
+        color: 'var(--accent-color)',
+        ...style
+      }}
+      className={className}
+    >
+      <Globe size={Math.round(size * 0.8)} strokeWidth={2} />
+    </div>
+  );
 };

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { X, Search, FileText, Globe, ExternalLink, Filter, Calendar } from 'lucide-react';
 import { SavedTabItem, Collection } from '../types';
 import { ArchiveSearchEngine, SearchResultMatch } from '../../core/vault/archive-search';
@@ -20,6 +20,18 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
   onSelectItem,
   onOpenLiveUrl
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -33,42 +45,51 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
   }, [items, searchQuery, selectedCollectionId]);
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.65)',
-      backdropFilter: 'blur(8px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500,
-      padding: '20px'
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(8px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="archive-search-modal-title"
         style={{
-        width: '680px',
-        maxHeight: '85vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
+          width: '680px',
+          maxWidth: '92vw',
+          maxHeight: '85vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '18px 22px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
@@ -94,25 +115,32 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
           </div>
           <button
             onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
             style={{
               border: 'none',
               background: 'transparent',
               cursor: 'pointer',
               color: 'var(--text-muted)',
-              padding: '4px'
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Search Input and Filter Bar */}
+        {/* Search Input and Filter Bar - Fixed */}
         <div style={{
           padding: '16px 22px',
           borderBottom: '1px solid var(--border-subtle)',
           display: 'flex',
           gap: '12px',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-app)',
+          flexShrink: 0
         }}>
           <div style={{
             flex: 1,
@@ -256,28 +284,32 @@ export const ArchiveSearchModal: React.FC<ArchiveSearchModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Fixed */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          padding: '12px 22px',
+          padding: '14px 22px',
           borderTop: '1px solid var(--border-subtle)',
           backgroundColor: 'var(--bg-app)',
           fontSize: '12px',
-          color: 'var(--text-muted)'
+          color: 'var(--text-muted)',
+          flexShrink: 0
         }}>
           <span>{searchResults.length} matching {searchResults.length === 1 ? 'record' : 'records'}</span>
           <button
             onClick={onClose}
+            aria-label="Close archive search"
             style={{
-              padding: '6px 14px',
+              padding: '8px 18px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',
               border: 'none',
               fontWeight: 600,
-              cursor: 'pointer'
+              fontSize: '13px',
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
             Close

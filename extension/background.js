@@ -33,6 +33,15 @@ async function handleSaveTabs(request) {
                          url.startsWith('about:') ||
                          url.startsWith('chrome-extension://');
 
+    let domain = '';
+    try {
+      if (url && !isRestricted) {
+        domain = new URL(url).hostname.replace(/^www\./, '');
+      }
+    } catch (e) {
+      domain = '';
+    }
+
     let thumbnailDataUrl = null;
     if (captureThumbnails && !isRestricted && tab.active) {
       try {
@@ -45,16 +54,33 @@ async function handleSaveTabs(request) {
       }
     }
 
+    // Cascade favicon: tab.favIconUrl -> Google S2 favicon service (64px) -> null (desktop UI uses logo-32/squircle)
+    const resolvedFavicon = tab.favIconUrl || (domain ? `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64` : null);
+
+    // Rich preview metadata for background tabs or when screenshot is unavailable
+    const richPreviewMetadata = {
+      domain: domain,
+      isBackgroundTab: !tab.active,
+      hasScreenshot: !!thumbnailDataUrl,
+      previewType: thumbnailDataUrl ? 'screenshot' : 'rich_preview',
+      status: tab.status || 'complete',
+      audible: !!tab.audible,
+      discarded: !!tab.discarded,
+      pinned: !!tab.pinned
+    };
+
     stagedTabs.push({
       tabId: tab.id,
       windowId: tab.windowId,
       url: url,
       title: tab.title || 'Untitled',
-      favIconUrl: tab.favIconUrl || null,
+      domain: domain,
+      favIconUrl: resolvedFavicon,
       pinned: tab.pinned || false,
       orderIndex: tab.index,
       groupId: tab.groupId || null,
       thumbnail: thumbnailDataUrl,
+      previewMetadata: richPreviewMetadata,
       collectionId: collectionId || 'inbox',
       browserFamily: navigator.userAgent.includes('Edg') ? 'Edge' : 'Chrome',
       capturedAt: new Date().toISOString(),

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Palette, Monitor, Shield, HardDrive, Check, Key, EyeOff, Play, Clock, Bell } from 'lucide-react';
 import { UserPreferences, ThemeMode, DensityMode, AccentPreset } from '../types';
 import { DEFAULT_REDACTION_RULES } from '../../core/vault/privacy-manager';
@@ -26,6 +26,18 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   preferences,
   onUpdatePreferences
 }) => {
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   const [activeTab, setActiveTab] = useState<'appearance' | 'browsers' | 'privacy' | 'automation' | 'tray'>('appearance');
@@ -76,49 +88,74 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   };
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(4px)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 1500
-    }}>
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(6px)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 1500,
+        padding: '20px'
+      }}
+    >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="settings-modal-title"
         style={{
-        width: '640px',
-        maxHeight: '88vh',
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--border-subtle)',
-        boxShadow: 'var(--shadow-lg)',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        {/* Header */}
+          width: '640px',
+          maxWidth: '92vw',
+          maxHeight: '88vh',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-lg)',
+          border: '1px solid var(--border-subtle)',
+          boxShadow: 'var(--shadow-lg), 0 20px 40px rgba(0, 0, 0, 0.4)',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {/* Header - Fixed */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           padding: '16px 20px',
-          borderBottom: '1px solid var(--border-subtle)'
+          borderBottom: '1px solid var(--border-subtle)',
+          backgroundColor: 'var(--bg-surface)',
+          flexShrink: 0
         }}>
-          <span style={{ fontSize: '15px', fontWeight: 600 }}>Tabsed Preferences</span>
-          <button onClick={onClose} style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: 'var(--text-muted)' }}>
+          <span id="settings-modal-title" style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text-primary)' }}>Tabsed Preferences</span>
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            title="Close (Esc)"
+            style={{
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+              color: 'var(--text-muted)',
+              padding: '6px',
+              borderRadius: 'var(--radius-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             <X size={18} />
           </button>
         </div>
 
-        {/* Tab navigation */}
+        {/* Tab navigation - Fixed */}
         <div style={{
           display: 'flex',
           gap: '6px',
@@ -126,7 +163,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           backgroundColor: 'var(--bg-app)',
           borderBottom: '1px solid var(--border-subtle)',
           fontSize: '12px',
-          overflowX: 'auto'
+          overflowX: 'auto',
+          flexShrink: 0
         }}>
           {(['appearance', 'browsers', 'privacy', 'automation', 'tray'] as const).map(tab => (
             <button
@@ -534,25 +572,32 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           )}
         </div>
 
-        {/* Footer */}
+        {/* Footer - Fixed */}
         <div style={{
           display: 'flex',
-          justifyContent: 'flex-end',
-          padding: '12px 20px',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: '14px 20px',
           borderTop: '1px solid var(--border-subtle)',
-          backgroundColor: 'var(--bg-app)'
+          backgroundColor: 'var(--bg-app)',
+          flexShrink: 0
         }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Press Esc or click outside to dismiss
+          </span>
           <button
             onClick={onClose}
+            aria-label="Close settings"
             style={{
-              padding: '6px 16px',
+              padding: '8px 20px',
               borderRadius: 'var(--radius-md)',
               backgroundColor: 'var(--accent-color)',
               color: '#ffffff',
               border: 'none',
-              fontSize: '12px',
-              fontWeight: 500,
-              cursor: 'pointer'
+              fontSize: '13px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
             }}
           >
             Done
