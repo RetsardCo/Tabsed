@@ -101,7 +101,7 @@ export class UrlNormalizer {
       options.trimTrailingSlash
     );
 
-    const map = new Map<string, T[]>();
+    const map = new Map<string, T | T[]>();
     const len = items.length;
 
     for (let i = 0; i < len; i++) {
@@ -111,11 +111,15 @@ export class UrlNormalizer {
         ? (item as any).normalizedUrl
         : this.normalize(item.url, options);
 
-      const group = map.get(norm);
-      if (group) {
-        group.push(item);
+      if (!norm) continue;
+
+      const existing = map.get(norm);
+      if (existing === undefined) {
+        map.set(norm, item);
+      } else if (Array.isArray(existing)) {
+        existing.push(item);
       } else {
-        map.set(norm, [item]);
+        map.set(norm, [existing, item]);
       }
     }
 
@@ -125,7 +129,7 @@ export class UrlNormalizer {
 
     const groups: DuplicateGroup<T>[] = [];
     for (const [norm, groupItems] of map.entries()) {
-      if (groupItems.length > 1) {
+      if (Array.isArray(groupItems)) {
         groups.push({
           normalizedUrl: norm,
           count: groupItems.length,

@@ -57,4 +57,40 @@ describe('UrlNormalizer', () => {
     expect(dups.length).toBe(1);
     expect(dups[0].items.length).toBe(2);
   });
+
+  it('safely ignores empty, null, or whitespace URLs and does not treat them as duplicates', () => {
+    const items = [
+      { id: 1, url: '' },
+      { id: 2, url: '   ' },
+      { id: 3, url: 'https://example.com' },
+      { id: 4, url: (null as unknown as string) }
+    ];
+    const dups = UrlNormalizer.findDuplicates(items);
+    expect(dups.length).toBe(0);
+  });
+
+  it('correctly handles IPv6 host literals and default port stripping', () => {
+    const raw1 = 'http://[::1]:80/dashboard';
+    const raw2 = 'http://[::1]/dashboard';
+    expect(UrlNormalizer.normalize(raw1)).toBe('http://[::1]/dashboard');
+    expect(UrlNormalizer.normalize(raw2)).toBe('http://[::1]/dashboard');
+
+    const dups = UrlNormalizer.findDuplicates([{ id: 1, url: raw1 }, { id: 2, url: raw2 }]);
+    expect(dups.length).toBe(1);
+    expect(dups[0].items.length).toBe(2);
+  });
+
+  it('handles IDN/Punycode domains and uppercase tracking parameters', () => {
+    const raw1 = 'https://MÜNCHEN.DE/events?UTM_SOURCE=newsletter&topic=art';
+    const raw2 = 'https://xn--mnchen-3ya.de/events?topic=art';
+    const norm1 = UrlNormalizer.normalize(raw1, { stripTrackingParams: true });
+    const norm2 = UrlNormalizer.normalize(raw2);
+
+    expect(norm1).toBe(norm2);
+    const dups = UrlNormalizer.findDuplicates(
+      [{ id: 1, url: raw1 }, { id: 2, url: raw2 }],
+      { stripTrackingParams: true }
+    );
+    expect(dups.length).toBe(1);
+  });
 });
