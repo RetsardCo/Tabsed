@@ -360,25 +360,6 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
               flexShrink: 0
             }}
           >
-            {/* Window Traffic Dots */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <button
-                onClick={handleSafeClose}
-                title="Close"
-                aria-label="Close"
-                style={{
-                  width: '10px',
-                  height: '10px',
-                  borderRadius: '50%',
-                  backgroundColor: '#ef4444',
-                  border: 'none',
-                  padding: 0,
-                  cursor: 'pointer'
-                }}
-              />
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#f59e0b' }} />
-              <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: '#10b981' }} />
-            </div>
 
             {/* Address Bar Pill */}
             <div

@@ -6,6 +6,7 @@ import { TabGrid } from '../src/ui/components/TabGrid';
 import { SavedTabItem } from '../src/ui/types';
 import { ErrorBoundary } from '../src/ui/components/ErrorBoundary';
 import { SmartBrandThumbnail } from '../src/ui/components/SmartBrandThumbnail';
+import { MockBrowserConnector } from '../src/core/connector/mock-connector';
 
 const createSampleTab = (overrides: Partial<SavedTabItem> = {}): SavedTabItem => ({
   id: 'tab_test_1',
@@ -328,5 +329,51 @@ describe('Grid Preferences, Note Badges & DetailInspector Overlay Suite', () => 
       // It should render the brand badge instead
       expect(html).toContain('Google Docs');
     });
+
+    it('SmartBrandThumbnail and DetailInspector do not render simulated window traffic dots or top chrome', () => {
+      const cardHtml = renderToString(
+        React.createElement(SmartBrandThumbnail, {
+          domain: 'example.com',
+          url: 'https://example.com',
+          title: 'Example Page',
+          thumbnailUrl: null
+        })
+      );
+
+      // Verify no macOS/traffic-light dots in card thumbnail fallback
+      expect(cardHtml).not.toContain('rgba(239, 68, 68');
+      expect(cardHtml).not.toContain('rgba(245, 158, 11');
+      expect(cardHtml).not.toContain('rgba(16, 185, 129');
+      expect(cardHtml).not.toContain('Top Mini Browser Chrome Header Bar');
+
+      const sampleTab = createSampleTab();
+      const inspectorHtml = renderToString(
+        React.createElement(DetailInspector, {
+          item: sampleTab,
+          onClose: () => {},
+          onUpdateNotes: () => {},
+          onAddTag: () => {},
+          onRemoveTag: () => {},
+          onOpenLiveUrl: () => {},
+          onCheckAvailability: () => {}
+        })
+      );
+
+      // Verify no traffic light window controls in DetailInspector top preview
+      expect(inspectorHtml).not.toContain('Window Traffic Dots');
+      expect(inspectorHtml).not.toContain('backgroundColor: \'#ef4444\'');
+    });
+
+    it('MockBrowserConnector captureThumbnail generates clean SVG without simulated window chrome or traffic dots', async () => {
+      const connector = new MockBrowserConnector();
+      const thumb = await connector.captureThumbnail(101);
+      expect(thumb).not.toBeNull();
+      const decoded = decodeURIComponent(thumb!);
+      expect(decoded).not.toContain('fill="#ef4444"');
+      expect(decoded).not.toContain('fill="#f59e0b"');
+      expect(decoded).not.toContain('fill="#10b981"');
+      expect(decoded).not.toContain('height="36" fill="#1e293b"');
+    });
   });
 });
+

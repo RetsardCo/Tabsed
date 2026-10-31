@@ -138,12 +138,6 @@ export class MockBrowserConnector implements IBrowserConnector {
     </linearGradient>
   </defs>
   <rect width="600" height="400" fill="url(#bg_${tabId})" />
-  <rect x="0" y="0" width="600" height="36" fill="#1e293b" />
-  <circle cx="20" cy="18" r="5" fill="#ef4444" />
-  <circle cx="36" cy="18" r="5" fill="#f59e0b" />
-  <circle cx="52" cy="18" r="5" fill="#10b981" />
-  <rect x="80" y="8" width="400" height="20" rx="4" fill="#0f172a" />
-  <text x="94" y="22" font-family="system-ui, -apple-system, sans-serif" font-size="11" fill="#94a3b8">${domain}</text>
   <rect x="40" y="60" width="160" height="20" rx="4" fill="#2563eb" opacity="0.8" />
   <text x="40" y="112" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="bold" fill="#f8fafc">${cleanTitle.slice(0, 38)}</text>
   <rect x="40" y="135" width="520" height="10" rx="3" fill="#334155" />

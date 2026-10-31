@@ -253,54 +253,7 @@ export const SmartBrandThumbnail: React.FC<SmartBrandThumbnailProps> = ({
         boxSizing: 'border-box'
       }}
     >
-      {/* Top Mini Browser Chrome Header Bar */}
-      <div
-        style={{
-          height: '24px',
-          backgroundColor: 'rgba(0, 0, 0, 0.45)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '0 10px',
-          flexShrink: 0,
-          zIndex: 3
-        }}
-      >
-        {/* Window controls (left) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(239, 68, 68, 0.75)' }} />
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(245, 158, 11, 0.75)' }} />
-          <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.75)' }} />
-        </div>
-
-        {/* Address bar mockup (center) */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '4px',
-            backgroundColor: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '4px',
-            padding: '1px 8px',
-            fontSize: '10px',
-            color: 'rgba(255, 255, 255, 0.85)',
-            maxWidth: '190px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
-          <Lock size={9} style={{ flexShrink: 0, opacity: 0.8 }} />
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {domain || 'web'}
-          </span>
-        </div>
-
-        {/* Empty space on right for balance */}
-        <div style={{ width: '28px' }} />
-      </div>
+      {/* Card preview surface - simulated window chrome header bar removed for clean, uncluttered cards (Lock / {domain || 'web'}) */}
 
       {/* Realistic Webpage Screenshot Content Surface */}
       <div
