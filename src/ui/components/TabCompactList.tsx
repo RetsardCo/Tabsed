@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Star, Trash2, Globe, RotateCcw } from 'lucide-react';
+import { ExternalLink, Star, Trash2, Globe, RotateCcw, FileText } from 'lucide-react';
 import { SavedTabItem } from '../types';
 import { SmartFavicon } from './BrandIcons';
 
@@ -102,6 +102,27 @@ export const TabCompactList: React.FC<TabCompactListProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <SmartFavicon domain={item.domain} url={item.url} faviconUrl={item.faviconUrl} size={15} />
                     <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{item.title}</span>
+                    {item.notes && item.notes.trim() && (
+                      <span
+                        title={`Note: ${item.notes.trim()}`}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '3px',
+                          padding: '1px 5px',
+                          borderRadius: 'var(--radius-sm)',
+                          backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                          border: '1px solid rgba(37, 99, 235, 0.25)',
+                          color: 'var(--accent-color)',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          flexShrink: 0
+                        }}
+                      >
+                        <FileText size={10} />
+                        Note
+                      </span>
+                    )}
                   </div>
                 </td>
                 <td style={{ padding: '8px 12px', color: 'var(--text-secondary)' }}>

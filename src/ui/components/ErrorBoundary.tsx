@@ -27,12 +27,28 @@ export class ErrorBoundary extends Component<Props, State> {
     console.error('[Tabsed ErrorBoundary] Uncaught React error:', error, errorInfo);
   }
 
+  public componentDidMount() {
+    window.addEventListener('keydown', this.handleKeyDown, true);
+  }
+
+  public componentWillUnmount() {
+    window.removeEventListener('keydown', this.handleKeyDown, true);
+  }
+
+  private handleKeyDown = (e: KeyboardEvent) => {
+    if (this.state.hasError && e.key === 'Escape') {
+      e.stopPropagation();
+      this.handleReset();
+    }
+  };
+
   public handleReset = () => {
     this.setState({ hasError: false, error: null });
     if (this.props.onReset) {
       this.props.onReset();
     }
   };
+
 
   public render() {
     if (this.state.hasError) {

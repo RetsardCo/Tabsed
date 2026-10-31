@@ -53,10 +53,24 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     setAccentColor('#2563eb');
     setSearchQuery('');
 
-    // Pre-select source and target tabs
+    // Pre-select source and target tabs (including expanding session tabs if dropping a session group)
     const initialIds: string[] = [];
-    if (sourceTab && !initialIds.includes(sourceTab.id)) initialIds.push(sourceTab.id);
-    if (targetTab && !initialIds.includes(targetTab.id)) initialIds.push(targetTab.id);
+    if (sourceTab) {
+      if (sourceTab.sessionTabs && sourceTab.sessionTabs.length > 0) {
+        sourceTab.sessionTabs.forEach(st => {
+          if (!initialIds.includes(st.id)) initialIds.push(st.id);
+        });
+      }
+      if (!initialIds.includes(sourceTab.id)) initialIds.push(sourceTab.id);
+    }
+    if (targetTab) {
+      if (targetTab.sessionTabs && targetTab.sessionTabs.length > 0) {
+        targetTab.sessionTabs.forEach(st => {
+          if (!initialIds.includes(st.id)) initialIds.push(st.id);
+        });
+      }
+      if (!initialIds.includes(targetTab.id)) initialIds.push(targetTab.id);
+    }
     setSelectedTabIds(initialIds);
   }, [isOpen, sourceTab, targetTab]);
 
@@ -65,11 +79,12 @@ export const CreateGroupModal: React.FC<CreateGroupModalProps> = ({
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopPropagation();
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
   // Filter tabs for the picker (excluding deleted tabs)

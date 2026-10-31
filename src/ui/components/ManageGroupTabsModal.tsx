@@ -25,7 +25,11 @@ export const ManageGroupTabsModal: React.FC<ManageGroupTabsModalProps> = ({
   useEffect(() => {
     if (!isOpen || !collection) return;
     const initialIds = allTabs
-      .filter(t => !t.deletedAt && t.collectionIds && t.collectionIds.includes(collection.id))
+      .filter(t => !t.deletedAt && t.collectionIds && (
+        t.collectionIds.includes(collection.id) ||
+        t.collectionIds.includes(`col_${collection.id}`) ||
+        (collection.id.startsWith('col_') && t.collectionIds.includes(collection.id.slice(4)))
+      ))
       .map(t => t.id);
     setSelectedTabIds(initialIds);
     setSearchQuery('');
@@ -36,11 +40,12 @@ export const ManageGroupTabsModal: React.FC<ManageGroupTabsModalProps> = ({
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopPropagation();
         onClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isOpen, onClose]);
 
   const activeTabs = useMemo(() => {

@@ -281,11 +281,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Sub-items for each individual collection */}
         {!isCollapsed && collections.map(col => {
-          const isSelected = currentDestination === `col_${col.id}`;
+          const isSelected = currentDestination === col.id ||
+            currentDestination === `col_${col.id}` ||
+            (currentDestination.startsWith('col_') && col.id === currentDestination.slice(4));
           return (
             <button
               key={col.id}
-              onClick={() => onSelectDestination(`col_${col.id}`)}
+              onClick={() => onSelectDestination(col.id)}
               style={{
                 ...navItemStyle(isSelected),
                 paddingLeft: '28px',

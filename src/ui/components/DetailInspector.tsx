@@ -101,9 +101,14 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
 
   useEffect(() => {
     if (item) {
-      setNotesText(item.notes);
-      setTitleText(item.title);
-      setSelectedSubTabId(sessionTabs[0]?.id || item.id);
+      setNotesText(item.notes || '');
+      setTitleText(item.title || '');
+      setSelectedSubTabId(prev => {
+        if (prev && sessionTabs.some(t => t.id === prev)) {
+          return prev;
+        }
+        return sessionTabs[0]?.id || item.id;
+      });
       setPreviewImgError(false);
     }
     setIsEditing(false);
@@ -114,8 +119,23 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
     setPreviewImgError(false);
   }, [selectedSubTabId]);
 
+  const itemRef = React.useRef(item);
+  itemRef.current = item;
+  const notesTextRef = React.useRef(notesText);
+  notesTextRef.current = notesText;
+  const onUpdateNotesRef = React.useRef(onUpdateNotes);
+  onUpdateNotesRef.current = onUpdateNotes;
+
+  useEffect(() => {
+    return () => {
+      if (itemRef.current && notesTextRef.current !== (itemRef.current.notes || '')) {
+        onUpdateNotesRef.current(itemRef.current.id, notesTextRef.current);
+      }
+    };
+  }, []);
+
   const handleSafeClose = React.useCallback(() => {
-    if (item && notesText !== item.notes) {
+    if (item && notesText !== (item.notes || '')) {
       onUpdateNotes(item.id, notesText);
     }
     onClose();
@@ -124,12 +144,38 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopPropagation();
+        if (isViewAllOpen) {
+          setIsViewAllOpen(false);
+          return;
+        }
+        if (isMoveOpen) {
+          setIsMoveOpen(false);
+          return;
+        }
+        if (isOpenMenuOpen) {
+          setIsOpenMenuOpen(false);
+          return;
+        }
+        if (isEditingNotes) {
+          handleSaveNotes();
+          return;
+        }
+        if (isEditing) {
+          setIsEditing(false);
+          return;
+        }
+        if (showTagInput) {
+          setShowTagInput(false);
+          return;
+        }
         handleSafeClose();
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [handleSafeClose]);
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
+  }, [handleSafeClose, isViewAllOpen, isMoveOpen, isOpenMenuOpen, isEditingNotes, isEditing, showTagInput, notesText, item]);
+
 
   if (!item) return null;
 
@@ -182,7 +228,7 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
   };
   const currentPreviewThumbnail = currentActiveTab.id === item.id 
     ? item.thumbnailUrl 
-    : (currentActiveTab.thumbnailUrl || item.thumbnailUrl);
+    : (currentActiveTab.thumbnailUrl || (currentActiveTab.domain === item.domain ? item.thumbnailUrl : null));
 
   const isSessionGroup = item.itemType === 'session' || (item.tabCount && item.tabCount > 1) || sessionTabs.length > 1;
   const tabCount = item.tabCount || sessionTabs.length;
@@ -1216,7 +1262,10 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
               onChange={(e) => setNotesText(e.target.value)}
               onBlur={handleSaveNotes}
               onKeyDown={(e) => {
-                if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                if (e.key === 'Escape') {
+                  e.stopPropagation();
+                  handleSaveNotes();
+                } else if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                   e.preventDefault();
                   handleSaveNotes();
                 }
@@ -1237,17 +1286,23 @@ export const DetailInspector: React.FC<DetailInspectorProps> = ({
               }}
             />
           ) : (
-            <div style={{
-              fontSize: '12px',
-              lineHeight: 1.5,
-              color: item.notes ? 'var(--text-secondary)' : 'var(--text-muted)',
-              backgroundColor: 'var(--bg-app)',
-              padding: '10px 12px',
-              borderRadius: 'var(--radius-md)',
-              border: '1px solid var(--border-subtle)',
-              fontStyle: item.notes ? 'normal' : 'italic'
-            }}>
-              {item.notes || 'No notes added for this tab.'}
+            <div
+              onClick={() => setIsEditingNotes(true)}
+              title="Click to edit notes"
+              style={{
+                fontSize: '12px',
+                lineHeight: 1.5,
+                color: item.notes ? 'var(--text-secondary)' : 'var(--text-muted)',
+                backgroundColor: 'var(--bg-app)',
+                padding: '10px 12px',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--border-subtle)',
+                fontStyle: item.notes ? 'normal' : 'italic',
+                cursor: 'pointer',
+                transition: 'border-color 0.15s ease'
+              }}
+            >
+              {item.notes || 'Click to add personal notes or context...'}
             </div>
           )}
         </div>

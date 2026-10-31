@@ -132,9 +132,9 @@ const TabCard = React.memo<TabCardProps>(({
   onDrop,
   onDragEnd
 }) => {
-  const isMenuOpen = activeMenuId === item.id;
   const isSession = item.itemType === 'session' && (item.tabCount ? item.tabCount > 1 : false);
   const tabCount = item.tabCount || (item.sessionTabs ? item.sessionTabs.length : 1);
+  const isMenuOpen = activeMenuId === item.id;
 
   return (
     <div
@@ -145,7 +145,7 @@ const TabCard = React.memo<TabCardProps>(({
       onDragLeave={(e) => onDragLeave(item.id, e)}
       onDrop={(e) => onDrop(item.id, e)}
       onDragEnd={onDragEnd}
-      className="tab-card"
+      className={`tab-card ${activeMenuId === item.id ? 'menu-open' : ''}`}
       style={{
         backgroundColor: isSelected ? 'var(--bg-card-selected)' : 'var(--bg-card)',
         border: isDropTarget
@@ -165,7 +165,7 @@ const TabCard = React.memo<TabCardProps>(({
             : 'var(--shadow-sm), var(--card-highlight)'),
         position: 'relative',
         zIndex: activeMenuId === item.id ? 45 : (isSelected ? 5 : 1),
-        contain: 'content',
+        contain: activeMenuId === item.id ? 'none' : 'content',
         willChange: 'transform'
       }}
     >
@@ -546,6 +546,7 @@ const TabCard = React.memo<TabCardProps>(({
                       width: '180px',
                       backgroundColor: 'var(--bg-popover)',
                       backdropFilter: 'var(--backdrop-filter-popover)',
+                      WebkitBackdropFilter: 'var(--backdrop-filter-popover)',
                       borderRadius: 'var(--radius-md)',
                       border: '1px solid var(--border-popover)',
                       boxShadow: 'var(--shadow-popover)',
@@ -619,6 +620,19 @@ const TabCard = React.memo<TabCardProps>(({
         </div>
       </div>
     </div>
+  );
+}, (prev, next) => {
+  const prevMenuOpen = prev.activeMenuId === prev.item.id;
+  const nextMenuOpen = next.activeMenuId === next.item.id;
+  if (prevMenuOpen !== nextMenuOpen) return false;
+  return (
+    prev.item === next.item &&
+    prev.isSelected === next.isSelected &&
+    prev.isBeingDragged === next.isBeingDragged &&
+    prev.isDropTarget === next.isDropTarget &&
+    prev.isTrash === next.isTrash &&
+    prev.thumbHeight === next.thumbHeight &&
+    prev.bodyPadding === next.bodyPadding
   );
 });
 

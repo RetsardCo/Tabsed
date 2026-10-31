@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Trash2, CheckCircle2 } from 'lucide-react';
+import { Trash2, CheckCircle2, FolderCog } from 'lucide-react';
 import { Header } from './ui/components/Header';
 import { VaultSyncService } from './core/vault/vault-sync';
 import { Sidebar } from './ui/components/Sidebar';
@@ -25,6 +25,7 @@ import { ErrorBoundary } from './ui/components/ErrorBoundary';
 import { SavedTabItem, Collection, ViewMode, GroupMode, UserPreferences, Tag } from './ui/types';
 import { AvailabilityChecker, AvailabilityCategory } from './core/transaction/availability-checker';
 import { TrashManager } from './core/vault/trash-manager';
+import { StorageReport } from './core/vault/vault-manager';
 import { unpackAllSessionItems, groupTabsBySession, extractDomainFromUrl } from './core/vault/unpack-sessions';
 
 const INITIAL_COLLECTIONS: Collection[] = [
@@ -629,12 +630,25 @@ export const App: React.FC = () => {
       result = result.filter(i => !i.deletedAt && i.browserFamily === 'Firefox');
     } else if (currentDestination === 'collections') {
       result = result.filter(i => !i.deletedAt && i.collectionIds && i.collectionIds.length > 0);
-    } else if (currentDestination.startsWith('col_')) {
-      const colId = currentDestination.replace('col_', '');
-      result = result.filter(i => (i.collectionIds || []).includes(colId) && !i.deletedAt);
     } else {
-      // Default: All active tabs
-      result = result.filter(i => !i.deletedAt);
+      const targetCol = collections.find(c =>
+        c.id === currentDestination ||
+        `col_${c.id}` === currentDestination ||
+        (currentDestination.startsWith('col_') && c.id === currentDestination.slice(4))
+      );
+      if (targetCol) {
+        result = result.filter(i =>
+          !i.deletedAt &&
+          (i.collectionIds || []).some(cid =>
+            cid === targetCol.id ||
+            cid === `col_${targetCol.id}` ||
+            (targetCol.id.startsWith('col_') && cid === targetCol.id.slice(4))
+          )
+        );
+      } else {
+        // Default: All active tabs
+        result = result.filter(i => !i.deletedAt);
+      }
     }
 
     // Filter Type dropdown filter (favorites, tab, session, reachable)
@@ -736,7 +750,14 @@ export const App: React.FC = () => {
           savedAt: now,
           notes: '',
           isFavorite: false,
-          collectionIds: currentDestination.startsWith('col_') ? [currentDestination.replace('col_', '')] : ['inbox'],
+          collectionIds: (() => {
+            const activeCol = collections.find(c =>
+              c.id === currentDestination ||
+              `col_${c.id}` === currentDestination ||
+              (currentDestination.startsWith('col_') && c.id === currentDestination.slice(4))
+            );
+            return activeCol ? [activeCol.id] : ['inbox'];
+          })(),
           tags: ['Quick Add', 'Web'],
           tabCount: 1,
           archiveSizeBytes: 131072,
@@ -756,82 +777,132 @@ export const App: React.FC = () => {
     return displayedItems.find(i => i.id === selectedItemId) || items.find(i => i.id === selectedItemId) || null;
   }, [displayedItems, items, selectedItemId]);
 
-  const trashCount = useMemo(() => {
-    return items.filter(i => Boolean(i.deletedAt)).length;
-  }, [items]);
+  const tabStats = useMemo(() => {
+    let trashCount = 0;
+    let favoritesCount = 0;
+    let activeItemCount = 0;
+    let recentCount = 0;
+    let edgeCount = 0;
+    let chromeCount = 0;
+    let firefoxCount = 0;
+    let storageUsedBytes = 0;
+    let totalTrashBytes = 0;
+    let thumbnailsCount = 0;
+    let brokenLinksCount = 0;
+    let collectionsCount = 0;
 
-  const favoritesCount = useMemo(() => {
-    return items.filter(i => i.isFavorite && !i.deletedAt).length;
-  }, [items]);
-
-  const activeCollections = useMemo(() => {
-    return collections.map(col => ({
-      ...col,
-      itemCount: items.filter(i => (i.collectionIds || []).includes(col.id) && !i.deletedAt).length
-    }));
-  }, [collections, items]);
-
-  const collectionsCount = useMemo(() => {
-    return items.filter(i => !i.deletedAt && i.collectionIds && i.collectionIds.length > 0).length;
-  }, [items]);
-
-  const activeItemCount = useMemo(() => items.filter(i => !i.deletedAt).length, [items]);
-
-  const recentCount = useMemo(() => {
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return items.filter(i => !i.deletedAt && new Date(i.savedAt).getTime() >= oneWeekAgo).length;
-  }, [items]);
+    const seenUrls = new Set<string>();
+    let duplicatesCount = 0;
 
-  const edgeCount = useMemo(() => items.filter(i => i.browserFamily === 'Edge' && !i.deletedAt).length, [items]);
-  const chromeCount = useMemo(() => items.filter(i => i.browserFamily === 'Chrome' && !i.deletedAt).length, [items]);
-  const firefoxCount = useMemo(() => items.filter(i => i.browserFamily === 'Firefox' && !i.deletedAt).length, [items]);
+    const colCounts: Record<string, number> = {};
+    for (const c of collections) {
+      colCounts[c.id] = 0;
+    }
 
-  const storageUsedBytes = useMemo(() => {
-    return items.filter(i => !i.deletedAt).reduce((acc, i) => acc + (i.archiveSizeBytes || 128 * 1024), 0);
-  }, [items]);
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.deletedAt) {
+        trashCount++;
+        totalTrashBytes += (item.archiveSizeBytes || 131072);
+      } else {
+        activeItemCount++;
+        const bytes = item.archiveSizeBytes || 131072;
+        storageUsedBytes += bytes;
 
-  const dynamicStorageReport = useMemo(() => {
-    const activeItems = items.filter(i => !i.deletedAt);
-    const trashItems = items.filter(i => Boolean(i.deletedAt));
+        if (item.isFavorite) favoritesCount++;
+        if (item.thumbnailUrl) thumbnailsCount++;
 
-    const totalActiveArchiveBytes = activeItems.reduce((acc, i) => acc + (i.archiveSizeBytes || 131072), 0);
-    const totalTrashBytes = trashItems.reduce((acc, i) => acc + (i.archiveSizeBytes || 131072), 0);
-    const thumbnailsBytes = activeItems.filter(i => i.thumbnailUrl).length * 85000;
+        const savedTime = new Date(item.savedAt).getTime();
+        if (savedTime >= oneWeekAgo) recentCount++;
+
+        if (item.browserFamily === 'Edge') edgeCount++;
+        else if (item.browserFamily === 'Chrome') chromeCount++;
+        else if (item.browserFamily === 'Firefox') firefoxCount++;
+
+        if (item.collectionIds && item.collectionIds.length > 0) {
+          collectionsCount++;
+          for (let j = 0; j < item.collectionIds.length; j++) {
+            const cid = item.collectionIds[j];
+            for (let k = 0; k < collections.length; k++) {
+              const col = collections[k];
+              if (col.id === cid || `col_${col.id}` === cid || (col.id.startsWith('col_') && col.id.slice(4) === cid)) {
+                colCounts[col.id] = (colCounts[col.id] || 0) + 1;
+              }
+            }
+          }
+        }
+
+        const url = item.normalizedUrl || item.url;
+        if (url) {
+          if (seenUrls.has(url)) {
+            duplicatesCount++;
+          } else {
+            seenUrls.add(url);
+          }
+        }
+
+        if (item.availabilityStatus === 'network_error' || item.availabilityStatus === 'timeout') {
+          brokenLinksCount++;
+        }
+      }
+    }
+
+    const thumbnailsBytes = thumbnailsCount * 85000;
     const databaseBytes = Math.max(items.length * 4096, 65536);
-    const exactVaultBytes = totalActiveArchiveBytes + totalTrashBytes + thumbnailsBytes + databaseBytes;
+    const exactVaultBytes = storageUsedBytes + totalTrashBytes + thumbnailsBytes + databaseBytes;
+    const quotaBytes = preferences.storageQuotaBytes || (50 * 1024 * 1024 * 1024);
 
-    return {
+    const dynamicStorageReport: StorageReport = {
       exactVaultBytes,
       thumbnailsBytes,
-      archivesBytes: totalActiveArchiveBytes,
+      archivesBytes: storageUsedBytes,
       databaseBytes,
       trashBytes: totalTrashBytes,
       backupsBytes: 0,
       temporaryBytes: 32768,
       manifestBytes: 4096,
-      freeSpaceBytes: Math.max(0, (preferences.storageQuotaBytes || (50 * 1024 * 1024 * 1024)) - exactVaultBytes),
+      freeSpaceBytes: Math.max(0, quotaBytes - exactVaultBytes),
       profileEstimateBytes: null
     };
-  }, [items, preferences.storageQuotaBytes]);
 
-  const duplicatesCount = useMemo(() => {
-    const active = items.filter(i => !i.deletedAt);
-    const seen = new Set<string>();
-    let dupes = 0;
-    for (const item of active) {
-      const url = item.normalizedUrl || item.url;
-      if (seen.has(url)) {
-        dupes++;
-      } else {
-        seen.add(url);
-      }
-    }
-    return dupes;
-  }, [items]);
+    const activeCollections = collections.map(col => ({
+      ...col,
+      itemCount: colCounts[col.id] || 0
+    }));
 
-  const brokenLinksCount = useMemo(() => {
-    return items.filter(i => !i.deletedAt && (i.availabilityStatus === 'network_error' || i.availabilityStatus === 'timeout')).length;
-  }, [items]);
+    return {
+      trashCount,
+      favoritesCount,
+      activeItemCount,
+      recentCount,
+      edgeCount,
+      chromeCount,
+      firefoxCount,
+      storageUsedBytes,
+      dynamicStorageReport,
+      duplicatesCount,
+      brokenLinksCount,
+      collectionsCount,
+      activeCollections
+    };
+  }, [items, collections, preferences.storageQuotaBytes]);
+
+  const {
+    trashCount,
+    favoritesCount,
+    activeItemCount,
+    recentCount,
+    edgeCount,
+    chromeCount,
+    firefoxCount,
+    storageUsedBytes,
+    dynamicStorageReport,
+    duplicatesCount,
+    brokenLinksCount,
+    collectionsCount,
+    activeCollections
+  } = tabStats;
 
   // Actions
 
@@ -863,16 +934,23 @@ export const App: React.FC = () => {
     }));
   };
 
+  const handleSelectDestination = (dest: string) => {
+    setCurrentDestination(dest);
+    setSelectedItemId(null);
+  };
+
   const handleGroupTabs = (sourceTabId: string, targetTabId: string) => {
-    const s = items.find(i => i.id === sourceTabId) || null;
-    const t = items.find(i => i.id === targetTabId) || null;
+    setSelectedItemId(null);
+    const s = items.find(i => i.id === sourceTabId) || displayedItems.find(i => i.id === sourceTabId) || null;
+    const t = items.find(i => i.id === targetTabId) || displayedItems.find(i => i.id === targetTabId) || null;
     setGroupSourceTab(s);
     setGroupTargetTab(t);
     setCreateGroupModalOpen(true);
   };
 
   const handleAddToGroup = (tabId: string) => {
-    const s = items.find(i => i.id === tabId) || null;
+    setSelectedItemId(null);
+    const s = items.find(i => i.id === tabId) || displayedItems.find(i => i.id === tabId) || null;
     setGroupSourceTab(s);
     setGroupTargetTab(null);
     setCreateGroupModalOpen(true);
@@ -898,6 +976,8 @@ export const App: React.FC = () => {
       }
       return tab;
     }));
+    setCurrentDestination(newCollectionId);
+    setSelectedItemId(null);
     setSyncToast({
       message: `Group "${name}" created with ${selectedTabIds.length} tabs`,
       timestamp: Date.now()
@@ -1105,10 +1185,12 @@ export const App: React.FC = () => {
     if (currentDestination === 'browser_chrome') return 'Google Chrome Tabs';
     if (currentDestination === 'browser_firefox') return 'Firefox Tabs';
     if (currentDestination === 'collections') return 'All Collections';
-    if (currentDestination.startsWith('col_')) {
-      const col = collections.find(c => c.id === currentDestination.replace('col_', ''));
-      return col ? col.name : 'Collection';
-    }
+    const col = collections.find(c =>
+      c.id === currentDestination ||
+      `col_${c.id}` === currentDestination ||
+      (currentDestination.startsWith('col_') && c.id === currentDestination.slice(4))
+    );
+    if (col) return col.name;
     return 'All Tabs';
   };
 
@@ -1117,31 +1199,55 @@ export const App: React.FC = () => {
       {/* Navigation Sidebar */}
       <Sidebar
         currentDestination={currentDestination}
-        onSelectDestination={setCurrentDestination}
+        onSelectDestination={handleSelectDestination}
         collections={activeCollections}
         collectionsCount={collectionsCount}
         onOpenCreateCollection={() => {
+          setSelectedItemId(null);
           setGroupSourceTab(null);
           setGroupTargetTab(null);
           setCreateGroupModalOpen(true);
         }}
         isCollapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-        onOpenStorage={() => setStorageModalOpen(true)}
-        onOpenDuplicates={() => setDuplicatesModalOpen(true)}
+        onOpenStorage={() => {
+          setSelectedItemId(null);
+          setStorageModalOpen(true);
+        }}
+        onOpenDuplicates={() => {
+          setSelectedItemId(null);
+          setDuplicatesModalOpen(true);
+        }}
         onOpenSettings={() => {
+          setSelectedItemId(null);
           setSettingsInitialTab('appearance');
           setSettingsModalOpen(true);
         }}
         onOpenConnectBrowser={() => {
+          setSelectedItemId(null);
           setSettingsInitialTab('browsers');
           setSettingsModalOpen(true);
         }}
-        onOpenHelp={() => setHelpModalOpen(true)}
-        onOpenRestoreQueue={() => setRestoreModalOpen(true)}
-        onOpenArchiveSearch={() => setArchiveSearchModalOpen(true)}
-        onOpenCheckLinks={() => setCheckLinksModalOpen(true)}
-        onOpenPortableVault={() => setPortableVaultModalOpen(true)}
+        onOpenHelp={() => {
+          setSelectedItemId(null);
+          setHelpModalOpen(true);
+        }}
+        onOpenRestoreQueue={() => {
+          setSelectedItemId(null);
+          setRestoreModalOpen(true);
+        }}
+        onOpenArchiveSearch={() => {
+          setSelectedItemId(null);
+          setArchiveSearchModalOpen(true);
+        }}
+        onOpenCheckLinks={() => {
+          setSelectedItemId(null);
+          setCheckLinksModalOpen(true);
+        }}
+        onOpenPortableVault={() => {
+          setSelectedItemId(null);
+          setPortableVaultModalOpen(true);
+        }}
         activeItemCount={activeItemCount}
         favoritesCount={favoritesCount}
         trashCount={trashCount}
@@ -1169,10 +1275,12 @@ export const App: React.FC = () => {
           onFilterTypeChange={setFilterType}
           itemCount={displayedItems.length}
           onOpenSaveModal={(scope) => {
+            setSelectedItemId(null);
             setSaveModalScope(scope || 'window');
             setSaveModalOpen(true);
           }}
           onQuickSave={() => {
+            setSelectedItemId(null);
             setSaveModalScope('window');
             setSaveModalOpen(true);
           }}
@@ -1237,52 +1345,58 @@ export const App: React.FC = () => {
           </div>
         )}
 
-        {currentDestination.startsWith('col_') && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '10px 24px',
-            backgroundColor: 'var(--bg-card)',
-            borderBottom: '1px solid var(--border-subtle)',
-            fontSize: '13px',
-            color: 'var(--text-secondary)'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                Collection: {collections.find(c => c.id === currentDestination.replace('col_', ''))?.name || 'Group'}
-              </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                ({displayedItems.length} {displayedItems.length === 1 ? 'tab' : 'tabs'})
-              </span>
-            </div>
-            <button
-              onClick={() => {
-                const col = collections.find(c => c.id === currentDestination.replace('col_', ''));
-                if (col) {
+        {(() => {
+          const col = collections.find(c =>
+            c.id === currentDestination ||
+            `col_${c.id}` === currentDestination ||
+            (currentDestination.startsWith('col_') && c.id === currentDestination.slice(4))
+          );
+          if (!col) return null;
+          return (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '10px 24px',
+              backgroundColor: 'var(--bg-card)',
+              borderBottom: '1px solid var(--border-subtle)',
+              fontSize: '13px',
+              color: 'var(--text-secondary)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                  Collection: {col.name}
+                </span>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  ({displayedItems.length} {displayedItems.length === 1 ? 'tab' : 'tabs'})
+                </span>
+              </div>
+              <button
+                onClick={() => {
                   setTargetCollectionForManage(col);
                   setManageGroupModalOpen(true);
-                }
-              }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                backgroundColor: 'var(--accent-color)',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: 'var(--radius-md)',
-                padding: '6px 14px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                boxShadow: 'var(--shadow-sm)'
-              }}
-            >
-              <span>Manage Group Tabs</span>
-            </button>
-          </div>
-        )}
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  backgroundColor: 'var(--accent-color)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: '6px 14px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  boxShadow: 'var(--shadow-sm)'
+                }}
+              >
+                <FolderCog size={14} />
+                <span>Manage Group Tabs</span>
+              </button>
+            </div>
+          );
+        })()}
 
         <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
           {/* Main List / Grid View */}
@@ -1336,29 +1450,6 @@ export const App: React.FC = () => {
               />
             )}
           </main>
-
-          {/* Collapsible Detail Inspector (PRD Section 9.4 & Mockup) */}
-          {selectedItem && (
-            <ErrorBoundary fallbackTitle="Tab Details Inspector" onReset={() => setSelectedItemId(null)}>
-              <DetailInspector
-                item={selectedItem}
-                collections={collections}
-                onClose={() => setSelectedItemId(null)}
-                onUpdateNotes={handleUpdateNotes}
-                onUpdateTitle={handleUpdateTitle}
-                onAddTag={handleAddTag}
-                onRemoveTag={handleRemoveTag}
-                onOpenLiveUrl={handleOpenLiveUrl}
-                onCheckAvailability={handleCheckAvailability}
-                onRestoreItem={handleRestoreFromTrash}
-                onDeleteItem={handleDeleteItem}
-                onToggleFavorite={handleToggleFavorite}
-                onDeleteSubTab={handleDeleteSubTab}
-                onMoveToCollection={handleMoveItemToCollection}
-                isTrash={currentDestination === 'trash'}
-              />
-            </ErrorBoundary>
-          )}
         </div>
       </div>
 
@@ -1390,6 +1481,30 @@ export const App: React.FC = () => {
         </div>
       )}
 
+      {/* Collapsible Detail Inspector (Overlay / Modal) */}
+      {selectedItem && (
+        <ErrorBoundary fallbackTitle="Tab Details Inspector" onReset={() => setSelectedItemId(null)}>
+          <DetailInspector
+            key={selectedItem.id}
+            item={selectedItem}
+            collections={collections}
+            onClose={() => setSelectedItemId(null)}
+            onUpdateNotes={handleUpdateNotes}
+            onUpdateTitle={handleUpdateTitle}
+            onAddTag={handleAddTag}
+            onRemoveTag={handleRemoveTag}
+            onOpenLiveUrl={handleOpenLiveUrl}
+            onCheckAvailability={handleCheckAvailability}
+            onRestoreItem={handleRestoreFromTrash}
+            onDeleteItem={handleDeleteItem}
+            onToggleFavorite={handleToggleFavorite}
+            onDeleteSubTab={handleDeleteSubTab}
+            onMoveToCollection={handleMoveItemToCollection}
+            isTrash={currentDestination === 'trash'}
+          />
+        </ErrorBoundary>
+      )}
+
       {/* Modals & Dialogs */}
       <ErrorBoundary fallbackTitle="Save Tabs" onReset={() => setSaveModalOpen(false)}>
         <SaveTabsModal
@@ -1401,13 +1516,15 @@ export const App: React.FC = () => {
         />
       </ErrorBoundary>
 
-      <OnboardingWizard
-        isOpen={!hasOnboarded}
-        onComplete={() => {
-          setHasOnboarded(true);
-          localStorage.setItem('tabsed_onboarded', 'true');
-        }}
-      />
+      <ErrorBoundary fallbackTitle="Onboarding Wizard" onReset={() => setHasOnboarded(true)}>
+        <OnboardingWizard
+          isOpen={!hasOnboarded}
+          onComplete={() => {
+            setHasOnboarded(true);
+            localStorage.setItem('tabsed_onboarded', 'true');
+          }}
+        />
+      </ErrorBoundary>
 
       <ErrorBoundary fallbackTitle="Storage Breakdown" onReset={() => setStorageModalOpen(false)}>
         <StorageModal
@@ -1452,7 +1569,10 @@ export const App: React.FC = () => {
           onClose={() => setArchiveSearchModalOpen(false)}
           items={items}
           collections={collections}
-          onSelectItem={setSelectedItemId}
+          onSelectItem={(id) => {
+            setArchiveSearchModalOpen(false);
+            setSelectedItemId(id);
+          }}
           onOpenLiveUrl={handleOpenLiveUrl}
         />
       </ErrorBoundary>
@@ -1462,7 +1582,7 @@ export const App: React.FC = () => {
           isOpen={backupModalOpen}
           onClose={() => setBackupModalOpen(false)}
           items={items}
-          onRestoreBackup={(restored) => setItems(restored)}
+          onRestoreBackup={(restored) => setItems(unpackAllSessionItems(restored))}
         />
       </ErrorBoundary>
 
@@ -1473,7 +1593,7 @@ export const App: React.FC = () => {
           items={items}
           collections={collections}
           tags={INITIAL_COLLECTIONS.map(c => ({ id: c.id, name: c.name }))}
-          onImportItems={(imported) => setItems(imported)}
+          onImportItems={(imported) => setItems(unpackAllSessionItems(imported))}
         />
       </ErrorBoundary>
 
